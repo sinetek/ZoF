@@ -47,27 +47,25 @@ extern "C" {
 /* mknode flags */
 #define	IS_ROOT_NODE	0x01		/* create a root node */
 #define	IS_XATTR	0x02		/* create an extended attribute node */
-#define	IS_TMPFILE	0x04		/* create a tmpfile */
 
-extern int zfs_dirent_lock(zfs_dirlock_t **, znode_t *, char *, znode_t **,
-    int, int *, pathname_t *);
-extern void zfs_dirent_unlock(zfs_dirlock_t *);
-extern int zfs_link_create(zfs_dirlock_t *, znode_t *, dmu_tx_t *, int);
-extern int zfs_link_destroy(zfs_dirlock_t *, znode_t *, dmu_tx_t *, int,
+extern int zfs_dirent_lookup(znode_t *, const char *, znode_t **, int);
+extern int zfs_link_create(znode_t *, const char *, znode_t *, dmu_tx_t *, int);
+extern int zfs_link_destroy(znode_t *, const char *, znode_t *, dmu_tx_t *, int,
     boolean_t *);
-extern int zfs_dirlook(znode_t *, char *, struct inode **, int, int *,
-    pathname_t *);
+#if 0
+extern int zfs_dirlook(vnode_t *, const char *, vnode_t **, int);
+#else
+extern int zfs_dirlook(znode_t *, const char *name, znode_t **);
+#endif
 extern void zfs_mknode(znode_t *, vattr_t *, dmu_tx_t *, cred_t *,
     uint_t, znode_t **, zfs_acl_ids_t *);
 extern void zfs_rmnode(znode_t *);
-extern void zfs_dl_name_switch(zfs_dirlock_t *dl, char *new, char **old);
 extern boolean_t zfs_dirempty(znode_t *);
 extern void zfs_unlinked_add(znode_t *, dmu_tx_t *);
 extern void zfs_unlinked_drain(zfsvfs_t *zfsvfs);
-extern void zfs_unlinked_drain_stop_wait(zfsvfs_t *zfsvfs);
 extern int zfs_sticky_remove_access(znode_t *, znode_t *, cred_t *cr);
-extern int zfs_get_xattrdir(znode_t *, struct inode **, cred_t *, int);
-extern int zfs_make_xattrdir(znode_t *, vattr_t *, struct inode **, cred_t *);
+extern int zfs_get_xattrdir(znode_t *, vnode_t **, cred_t *, int);
+extern int zfs_make_xattrdir(znode_t *, vattr_t *, vnode_t **, cred_t *);
 
 #ifdef	__cplusplus
 }

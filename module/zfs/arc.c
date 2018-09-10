@@ -357,9 +357,8 @@ int arc_p_min_shift = 4;
 static int arc_shrink_shift = 7;
 
 /* percent of pagecache to reclaim arc to */
-#ifdef _KERNEL
-static uint_t zfs_arc_pc_percent = 0;
-#endif
+#if defined(_KERNEL) && defined(__linux__)
+static uint_t		zfs_arc_pc_percent = 0;
 
 /*
  * log2(fraction of ARC which must be free to allow growing).
@@ -4821,6 +4820,13 @@ arc_reduce_target_size(int64_t to_free)
 		zthr_wakeup(arc_adjust_zthr);
 	}
 }
+#ifdef __FreeBSD__
+static uint64_t
+arc_all_memory(void)
+{
+	return ((uint64_t)physmem * arc_lotsfree_percent / 100);
+}
+#endif
 #ifdef __linux__
 /*
  * Return maximum amount of memory that we could possibly use.  Reduced
@@ -4897,7 +4903,7 @@ int64_t arc_swapfs_reserve = 64;
  * needed.  Positive if there is sufficient free memory, negative indicates
  * the amount of memory that needs to be freed up.
  */
-static int64_t
+int64_t
 arc_available_memory(void)
 {
 	int64_t lowest = INT64_MAX;

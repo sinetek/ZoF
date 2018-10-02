@@ -393,7 +393,11 @@ struct vdev {
 	uint64_t	vdev_mmp_kstat_id;	/* to find kstat entry */
 	uint64_t	vdev_expansion_time;	/* vdev's last expansion time */
 	list_node_t	vdev_leaf_node;		/* leaf vdev list */
+	uint16_t	vdev_rotation_rate; /* rotational rate of the media */
 
+#define	VDEV_RATE_UNKNOWN	0
+#define	VDEV_RATE_NON_ROTATING	1
+	
 	/*
 	 * For DTrace to work in userland (libzpool) context, these fields must
 	 * remain at the end of the structure.  DTrace will use the kernel's

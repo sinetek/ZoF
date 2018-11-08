@@ -1134,6 +1134,10 @@ zpool_do_labelclear(int argc, char **argv)
 		return (1);
 	}
 
+#ifdef __linux__
+	/*
+	 * XXX freebsd equivalent?
+	 */
 	/*
 	 * Flush all dirty pages for the block device.  This should not be
 	 * fatal when the device does not support BLKFLSBUF as would be the
@@ -1142,8 +1146,9 @@ zpool_do_labelclear(int argc, char **argv)
 	if ((ioctl(fd, BLKFLSBUF) != 0) && (errno != ENOTTY))
 		(void) fprintf(stderr, gettext("failed to invalidate "
 		    "cache for %s: %s\n"), vdev, strerror(errno));
-
-	if (zpool_read_label(fd, &config, NULL) != 0) {
+#endif
+	
+	if (zpool_read_label(fd, &config, NULL) != 0 || config == NULL) {
 		(void) fprintf(stderr,
 		    gettext("failed to read label from %s\n"), vdev);
 		ret = 1;
@@ -4585,7 +4590,7 @@ get_interval_count(int *argcp, char **argv, float *iv,
 	/*
 	 * Determine if the last argument is an integer or a pool name
 	 */
-	if (argc > 0 && isnumber(argv[argc - 1])) {
+	if (argc > 0 && zfs_isnumber(argv[argc - 1])) {
 		char *end;
 
 		errno = 0;
@@ -4615,7 +4620,7 @@ get_interval_count(int *argcp, char **argv, float *iv,
 	 * If the last argument is also an integer, then we have both a count
 	 * and an interval.
 	 */
-	if (argc > 0 && isnumber(argv[argc - 1])) {
+	if (argc > 0 && zfs_isnumber(argv[argc - 1])) {
 		char *end;
 
 		errno = 0;

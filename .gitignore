@@ -63,3 +63,7 @@ cscope.*
 *.log
 venv
 
+*.so
+*.so.debug
+*.so.full
+*.tmp

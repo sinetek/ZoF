@@ -5047,7 +5047,7 @@ int64_t
 arc_available_memory(void)
 {
 	int64_t lowest = INT64_MAX;
-	int64_t n;
+	int64_t n __unused;
 	free_memory_reason_t r = FMR_UNKNOWN;
 
 #ifdef _KERNEL

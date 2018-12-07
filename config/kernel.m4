@@ -2,6 +2,7 @@ dnl #
 dnl # Default ZFS kernel configuration
 dnl #
 AC_DEFUN([ZFS_AC_CONFIG_KERNEL], [
+	AM_COND_IF([BUILD_LINUX], [
 	ZFS_AC_KERNEL
 	ZFS_AC_QAT
 	ZFS_AC_KERNEL_ACCESS_OK_TYPE
@@ -170,7 +171,7 @@ AC_DEFUN([ZFS_AC_CONFIG_KERNEL], [
 	AS_IF([test "$LINUX_OBJ" != "$LINUX"], [
 		KERNEL_MAKE="$KERNEL_MAKE O=$LINUX_OBJ"
 	])
-
+	])
 	AC_SUBST(KERNEL_MAKE)
 ])
 

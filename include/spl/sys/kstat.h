@@ -102,34 +102,35 @@ typedef struct kstat_raw_ops {
 	void *(*addr)(kstat_t *ksp, loff_t index);
 } kstat_raw_ops_t;
 
-typedef struct kstat_proc_entry {
-	char	kpe_name[KSTAT_STRLEN+1];	/* kstat name */
-	char	kpe_module[KSTAT_STRLEN+1];	/* provider module name */
-	kstat_module_t		*kpe_owner;	/* kstat module linkage */
-	struct list_head	kpe_list;	/* kstat linkage */
-	struct proc_dir_entry	*kpe_proc;	/* procfs entry */
-} kstat_proc_entry_t;
-
 struct kstat_s {
 	int		ks_magic;		/* magic value */
 	kid_t		ks_kid;			/* unique kstat ID */
 	hrtime_t	ks_crtime;		/* creation time */
 	hrtime_t	ks_snaptime;		/* last access time */
+	char		ks_module[KSTAT_STRLEN+1]; /* provider module name */
 	int		ks_instance;		/* provider module instance */
+	char		ks_name[KSTAT_STRLEN+1]; /* kstat name */
 	char		ks_class[KSTAT_STRLEN+1]; /* kstat class */
 	uchar_t		ks_type;		/* kstat data type */
 	uchar_t		ks_flags;		/* kstat flags */
 	void		*ks_data;		/* kstat type-specific data */
 	uint_t		ks_ndata;		/* # of data records */
 	size_t		ks_data_size;		/* size of kstat data section */
+	struct proc_dir_entry *ks_proc;		/* proc linkage */
 	kstat_update_t	*ks_update;		/* dynamic updates */
 	void		*ks_private;		/* private data */
 	kmutex_t	ks_private_lock;	/* kstat private data lock */
 	kmutex_t	*ks_lock;		/* kstat data lock */
+	struct list_head ks_list;		/* kstat linkage */
+	kstat_module_t	*ks_owner;		/* kstat module linkage */
 	kstat_raw_ops_t	ks_raw_ops;		/* ops table for raw type */
 	char		*ks_raw_buf;		/* buf used for raw ops */
 	size_t		ks_raw_bufsize;		/* size of raw ops buffer */
-	kstat_proc_entry_t	ks_proc;	/* data for procfs entry */
+#if defined(_KERNEL) && defined(__FreeBSD__)
+        struct sysctl_ctx_list ks_sysctl_ctx;
+        struct sysctl_oid *ks_sysctl_root;
+#endif
+
 };
 
 typedef struct kstat_named_s {

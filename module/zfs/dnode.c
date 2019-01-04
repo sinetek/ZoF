@@ -39,6 +39,7 @@
 #include <sys/range_tree.h>
 #include <sys/trace_zfs.h>
 #include <sys/zfs_project.h>
+#include <sys/sdt.h>
 
 dnode_stats_t dnode_stats = {
 	{ "dnode_hold_dbuf_hold",		KSTAT_DATA_UINT64 },
@@ -79,7 +80,7 @@ ASSERTV(static dnode_phys_t dnode_phys_zero);
 int zfs_default_bs = SPA_MINBLOCKSHIFT;
 int zfs_default_ibs = DN_MAX_INDBLKSHIFT;
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) && defined(__linux__)
 static kmem_cbrc_t dnode_move(void *, void *, size_t, void *);
 #endif /* _KERNEL */
 
@@ -749,7 +750,7 @@ dnode_reallocate(dnode_t *dn, dmu_object_type_t ot, int blocksize,
 	mutex_exit(&dn->dn_mtx);
 }
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) && defined(__linux__)
 static void
 dnode_move_impl(dnode_t *odn, dnode_t *ndn)
 {

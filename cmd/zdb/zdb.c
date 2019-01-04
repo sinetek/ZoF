@@ -98,7 +98,7 @@ zdb_ot_name(dmu_object_type_t type)
 
 extern int reference_tracking_enable;
 extern int zfs_recover;
-extern uint64_t zfs_arc_max, zfs_arc_meta_limit;
+extern uint64_t zfs_arc_max, zfs_arc_metadata_limit;
 extern int zfs_vdev_async_read_max_active;
 extern boolean_t spa_load_verify_dryrun;
 extern int zfs_reconstruct_indirect_combinations_max;
@@ -3444,10 +3444,12 @@ dump_label(const char *dev)
 		exit(1);
 	}
 
+#ifdef __linux__
 	if (S_ISBLK(statbuf.st_mode) && ioctl(fd, BLKFLSBUF) != 0)
 		(void) printf("failed to invalidate cache '%s' : %s\n", path,
 		    strerror(errno));
 
+#endif
 	avl_create(&config_tree, cksum_record_compare,
 	    sizeof (cksum_record_t), offsetof(cksum_record_t, link));
 	avl_create(&uberblock_tree, cksum_record_compare,
@@ -6760,7 +6762,7 @@ main(int argc, char **argv)
 	 * ZDB does not typically re-read blocks; therefore limit the ARC
 	 * to 256 MB, which can be used entirely for metadata.
 	 */
-	zfs_arc_max = zfs_arc_meta_limit = 256 * 1024 * 1024;
+	zfs_arc_max = zfs_arc_metadata_limit = 256 * 1024 * 1024;
 #endif
 
 	/*

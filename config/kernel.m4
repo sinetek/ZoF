@@ -2,6 +2,7 @@ dnl #
 dnl # Default ZFS kernel configuration
 dnl #
 AC_DEFUN([ZFS_AC_CONFIG_KERNEL], [
+	AM_COND_IF([BUILD_LINUX], [
 	dnl # Setup the kernel build environment.
 	ZFS_AC_KERNEL
 	ZFS_AC_QAT
@@ -25,6 +26,7 @@ AC_DEFUN([ZFS_AC_CONFIG_KERNEL], [
 	])
 
 	AC_SUBST(KERNEL_MAKE)
+	])
 ])
 
 dnl #

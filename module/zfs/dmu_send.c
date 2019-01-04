@@ -112,17 +112,6 @@ overflow_multiply(uint64_t a, uint64_t b, uint64_t *c)
 	return (B_TRUE);
 }
 
-/*
- * Return B_TRUE and modifies *out to the span if the span is less than 2^64,
- * returns B_FALSE otherwise.
- */
-static inline boolean_t
-bp_span(uint32_t datablksz, uint8_t indblkshift, uint64_t level, uint64_t *out)
-{
-	uint64_t spanb = bp_span_in_blocks(indblkshift, level);
-	return (overflow_multiply(spanb, datablksz, out));
-}
-
 struct send_thread_arg {
 	bqueue_t	q;
 	dsl_dataset_t	*ds;		/* Dataset to traverse */
@@ -468,7 +457,7 @@ dump_redact(dmu_send_cookie_t *dscp, uint64_t object, uint64_t offset,
 }
 
 static int
-dump_write(dmu_send_cookie_t *dscp, dmu_object_type_t type, uint64_t object,
+dmu_dump_write(dmu_send_cookie_t *dscp, dmu_object_type_t type, uint64_t object,
     uint64_t offset, int lsize, int psize, const blkptr_t *bp, void *data)
 {
 	uint64_t payload_size;
@@ -959,9 +948,11 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 			    bp, arc_getbuf_func, &abuf, ZIO_PRIORITY_ASYNC_READ,
 			    zioflags, &aflags, &zb) != 0)
 				return (SET_ERROR(EIO));
-
-			err = dump_spill(dscp, bp, zb.zb_object, abuf->b_data);
-			arc_buf_destroy(abuf, &abuf);
+			if (!dscp->dsc_dso->dso_dryrun) {
+				err = dump_spill(dscp, bp, zb.zb_object,
+				    abuf->b_data);
+				arc_buf_destroy(abuf, &abuf);
+			}
 			return (err);
 		}
 		if (send_do_embed(dscp, bp)) {
@@ -1057,7 +1048,7 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 			while (srdp->datablksz > 0 && err == 0) {
 				int n = MIN(srdp->datablksz,
 				    SPA_OLD_MAXBLOCKSIZE);
-				err = dump_write(dscp, srdp->obj_type,
+				err = dmu_dump_write(dscp, srdp->obj_type,
 				    range->object, offset, n, n, NULL, buf);
 				offset += n;
 				buf += n;
@@ -1076,7 +1067,8 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 			} else {
 				psize = BP_GET_PSIZE(bp);
 			}
-			err = dump_write(dscp, srdp->obj_type, range->object,
+			err = dmu_dump_write(dscp, srdp->obj_type,
+			    range->object,
 			    offset, srdp->datablksz, psize, bp,
 			    (abuf == NULL ? NULL : abuf->b_data));
 		}
@@ -1116,7 +1108,7 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 	return (err);
 }
 
-struct send_range *
+static struct send_range *
 range_alloc(enum type type, uint64_t object, uint64_t start_blkid,
     uint64_t end_blkid, boolean_t eos)
 {

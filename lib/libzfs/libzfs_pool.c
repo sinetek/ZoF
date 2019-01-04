@@ -76,7 +76,7 @@ zpool_get_all_props(zpool_handle_t *zhp)
 	if (zcmd_alloc_dst_nvlist(hdl, &zc, 0) != 0)
 		return (-1);
 
-	while (ioctl(hdl->libzfs_fd, ZFS_IOC_POOL_GET_PROPS, &zc) != 0) {
+	while (zfs_ioctl(hdl, ZFS_IOC_POOL_GET_PROPS, &zc) != 0) {
 		if (errno == ENOMEM) {
 			if (zcmd_expand_dst_nvlist(hdl, &zc) != 0) {
 				zcmd_free_nvlists(&zc);
@@ -2633,13 +2633,19 @@ zpool_vdev_is_interior(const char *name)
 }
 
 nvlist_t *
-zpool_find_vdev(zpool_handle_t *zhp, const char *path, boolean_t *avail_spare,
+zpool_find_vdev(zpool_handle_t *zhp, const char *ipath, boolean_t *avail_spare,
     boolean_t *l2cache, boolean_t *log)
 {
 	char *end;
+	const char *path;
 	nvlist_t *nvroot, *search, *ret;
 	uint64_t guid;
+	int firstpass;
+	char buf[MAXPATHLEN+16];
 
+	firstpass = 1;
+	path = ipath;
+	retry:
 	verify(nvlist_alloc(&search, NV_UNIQUE_NAME, KM_SLEEP) == 0);
 
 	guid = strtoull(path, &end, 0);
@@ -2660,7 +2666,14 @@ zpool_find_vdev(zpool_handle_t *zhp, const char *path, boolean_t *avail_spare,
 		*log = B_FALSE;
 	ret = vdev_to_nvlist_iter(nvroot, search, avail_spare, l2cache, log);
 	nvlist_free(search);
-
+	if (ret == NULL && firstpass) {
+		sprintf(buf, "/dev/%s", path);
+		path = strdup(buf);
+		firstpass = 0;
+		goto retry;
+	}
+	if (path != ipath)
+		free((void *)path);
 	return (ret);
 }
 
@@ -3005,7 +3018,7 @@ zpool_vdev_fault(zpool_handle_t *zhp, uint64_t guid, vdev_aux_t aux)
 	zc.zc_cookie = VDEV_STATE_FAULTED;
 	zc.zc_obj = aux;
 
-	if (ioctl(hdl->libzfs_fd, ZFS_IOC_VDEV_SET_STATE, &zc) == 0)
+	if (zfs_ioctl(hdl, ZFS_IOC_VDEV_SET_STATE, &zc) == 0)
 		return (0);
 
 	switch (errno) {
@@ -3040,7 +3053,7 @@ zpool_vdev_degrade(zpool_handle_t *zhp, uint64_t guid, vdev_aux_t aux)
 	zc.zc_cookie = VDEV_STATE_DEGRADED;
 	zc.zc_obj = aux;
 
-	if (ioctl(hdl->libzfs_fd, ZFS_IOC_VDEV_SET_STATE, &zc) == 0)
+	if (zfs_ioctl(hdl, ZFS_IOC_VDEV_SET_STATE, &zc) == 0)
 		return (0);
 
 	return (zpool_standard_error(hdl, errno, msg));
@@ -3775,7 +3788,7 @@ zpool_vdev_clear(zpool_handle_t *zhp, uint64_t guid)
 	zc.zc_guid = guid;
 	zc.zc_cookie = ZPOOL_NO_REWIND;
 
-	if (ioctl(hdl->libzfs_fd, ZFS_IOC_CLEAR, &zc) == 0)
+	if (zfs_ioctl(hdl, ZFS_IOC_CLEAR, &zc) == 0)
 		return (0);
 
 	return (zpool_standard_error(hdl, errno, msg));
@@ -3915,6 +3928,7 @@ zpool_vdev_name(libzfs_handle_t *hdl, zpool_handle_t *zhp, nvlist_t *nv,
 			path++;
 		}
 
+#ifndef __FreeBSD__
 		/*
 		 * Remove the partition from the path it this is a whole disk.
 		 */
@@ -3922,6 +3936,7 @@ zpool_vdev_name(libzfs_handle_t *hdl, zpool_handle_t *zhp, nvlist_t *nv,
 		    == 0 && value && !(name_flags & VDEV_NAME_PATH)) {
 			return (zfs_strip_partition(path));
 		}
+#endif
 	} else {
 		path = type;
 
@@ -3986,7 +4001,7 @@ zpool_get_errlog(zpool_handle_t *zhp, nvlist_t **nverrlistp)
 	zc.zc_nvlist_dst_size = count;
 	(void) strcpy(zc.zc_name, zhp->zpool_name);
 	for (;;) {
-		if (ioctl(zhp->zpool_hdl->libzfs_fd, ZFS_IOC_ERROR_LOG,
+		if (zfs_ioctl(zhp->zpool_hdl, ZFS_IOC_ERROR_LOG,
 		    &zc) != 0) {
 			free((void *)(uintptr_t)zc.zc_nvlist_dst);
 			if (errno == ENOMEM) {
@@ -4101,7 +4116,7 @@ zpool_log_history(libzfs_handle_t *hdl, const char *message)
 	fnvlist_add_string(args, "message", message);
 	err = zcmd_write_src_nvlist(hdl, &zc, args);
 	if (err == 0)
-		err = ioctl(hdl->libzfs_fd, ZFS_IOC_LOG_HISTORY, &zc);
+		err = zfs_ioctl(hdl, ZFS_IOC_LOG_HISTORY, &zc);
 	nvlist_free(args);
 	zcmd_free_nvlists(&zc);
 	return (err);
@@ -4128,7 +4143,7 @@ get_history(zpool_handle_t *zhp, char *buf, uint64_t *off, uint64_t *len)
 	zc.zc_history_len = *len;
 	zc.zc_history_offset = *off;
 
-	if (ioctl(hdl->libzfs_fd, ZFS_IOC_POOL_GET_HISTORY, &zc) != 0) {
+	if (zfs_ioctl(hdl, ZFS_IOC_POOL_GET_HISTORY, &zc) != 0) {
 		switch (errno) {
 		case EPERM:
 			return (zfs_error_fmt(hdl, EZFS_PERM,
@@ -4360,7 +4375,7 @@ zpool_obj_to_path(zpool_handle_t *zhp, uint64_t dsobj, uint64_t obj,
 	/* get the dataset's name */
 	(void) strlcpy(zc.zc_name, zhp->zpool_name, sizeof (zc.zc_name));
 	zc.zc_obj = dsobj;
-	if (ioctl(zhp->zpool_hdl->libzfs_fd,
+	if (zfs_ioctl(zhp->zpool_hdl,
 	    ZFS_IOC_DSOBJ_TO_DSNAME, &zc) != 0) {
 		/* just write out a path of two object numbers */
 		(void) snprintf(pathname, len, "<0x%llx>:<0x%llx>",
@@ -4375,7 +4390,7 @@ zpool_obj_to_path(zpool_handle_t *zhp, uint64_t dsobj, uint64_t obj,
 	/* get the corrupted object's path */
 	(void) strlcpy(zc.zc_name, dsname, sizeof (zc.zc_name));
 	zc.zc_obj = obj;
-	if (ioctl(zhp->zpool_hdl->libzfs_fd, ZFS_IOC_OBJ_TO_PATH,
+	if (zfs_ioctl(zhp->zpool_hdl, ZFS_IOC_OBJ_TO_PATH,
 	    &zc) == 0) {
 		if (mounted) {
 			(void) snprintf(pathname, len, "%s%s", mntpnt,
@@ -4391,6 +4406,7 @@ zpool_obj_to_path(zpool_handle_t *zhp, uint64_t dsobj, uint64_t obj,
 	free(mntpnt);
 }
 
+#ifndef __FreeBSD__
 /*
  * Wait while the specified activity is in progress in the pool.
  */
@@ -4410,6 +4426,7 @@ zpool_wait(zpool_handle_t *zhp, zpool_wait_activity_t activity)
 		return (error);
 	}
 }
+#endif
 
 /*
  * Wait for the given activity and return the status of the wait (whether or not

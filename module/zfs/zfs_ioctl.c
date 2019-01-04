@@ -217,6 +217,27 @@
 #include <sys/lua/lauxlib.h>
 #include <sys/zfs_ioctl_impl.h>
 
+#ifndef __linux__
+#define	z_sb z_vfs
+#define	deactivate_super vfs_unbusy
+#define	group_leader p_pid
+#define	KMALLOC_MAX_SIZE MAXPHYS
+#define	VOP_SEEK(...) (0)
+#include <sys/buf.h>
+#endif
+volatile int geom_inhibited;
+
+#ifdef __GNUC__
+#define	_CC_UNUSED_ __attribute__((unused))
+#else
+#define	_CC_UNUSED_ __unused
+#endif
+
+/*
+ * Limit maximum nvlist size.  We don't want users passing in insane values
+ * for zc->zc_nvlist_src_size, since we will need to allocate that much memory.
+ */
+#define	MAX_NVLIST_SRC_SIZE	KMALLOC_MAX_SIZE
 kmutex_t zfsdev_state_lock;
 zfsdev_state_t *zfsdev_state_list;
 
@@ -1405,6 +1426,17 @@ getzfsvfs(const char *dsname, zfsvfs_t **zfvp)
 
 	error = getzfsvfs_impl(os, zfvp);
 	dmu_objset_rele(os, FTAG);
+#ifdef __FreeBSD__
+	if (error)
+		return (error);
+
+	error = vfs_busy((*zfvp)->z_vfs, 0);
+	vfs_rel((*zfvp)->z_vfs);
+	if (error != 0) {
+		*zfvp = NULL;
+		error = SET_ERROR(ESRCH);
+	}
+#endif
 	return (error);
 }
 
@@ -3325,6 +3357,16 @@ zfs_ioc_create(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 			}
 		}
 	}
+#if defined(__FreeBSD__) && defined(_KERNEL)
+	if (error == 0 && type == DMU_OST_ZVOL) {
+		spa_t *spa;
+
+		if (spa_open(fsname, &spa, FTAG) == 0) {
+			zvol_create_minors(spa, fsname, B_TRUE);
+			spa_close(spa, FTAG);
+		}
+	}
+#endif
 	return (error);
 }
 
@@ -3373,6 +3415,16 @@ zfs_ioc_clone(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		if (error != 0)
 			(void) dsl_destroy_head(fsname);
 	}
+#if defined(__FreeBSD__) && defined(_KERNEL)
+	if (error == 0) {
+		spa_t *spa;
+
+		if (spa_open(fsname, &spa, FTAG) == 0) {
+			zvol_create_minors(spa, fsname, B_TRUE);
+			spa_close(spa, FTAG);
+		}
+	}
+#endif
 	return (error);
 }
 
@@ -4103,7 +4155,7 @@ static int
 zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 {
 	zfsvfs_t *zfsvfs;
-	zvol_state_handle_t *zv;
+	zvol_state_handle_t *zv _CC_UNUSED_;
 	char *target = NULL;
 	int error;
 
@@ -4134,11 +4186,15 @@ zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 			error = error ? error : resume_err;
 		}
 		deactivate_super(zfsvfs->z_sb);
-	} else if ((zv = zvol_suspend(fsname)) != NULL) {
+	}
+#ifndef __FreeBSD__
+	else if ((zv = zvol_suspend(fsname)) != NULL) {
 		error = dsl_dataset_rollback(fsname, target, zvol_tag(zv),
 		    outnvl);
 		zvol_resume(zv);
-	} else {
+	}
+#endif
+	else {
 		error = dsl_dataset_rollback(fsname, target, NULL, outnvl);
 	}
 	return (error);
@@ -4205,6 +4261,7 @@ zfs_ioc_rename(zfs_cmd_t *zc)
 	objset_t *os;
 	dmu_objset_type_t ost;
 	boolean_t recursive = zc->zc_cookie & 1;
+	boolean_t nounmount = !!(zc->zc_cookie & 2);
 	char *at;
 	int err;
 
@@ -4230,7 +4287,7 @@ zfs_ioc_rename(zfs_cmd_t *zc)
 		if (strncmp(zc->zc_name, zc->zc_value, at - zc->zc_name + 1))
 			return (SET_ERROR(EXDEV));
 		*at = '\0';
-		if (ost == DMU_OST_ZFS) {
+		if (ost == DMU_OST_ZFS && !nounmount) {
 			error = dmu_objset_find(zc->zc_name,
 			    recursive_unmount, at + 1,
 			    recursive ? DS_FIND_CHILDREN : 0);
@@ -4479,7 +4536,10 @@ zfs_check_settable(const char *dsname, nvpair_t *pair, cred_t *cr)
 			    intval & ZIO_CHECKSUM_MASK);
 			if (feature == SPA_FEATURE_NONE)
 				break;
-
+#ifdef __FreeBSD__
+			if (feature == SPA_FEATURE_EDONR)
+				return (SET_ERROR(ENOTSUP));
+#endif
 			if ((err = spa_open(dsname, &spa, FTAG)) != 0)
 				return (err);
 
@@ -4726,10 +4786,17 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 	if (input_fp == NULL)
 		return (SET_ERROR(EBADF));
 
+	atomic_inc_32(&geom_inhibited);
 	off = input_fp->f_offset;
 	error = dmu_recv_begin(tofs, tosnap, begin_record, force,
-	    resumable, localprops, hidden_args, origin, &drc, input_fp->f_vnode,
+	    resumable, localprops, hidden_args, origin, &drc,
+#ifdef __FreeBSD__
+	    input_fp,
+#else
+	    input_fp->f_vnode,
+#endif
 	    &off);
+
 	if (error != 0)
 		goto out;
 	tofs_was_redacted = dsl_get_redacted(drc.drc_ds);
@@ -4837,7 +4904,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 
 	if (error == 0) {
 		zfsvfs_t *zfsvfs = NULL;
-		zvol_state_handle_t *zv = NULL;
+		zvol_state_handle_t *zv _CC_UNUSED_ = NULL;
 
 		if (getzfsvfs(tofs, &zfsvfs) == 0) {
 			/* online recv */
@@ -5007,6 +5074,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 		nvlist_free(inheritprops);
 	}
 out:
+	atomic_dec_32(&geom_inhibited);
 	releasef(input_fd);
 	nvlist_free(origrecvd);
 	nvlist_free(origprops);
@@ -5222,7 +5290,11 @@ zfs_ioc_recv_new(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 }
 
 typedef struct dump_bytes_io {
-	vnode_t		*dbi_vp;
+#if defined(__FreeBSD__) && defined(_KERNEL)
+	struct file	*dbi_vpfp;
+#else
+	vnode_t		*dbi_vpfp;
+#endif
 	void		*dbi_buf;
 	int		dbi_len;
 	int		dbi_err;
@@ -5232,11 +5304,34 @@ static void
 dump_bytes_cb(void *arg)
 {
 	dump_bytes_io_t *dbi = (dump_bytes_io_t *)arg;
+
+#if defined(_KERNEL) && defined(__FreeBSD__)
+	struct uio auio;
+	struct iovec aiov;
+	struct thread *td = curthread;
+
+
+	aiov.iov_base = dbi->dbi_buf;
+	aiov.iov_len = dbi->dbi_len;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = dbi->dbi_len;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_offset = (off_t)-1;
+	auio.uio_td = td;
+
+	if (dbi->dbi_vpfp->f_type == DTYPE_VNODE)
+		bwillwrite();
+	dbi->dbi_err = fo_write(dbi->dbi_vpfp, &auio, td->td_ucred, 0,
+	    td);
+#else
 	ssize_t resid; /* have to get resid to get detailed errno */
 
-	dbi->dbi_err = vn_rdwr(UIO_WRITE, dbi->dbi_vp,
+	dbi->dbi_err = vn_rdwr(UIO_WRITE, dbi->dbi_vpfp,
 	    (caddr_t)dbi->dbi_buf, dbi->dbi_len,
 	    0, UIO_SYSSPACE, FAPPEND, RLIM64_INFINITY, CRED(), &resid);
+#endif
 }
 
 static int
@@ -5244,7 +5339,7 @@ dump_bytes(objset_t *os, void *buf, int len, void *arg)
 {
 	dump_bytes_io_t dbi;
 
-	dbi.dbi_vp = arg;
+	dbi.dbi_vpfp = arg;
 	dbi.dbi_buf = buf;
 	dbi.dbi_len = len;
 
@@ -5347,20 +5442,34 @@ zfs_ioc_send(zfs_cmd_t *zc)
 		dsl_dataset_rele(tosnap, FTAG);
 		dsl_pool_rele(dp, FTAG);
 	} else {
-		file_t *fp = getf(zc->zc_cookie);
+		file_t *fp;
+#if defined(__FreeBSD__) && defined(_KERNEL)
+
+		fget_write(curthread, zc->zc_cookie, &cap_write_rights, &fp);
+#else
+		fp = getf(zc->zc_cookie);
+#endif
 		if (fp == NULL)
 			return (SET_ERROR(EBADF));
-
 		off = fp->f_offset;
 		dmu_send_outparams_t out = {0};
 		out.dso_outfunc = dump_bytes;
+#if defined(__FreeBSD__) && defined(_KERNEL)
+		out.dso_arg = fp;
+#else
 		out.dso_arg = fp->f_vnode;
+#endif
 		out.dso_dryrun = B_FALSE;
 		error = dmu_send_obj(zc->zc_name, zc->zc_sendobj,
 		    zc->zc_fromobj, embedok, large_block_ok, compressok, rawok,
 		    zc->zc_cookie, &off, &out);
 
+
+#if defined(__FreeBSD__) && defined(_KERNEL)
+		if (off >= 0 && off <= MAXOFFSET_T)
+#else
 		if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
+#endif
 			fp->f_offset = off;
 		releasef(zc->zc_cookie);
 	}
@@ -5935,7 +6044,11 @@ zfs_ioc_diff(zfs_cmd_t *zc)
 
 	off = fp->f_offset;
 
+#if defined(_KERNEL) && defined(__FreeBSD__)
+	error = dmu_diff(zc->zc_name, zc->zc_value, fp, &off);
+#else
 	error = dmu_diff(zc->zc_name, zc->zc_value, fp->f_vnode, &off);
+#endif
 
 	if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
 		fp->f_offset = off;
@@ -6271,7 +6384,6 @@ static const zfs_ioc_key_t zfs_keys_send_new[] = {
 	{"redactbook",		DATA_TYPE_STRING,	ZK_OPTIONAL},
 };
 
-/* ARGSUSED */
 static int
 zfs_ioc_send_new(const char *snapname, nvlist_t *innvl, nvlist_t *outnvl)
 {
@@ -6308,12 +6420,20 @@ zfs_ioc_send_new(const char *snapname, nvlist_t *innvl, nvlist_t *outnvl)
 	off = fp->f_offset;
 	dmu_send_outparams_t out = {0};
 	out.dso_outfunc = dump_bytes;
+#if defined(__FreeBSD__) && defined(_KERNEL)
+	out.dso_arg = fp;
+#else
 	out.dso_arg = fp->f_vnode;
+#endif
 	out.dso_dryrun = B_FALSE;
 	error = dmu_send(snapname, fromname, embedok, largeblockok, compressok,
 	    rawok, resumeobj, resumeoff, redactbook, fd, &off, &out);
 
+#ifdef __FreeBSD__
+	if (off >= 0 && off <= MAXOFFSET_T)
+#else
 	if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
+#endif
 		fp->f_offset = off;
 
 	releasef(fd);
@@ -7067,6 +7187,7 @@ zfs_ioctl_init(void)
 
 	zfs_ioctl_init_os();
 }
+
 
 /*
  * Verify that for non-legacy ioctls the input nvlist

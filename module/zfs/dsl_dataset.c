@@ -1092,7 +1092,7 @@ dsl_dataset_activate_feature(uint64_t dsobj, spa_feature_t f, void *arg,
 	}
 }
 
-void
+static void
 dsl_dataset_deactivate_feature_impl(dsl_dataset_t *ds, spa_feature_t f,
     dmu_tx_t *tx)
 {
@@ -1869,7 +1869,9 @@ dsl_dataset_snapshot_sync(void *arg, dmu_tx_t *tx)
 			dsl_props_set_sync_impl(ds->ds_prev,
 			    ZPROP_SRC_LOCAL, ddsa->ddsa_props, tx);
 		}
+#ifndef __FreeBSD__
 		zvol_create_minors(dp->dp_spa, nvpair_name(pair), B_TRUE);
+#endif
 		dsl_dataset_rele(ds, FTAG);
 	}
 }
@@ -1943,7 +1945,15 @@ dsl_dataset_snapshot(nvlist_t *snaps, nvlist_t *props, nvlist_t *errors)
 		}
 		fnvlist_free(suspended);
 	}
-
+#if defined(__FreeBSD__) && defined(_KERNEL)
+	if (error == 0) {
+		for (pair = nvlist_next_nvpair(snaps, NULL); pair != NULL;
+		    pair = nvlist_next_nvpair(snaps, pair)) {
+			char *snapname = nvpair_name(pair);
+			zvol_create_minors(spa, snapname, B_TRUE);
+		}
+	}
+#endif
 	return (error);
 }
 
@@ -2435,7 +2445,7 @@ get_receive_resume_stats_impl(dsl_dataset_t *ds)
 		kmem_free(compressed, packed_size);
 		return (propval);
 	}
-	return (strdup(""));
+	return (spl_strdup(""));
 }
 
 /*
@@ -2458,7 +2468,7 @@ get_child_receive_stats(dsl_dataset_t *ds)
 		dsl_dataset_rele(recv_ds, FTAG);
 		return (propval);
 	}
-	return (strdup(""));
+	return (spl_strdup(""));
 }
 
 static void

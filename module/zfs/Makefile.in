@@ -115,7 +115,6 @@ $(MODULE)-objs += zfs_ioctl.o
 $(MODULE)-objs += zfs_log.o
 $(MODULE)-objs += zfs_onexit.o
 $(MODULE)-objs += zfs_ratelimit.o
-$(MODULE)-objs += zfs_replay.o
 $(MODULE)-objs += zfs_rlock.o
 $(MODULE)-objs += zfs_sa.o
 $(MODULE)-objs += zil.o
@@ -126,7 +125,6 @@ $(MODULE)-objs += zio_inject.o
 $(MODULE)-objs += zle.o
 $(MODULE)-objs += zrlock.o
 $(MODULE)-objs += zthr.o
-$(MODULE)-objs += zvol.o
 
 # Suppress incorrect warnings from versions of objtool which are not
 # aware of x86 EVEX prefix instructions used for AVX512.

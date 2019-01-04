@@ -30,6 +30,10 @@
 . $STF_SUITE/include/libtest.shlib
 . $STF_SUITE/tests/functional/xattr/xattr_common.kshlib
 
+if is_freebsd; then
+	log_unsupported "xattrs not supported on FreeBSD"
+fi
+
 USES_NIS=$(cat $TEST_BASE_DIR/zfs-xattr-test-nis.txt)
 rm $TEST_BASE_DIR/zfs-xattr-test-nis.txt
 

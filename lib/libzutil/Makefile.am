@@ -11,12 +11,22 @@ USER_C = \
 	zutil_nicenum.c \
 	zutil_pool.c
 
+if BUILD_FREEBSD
+USER_C += \
+	freebsd_mnttab.c \
+	freebsd_zutil_import.c
+endif
+
 nodist_libzutil_la_SOURCES = $(USER_C)
 
 libzutil_la_LIBADD = \
 	$(top_builddir)/lib/libavl/libavl.la \
-        $(top_builddir)/lib/libefi/libefi.la \
 	$(top_builddir)/lib/libtpool/libtpool.la
+
+if BUILD_LINUX
+libzutil_la_LIBADD += \
+        $(top_builddir)/lib/libefi/libefi.la
+endif
 
 libzutil_la_LIBADD += -lm $(LIBBLKID) $(LIBUDEV)
 

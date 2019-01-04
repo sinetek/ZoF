@@ -31,14 +31,25 @@
 #define	_SYS_MNTTAB_H
 
 #include <stdio.h>
+#ifdef __linux__
 #include <mntent.h>
+#endif
 #include <sys/types.h>
 
 #ifdef MNTTAB
 #undef MNTTAB
 #endif /* MNTTAB */
 
+#ifdef __FreeBSD__
+#include <paths.h>
+#include <sys/mount.h>
+#define	MNTTAB		_PATH_DEVZERO
+#define	MS_NOMNTTAB		0x0
+#define	MS_RDONLY		0x1
+#define	umount2(p, f)	unmount(p, f)
+#else
 #define	MNTTAB		"/proc/self/mounts"
+#endif
 #define	MNT_LINE_MAX	4096
 
 #define	MNT_TOOLONG	1	/* entry exceeds MNT_LINE_MAX */

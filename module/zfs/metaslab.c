@@ -1887,7 +1887,7 @@ metaslab_verify_weight_and_frag(metaslab_t *msp)
 static void
 metaslab_potentially_evict(metaslab_class_t *mc)
 {
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(__FreeBSD__)
 	uint64_t allmem = arc_all_memory();
 	extern kmem_cache_t *range_seg_cache;
 	uint64_t inuse = range_seg_cache->skc_obj_total;

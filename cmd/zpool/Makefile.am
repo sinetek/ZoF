@@ -8,8 +8,15 @@ zpool_SOURCES = \
 	zpool_iter.c \
 	zpool_main.c \
 	zpool_util.c \
-	zpool_util.h \
-	zpool_vdev.c
+	zpool_util.h
+
+if BUILD_LINUX
+zpool_SOURCES += linux_zpool_vdev.c
+endif
+
+if BUILD_FREEBSD
+zpool_SOURCES += freebsd_zpool_vdev.c
+endif
 
 if BUILD_LINUX
 zpool_SOURCES += os/linux/zpool_vdev_os.c
@@ -20,6 +27,10 @@ zpool_LDADD = \
 	$(top_builddir)/lib/libuutil/libuutil.la \
 	$(top_builddir)/lib/libzfs/libzfs.la
 
+# XXX
+if BUILD_FREEBSD
+zpool_LDADD += -L/usr/local/lib -lintl -lgeom
+endif
 zpool_LDADD += -lm $(LIBBLKID)
 
 zpoolconfdir = $(sysconfdir)/zfs/zpool.d

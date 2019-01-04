@@ -1985,7 +1985,7 @@ zio_do_crypt_data(spa_t *spa, boolean_t encrypt, zio_crypt_key_t *key,
 		ckey = &tmp_ckey;
 		tmpl = NULL;
 	}
-
+#ifdef __linux__
 	/*
 	 * Attempt to use QAT acceleration if we can. We currently don't
 	 * do this for metadnode and ZIL blocks, since they have a much
@@ -2016,7 +2016,7 @@ zio_do_crypt_data(spa_t *spa, boolean_t encrypt, zio_crypt_key_t *key,
 		}
 		/* If the hardware implementation fails fall back to software */
 	}
-
+#endif
 	bzero(&puio, sizeof (uio_t));
 	bzero(&cuio, sizeof (uio_t));
 

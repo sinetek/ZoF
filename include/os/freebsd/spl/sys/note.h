@@ -20,16 +20,37 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Zettabyte Software, LLC.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 1994 by Sun Microsystems, Inc.
  */
 
 /*
- * Compiling against musl correctly points out that including sys/signal.h is
- * disallowed by the Single UNIX Specification when building in userspace, so
- * we implement a dummy header to redirect the include to the proper header.
+ * sys/note.h:	interface for annotating source with info for tools
+ *
+ * This is the underlying interface; NOTE (/usr/include/note.h) is the
+ * preferred interface, but all exported header files should include this
+ * file directly and use _NOTE so as not to take "NOTE" from the user's
+ * namespace.  For consistency, *all* kernel source should use _NOTE.
+ *
+ * By default, annotations expand to nothing.  This file implements
+ * that.  Tools using annotations will interpose a different version
+ * of this file that will expand annotations as needed.
  */
-#ifndef _LIBSPL_SYS_SIGNAL_H
-#define	_LIBSPL_SYS_SIGNAL_H
-#include <signal.h>
-#endif /* _LIBSPL_SYS_SIGNAL_H */
+
+#ifndef	_SYS_NOTE_H
+#define	_SYS_NOTE_H
+
+#pragma ident	"%Z%%M%	%I%	%E% SMI"
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+#ifndef _NOTE
+#define	_NOTE(s)
+#endif
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif	/* _SYS_NOTE_H */

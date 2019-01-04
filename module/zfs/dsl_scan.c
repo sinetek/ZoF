@@ -138,6 +138,21 @@ extern int zfs_vdev_async_write_active_min_dirty_percent;
 int zfs_scan_strict_mem_lim = B_FALSE;
 
 /*
+ * Maximum number of parallelly executing I/Os per top-level vdev.
+ * Tune with care. Very high settings (hundreds) are known to trigger
+ * some firmware bugs and resets on certain SSDs.
+ */
+
+/* number of ticks to delay resilver -- 2 is a good number */
+unsigned int zfs_resilver_delay = 2;
+
+/* number of ticks to delay scrub -- 4 is a good number */
+unsigned int zfs_scrub_delay = 4;
+
+/* idle window in clock ticks */
+unsigned int zfs_scan_idle = 50;
+
+/*
  * Maximum number of parallelly executed bytes per leaf vdev. We attempt
  * to strike a balance here between keeping the vdev queues full of I/Os
  * at all times and not overflowing the queues to cause long latency,
@@ -759,7 +774,8 @@ dsl_scan_setup_sync(void *arg, dmu_tx_t *tx)
 
 	spa_history_log_internal(spa, "scan setup", tx,
 	    "func=%u mintxg=%llu maxtxg=%llu",
-	    *funcp, scn->scn_phys.scn_min_txg, scn->scn_phys.scn_max_txg);
+	    *funcp, (longlong_t)scn->scn_phys.scn_min_txg,
+	    (longlong_t)scn->scn_phys.scn_max_txg);
 }
 
 /*
@@ -900,13 +916,13 @@ dsl_scan_done(dsl_scan_t *scn, boolean_t complete, dmu_tx_t *tx)
 
 	if (dsl_scan_restarting(scn, tx))
 		spa_history_log_internal(spa, "scan aborted, restarting", tx,
-		    "errors=%llu", spa_get_errlog_size(spa));
+		    "errors=%llu", (longlong_t)spa_get_errlog_size(spa));
 	else if (!complete)
 		spa_history_log_internal(spa, "scan cancelled", tx,
-		    "errors=%llu", spa_get_errlog_size(spa));
+		    "errors=%llu", (longlong_t)spa_get_errlog_size(spa));
 	else
 		spa_history_log_internal(spa, "scan done", tx,
-		    "errors=%llu", spa_get_errlog_size(spa));
+		    "errors=%llu", (longlong_t)spa_get_errlog_size(spa));
 
 	if (DSL_SCAN_IS_SCRUB_RESILVER(scn)) {
 		spa->spa_scrub_started = B_FALSE;
@@ -957,7 +973,8 @@ dsl_scan_done(dsl_scan_t *scn, boolean_t complete, dmu_tx_t *tx)
 		if (resilver_needed) {
 			spa_history_log_internal(spa,
 			    "starting deferred resilver", tx,
-			    "errors=%llu", spa_get_errlog_size(spa));
+			    "errors=%llu",
+			    (longlong_t)spa_get_errlog_size(spa));
 			spa_async_request(spa, SPA_ASYNC_RESILVER);
 		}
 	}
@@ -3923,6 +3940,7 @@ scan_exec_io(dsl_pool_t *dp, const blkptr_t *bp, int zio_flags,
 	dsl_scan_t *scn = dp->dp_scan;
 	size_t size = BP_GET_PSIZE(bp);
 	abd_t *data = abd_alloc_for_io(size, B_FALSE);
+	unsigned int scan_delay;
 
 	ASSERT3U(scn->scn_maxinflight_bytes, >, 0);
 
@@ -3941,6 +3959,17 @@ scan_exec_io(dsl_pool_t *dp, const blkptr_t *bp, int zio_flags,
 		queue->q_inflight_bytes += BP_GET_PSIZE(bp);
 		mutex_exit(q_lock);
 	}
+
+	if (zio_flags & ZIO_FLAG_RESILVER)
+		scan_delay = zfs_resilver_delay;
+	else {
+		ASSERT(zio_flags & ZIO_FLAG_SCRUB);
+		scan_delay = zfs_scrub_delay;
+	}
+
+	if (scan_delay &&
+	    (ddi_get_lbolt64() - spa->spa_last_io <= zfs_scan_idle))
+		delay(MAX((int)scan_delay, 0));
 
 	count_block(scn, dp->dp_blkstats, bp);
 	zio_nowait(zio_read(scn->scn_zio_root, spa, bp, data, size,

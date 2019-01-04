@@ -33,7 +33,9 @@
 #include <sys/dsl_scan.h>
 #include <sys/zil.h>
 #include <sys/callb.h>
+#ifdef __linux__
 #include <sys/trace_txg.h>
+#endif
 
 /*
  * ZFS Transaction Groups

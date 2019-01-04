@@ -48,8 +48,12 @@
 #include <sys/zfeature.h>
 #include <sys/zil_impl.h>
 #include <sys/dsl_userhold.h>
-#include <sys/trace_txg.h>
+#include <sys/sdt.h>
 #include <sys/mmp.h>
+
+#ifdef __linux__
+#include <sys/trace_txg.h>
+#endif
 
 /*
  * ZFS Write Throttle
@@ -220,8 +224,13 @@ dsl_pool_open_impl(spa_t *spa, uint64_t txg)
 	mutex_init(&dp->dp_lock, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&dp->dp_spaceavail_cv, NULL, CV_DEFAULT, NULL);
 
+#ifdef __linux__
 	dp->dp_iput_taskq = taskq_create("z_iput", max_ncpus, defclsyspri,
 	    max_ncpus * 8, INT_MAX, TASKQ_PREPOPULATE | TASKQ_DYNAMIC);
+#else
+	dp->dp_iput_taskq = taskq_create("zfs_vn_rele_taskq", 1, minclsyspri,
+	    1, 4, 0);
+#endif
 	dp->dp_unlinked_drain_taskq = taskq_create("z_unlinked_drain",
 	    max_ncpus, defclsyspri, max_ncpus, INT_MAX,
 	    TASKQ_PREPOPULATE | TASKQ_DYNAMIC);
@@ -587,7 +596,7 @@ dsl_pool_dirty_delta(dsl_pool_t *dp, int64_t delta)
 		cv_signal(&dp->dp_spaceavail_cv);
 }
 
-#ifdef ZFS_DEBUG
+#if defined(ZFS_DEBUG) && !defined(NDEBUG)
 static boolean_t
 dsl_early_sync_task_verify(dsl_pool_t *dp, uint64_t txg)
 {

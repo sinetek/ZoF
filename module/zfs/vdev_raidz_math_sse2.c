@@ -28,6 +28,7 @@
 
 #include <sys/types.h>
 #include <sys/simd.h>
+#include <sys/debug.h>
 
 #define	__asm __asm__ __volatile__
 
@@ -125,6 +126,8 @@ typedef struct v {
 		__asm(							\
 		    "movdqa %" VR0(r) ", %" VR1(r));			\
 		break;							\
+		default:					  \
+			VERIFY(0);				  \
 	}								\
 }
 
@@ -175,7 +178,9 @@ typedef struct v {
 		    "movdqa %%" VR0(r)", 0x00(%[DST])\n"		\
 		    : : [DST] "r" (dst));				\
 		break;							\
-	}								\
+		default:						\
+			VERIFY(0);					\
+	}					 \
 }
 
 #define	MUL2_SETUP()							\
@@ -498,7 +503,7 @@ gf_x2_mul_fns[256] = {
 #define	MUL(c, r...) 							\
 {									\
 	switch (REG_CNT(r)) {						\
-	case 2:								\
+	case 2:				\
 		COPY(r, _mul_x2_in);					\
 		gf_x2_mul_fns[c]();					\
 		COPY(_mul_x2_acc, r);					\
@@ -508,12 +513,11 @@ gf_x2_mul_fns[256] = {
 		gf_x1_mul_fns[c]();					\
 		COPY(_mul_x1_acc, r);					\
 		break;							\
+		default:					   \
+			VERIFY(0);				   \
 	}								\
 }
 
-
-#define	raidz_math_begin()	kfpu_begin()
-#define	raidz_math_end()	kfpu_end()
 
 #define	SYN_STRIDE		4
 
@@ -597,6 +601,9 @@ gf_x2_mul_fns[256] = {
 #define	REC_PQR_XS		3
 #define	REC_PQR_YS		4
 
+
+#define	raidz_math_begin()	kfpu_begin()
+#define	raidz_math_end()	kfpu_end()
 
 #include <sys/vdev_raidz_impl.h>
 #include "vdev_raidz_math_impl.h"

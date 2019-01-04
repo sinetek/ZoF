@@ -286,7 +286,6 @@ constrain_path() {
 	fi
 	create_links "$SYSTEM_DIRS" "$SYSTEM_FILES"
 
-	# Exceptions
 	ln -fs "$STF_PATH/awk" "$STF_PATH/nawk"
 	if [ "$UNAME" = "Linux" ] ; then
 		ln -fs /sbin/fsck.ext4 "$STF_PATH/fsck"

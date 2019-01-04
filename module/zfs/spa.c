@@ -2953,9 +2953,10 @@ spa_activity_check_required(spa_t *spa, uberblock_t *ub, nvlist_t *label,
 		return (B_FALSE);
 
 	/*
-	 * Skip the activity check when the MMP feature is disabled.
+	 * Skip the activity check when the MMP feature is not present or is
+	 * disabled.
 	 */
-	if (ub->ub_mmp_magic == MMP_MAGIC && ub->ub_mmp_delay == 0)
+	if (ub->ub_mmp_magic != MMP_MAGIC || ub->ub_mmp_delay == 0)
 		return (B_FALSE);
 
 	/*
@@ -5748,6 +5749,7 @@ spa_create(const char *pool, nvlist_t *nvroot, nvlist_t *props,
 		for (int c = 0; error == 0 && c < rvd->vdev_children; c++) {
 			vdev_t *vd = rvd->vdev_child[c];
 
+			vdev_ashift_optimize(vd);
 			vdev_metaslab_set_size(vd);
 			vdev_expand(vd, txg);
 		}
@@ -6080,7 +6082,6 @@ spa_import(char *pool, nvlist_t *config, nvlist_t *props, uint64_t flags)
 	spa_history_log_version(spa, "import", NULL);
 
 	spa_event_notify(spa, NULL, NULL, ESC_ZFS_POOL_IMPORT);
-
 	mutex_exit(&spa_namespace_lock);
 
 	zvol_create_minors(spa, pool, B_TRUE);
@@ -7478,8 +7479,11 @@ spa_vdev_split_mirror(spa_t *spa, char *newname, nvlist_t *config,
 
 	newspa->spa_config_source = SPA_CONFIG_SRC_SPLIT;
 
+	/* FreeBSD XXX */
+	newspa->spa_splitting_newspa = B_TRUE;
 	/* create the new pool from the disks of the original pool */
 	error = spa_load(newspa, SPA_LOAD_IMPORT, SPA_IMPORT_ASSEMBLE);
+	newspa->spa_splitting_newspa = B_FALSE;
 	if (error)
 		goto out;
 

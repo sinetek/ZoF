@@ -114,8 +114,13 @@ log_must zpool freeze $TESTPOOL
 #
 
 # TX_WRITE
-log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
-log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
+if is_freebsd; then
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 conv=sync
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 conv=sync
+else
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
+fi
 
 # TX_WRITE (WR_INDIRECT)
 log_must zfs set logbias=throughput $TESTPOOL/$TESTVOL

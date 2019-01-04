@@ -152,6 +152,9 @@ rand_set_prop $POOL sync "standard" "always" "disabled"
 # Duplicate POOL2 for testing
 #
 log_must eval "zfs send -R $POOL@final > $BACKDIR/pool-final-R"
+if is_freebsd; then
+	sleep 5
+fi
 log_must eval "zfs receive -d -F $POOL2 < $BACKDIR/pool-final-R"
 
 #

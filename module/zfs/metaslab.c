@@ -2140,7 +2140,7 @@ metaslab_verify_weight_and_frag(metaslab_t *msp)
 static void
 metaslab_potentially_evict(metaslab_class_t *mc)
 {
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(__FreeBSD__)
 	uint64_t allmem = arc_all_memory();
 	uint64_t inuse = spl_kmem_cache_inuse(zfs_btree_leaf_cache);
 	uint64_t size =	spl_kmem_cache_entry_size(zfs_btree_leaf_cache);

@@ -159,7 +159,10 @@
 libzfs_handle_t *g_zfs;
 int zfs_fd;
 
-#define	ECKSUM	EBADE
+#ifdef __FreeBSD__
+int zcmd_ioctl(int fd, int request, zfs_cmd_t *zc);
+#define	ioctl(fd, ioc, zc)	zcmd_ioctl((fd), (ioc), (zc))
+#endif
 
 static const char *errtable[TYPE_INVAL] = {
 	"data",
@@ -508,7 +511,7 @@ cancel_one_handler(int id, const char *pool, zinject_record_t *record,
 
 	zc.zc_guid = (uint64_t)id;
 
-	if (ioctl(zfs_fd, ZFS_IOC_CLEAR_FAULT, &zc) != 0) {
+	if (zcmd_ioctl(zfs_fd, ZFS_IOC_CLEAR_FAULT, &zc) != 0) {
 		(void) fprintf(stderr, "failed to remove handler %d: %s\n",
 		    id, strerror(errno));
 		return (1);
@@ -541,7 +544,7 @@ cancel_handler(int id)
 
 	zc.zc_guid = (uint64_t)id;
 
-	if (ioctl(zfs_fd, ZFS_IOC_CLEAR_FAULT, &zc) != 0) {
+	if (zcmd_ioctl(zfs_fd, ZFS_IOC_CLEAR_FAULT, &zc) != 0) {
 		(void) fprintf(stderr, "failed to remove handler %d: %s\n",
 		    id, strerror(errno));
 		return (1);
@@ -565,7 +568,7 @@ register_handler(const char *pool, int flags, zinject_record_t *record,
 	zc.zc_inject_record = *record;
 	zc.zc_guid = flags;
 
-	if (ioctl(zfs_fd, ZFS_IOC_INJECT_FAULT, &zc) != 0) {
+	if (zcmd_ioctl(zfs_fd, ZFS_IOC_INJECT_FAULT, &zc) != 0) {
 		(void) fprintf(stderr, "failed to add handler: %s\n",
 		    errno == EDOM ? "block level exceeds max level of object" :
 		    strerror(errno));
@@ -625,7 +628,7 @@ perform_action(const char *pool, zinject_record_t *record, int cmd)
 	zc.zc_guid = record->zi_guid;
 	zc.zc_cookie = cmd;
 
-	if (ioctl(zfs_fd, ZFS_IOC_VDEV_SET_STATE, &zc) == 0)
+	if (zcmd_ioctl(zfs_fd, ZFS_IOC_VDEV_SET_STATE, &zc) == 0)
 		return (0);
 
 	return (1);

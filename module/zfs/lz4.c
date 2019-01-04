@@ -197,7 +197,7 @@ lz4_decompress_zfs(void *s_start, void *d_start, size_t s_len,
  */
 
 /* 32 or 64 bits ? */
-#if defined(_LP64)
+#if defined(_LP64) || defined(__LP64__)
 #define	LZ4_ARCH64 1
 #else
 #define	LZ4_ARCH64 0

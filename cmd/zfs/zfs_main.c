@@ -755,8 +755,9 @@ zfs_mount_and_share(libzfs_handle_t *hdl, const char *dataset, zfs_type_t type)
 			    "successfully created, but it may only be "
 			    "mounted by root\n"));
 			ret = 1;
-		} else if (zfs_mount(zhp, NULL, 0) != 0) {
-			(void) fprintf(stderr, gettext("filesystem "
+		} else
+			if (zfs_mount(zhp, NULL, 0) != 0) {
+				(void) fprintf(stderr, gettext("filesystem "
 			    "successfully created, but not mounted\n"));
 			ret = 1;
 		} else if (zfs_share(zhp) != 0) {
@@ -3582,23 +3583,26 @@ static int
 zfs_do_rename(int argc, char **argv)
 {
 	zfs_handle_t *zhp;
+	renameflags_t flags = { 0 };
 	int c;
 	int ret = 0;
-	boolean_t recurse = B_FALSE;
+	int types;
 	boolean_t parents = B_FALSE;
-	boolean_t force_unmount = B_FALSE;
 
 	/* check options */
-	while ((c = getopt(argc, argv, "prf")) != -1) {
+	while ((c = getopt(argc, argv, "pruf")) != -1) {
 		switch (c) {
 		case 'p':
 			parents = B_TRUE;
 			break;
 		case 'r':
-			recurse = B_TRUE;
+			flags.recursive = B_TRUE;
+			break;
+		case 'u':
+			flags.nounmount = B_TRUE;
 			break;
 		case 'f':
-			force_unmount = B_TRUE;
+			flags.forceunmount = B_TRUE;
 			break;
 		case '?':
 		default:
@@ -3627,20 +3631,32 @@ zfs_do_rename(int argc, char **argv)
 		usage(B_FALSE);
 	}
 
-	if (recurse && parents) {
+	if (flags.recursive && parents) {
 		(void) fprintf(stderr, gettext("-p and -r options are mutually "
 		    "exclusive\n"));
 		usage(B_FALSE);
 	}
 
-	if (recurse && strchr(argv[0], '@') == 0) {
+	if (flags.nounmount && parents) {
+		(void) fprintf(stderr, gettext("-u and -p options are mutually "
+		    "exclusive\n"));
+		usage(B_FALSE);
+	}
+
+	if (flags.recursive && strchr(argv[0], '@') == 0) {
 		(void) fprintf(stderr, gettext("source dataset for recursive "
 		    "rename must be a snapshot\n"));
 		usage(B_FALSE);
 	}
 
-	if ((zhp = zfs_open(g_zfs, argv[0], parents ? ZFS_TYPE_FILESYSTEM |
-	    ZFS_TYPE_VOLUME : ZFS_TYPE_DATASET)) == NULL)
+	if (flags.nounmount)
+		types = ZFS_TYPE_FILESYSTEM;
+	else if (parents)
+		types = ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME;
+	else
+		types = ZFS_TYPE_DATASET;
+
+	if ((zhp = zfs_open(g_zfs, argv[0], types)) == NULL)
 		return (1);
 
 	/* If we were asked and the name looks good, try to create ancestors. */
@@ -3650,7 +3666,7 @@ zfs_do_rename(int argc, char **argv)
 		return (1);
 	}
 
-	ret = (zfs_rename(zhp, argv[1], recurse, force_unmount) != 0);
+	ret = (zfs_rename(zhp, argv[1], flags) != 0);
 
 	zfs_close(zhp);
 	return (ret);
@@ -6986,10 +7002,6 @@ unshare_unmount_path(int op, char *path, int flags, boolean_t is_manual)
 	const char *cmdname = (op == OP_SHARE) ? "unshare" : "unmount";
 	ino_t path_inode;
 
-	/*
-	 * Search for the given (major,minor) pair in the mount table.
-	 */
-
 	/* Reopen MNTTAB to prevent reading stale data from open file */
 	if (freopen(MNTTAB, "r", mnttab_file) == NULL)
 		return (ENOENT);
@@ -7256,15 +7268,27 @@ unshare_unmount(int op, int argc, char **argv)
 #endif
 			switch (op) {
 			case OP_SHARE:
+#if defined(__FreeBSD__)
+				if (zfs_unshareall_bypath(node->un_zhp,
+				    node->un_mountp) != 0)
+					ret = 1;
+#else
 				if (zfs_unshareall_bytype(node->un_zhp,
 				    node->un_mountp, protocol) != 0)
 					ret = 1;
+#endif
 				break;
 
 			case OP_MOUNT:
+#ifdef __FreeBSD__
+				if (zfs_unmount(node->un_zhp,
+				    NULL, flags) != 0)
+					ret = 1;
+#else
 				if (zfs_unmount(node->un_zhp,
 				    mntarg, flags) != 0)
 					ret = 1;
+#endif
 				break;
 			}
 

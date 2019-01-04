@@ -59,6 +59,7 @@
 
 extern const uint8_t gf_clmul_mod_lt[4*256][16];
 
+
 #define	ELEM_SIZE 32
 
 typedef struct v {
@@ -296,12 +297,8 @@ static const uint8_t __attribute__((aligned(32))) _mul_mask = 0x0F;
 	}								\
 }
 
-#define	raidz_math_begin()	kfpu_begin()
-#define	raidz_math_end()						\
-{									\
-	FLUSH();							\
-	kfpu_end();							\
-}
+#ifdef __linux__
+#endif
 
 
 #define	SYN_STRIDE		4
@@ -386,6 +383,13 @@ static const uint8_t __attribute__((aligned(32))) _mul_mask = 0x0F;
 #define	REC_PQR_XS		6, 7
 #define	REC_PQR_YS		8, 9
 
+
+#define	raidz_math_begin() kfpu_begin()
+#define	raidz_math_end()						\
+{									\
+	FLUSH();							\
+	kfpu_end();							\
+}
 
 #include <sys/vdev_raidz_impl.h>
 #include "vdev_raidz_math_impl.h"

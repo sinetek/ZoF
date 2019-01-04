@@ -639,7 +639,7 @@ vdev_raidz_impl_set(const char *val)
 	return (err);
 }
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) && defined(__linux__)
 #include <linux/mod_compat.h>
 
 static int

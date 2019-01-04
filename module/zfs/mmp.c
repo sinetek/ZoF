@@ -716,7 +716,8 @@ mmp_signal_all_threads(void)
 	mutex_exit(&spa_namespace_lock);
 }
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) && defined(__linux__)
+#include <linux/mod_compat.h>
 
 static int
 param_set_multihost_interval(const char *val, zfs_kernel_param_t *kp)

@@ -1010,6 +1010,7 @@ zvol_create_snap_minor_cb(const char *dsname, void *arg)
 	} else {
 		minors_job_t *job;
 		char *n = kmem_strdup(dsname);
+
 		if (n == NULL)
 			return (0);
 

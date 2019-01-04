@@ -49,6 +49,7 @@
 #include <sys/vdev_trim.h>
 #include <sys/trace_defs.h>
 
+
 /*
  * This file contains the necessary logic to remove vdevs from a
  * storage pool.  Currently, the only devices that can be removed

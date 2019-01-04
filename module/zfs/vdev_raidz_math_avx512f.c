@@ -26,7 +26,6 @@
 #include <sys/isa_defs.h>
 
 #if defined(__x86_64) && defined(HAVE_AVX512F)
-
 #include <sys/types.h>
 #include <sys/simd.h>
 #include <sys/debug.h>
@@ -380,10 +379,6 @@ gf_x2_mul_fns[256] = {
 }
 
 
-#define	raidz_math_begin()	kfpu_begin()
-#define	raidz_math_end()	kfpu_end()
-
-
 #define	SYN_STRIDE		4
 
 #define	ZERO_STRIDE		4
@@ -466,6 +461,9 @@ gf_x2_mul_fns[256] = {
 #define	REC_PQR_XS		12, 13, 14, 15
 #define	REC_PQR_YS		16, 17, 18, 19
 
+
+#define	raidz_math_begin()	kfpu_begin()
+#define	raidz_math_end()	kfpu_end()
 
 #include <sys/vdev_raidz_impl.h>
 #include "vdev_raidz_math_impl.h"

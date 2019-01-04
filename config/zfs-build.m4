@@ -157,6 +157,7 @@ AC_DEFUN([ZFS_AC_CONFIG_ALWAYS], [
 	ZFS_AC_CONFIG_ALWAYS_CC_NO_BOOL_COMPARE
 	ZFS_AC_CONFIG_ALWAYS_CC_FRAME_LARGER_THAN
 	ZFS_AC_CONFIG_ALWAYS_CC_NO_FORMAT_TRUNCATION
+	ZFS_AC_CONFIG_ALWAYS_CC_NO_FORMAT_ZERO_LENGTH
 	ZFS_AC_CONFIG_ALWAYS_CC_NO_OMIT_FRAME_POINTER
 	ZFS_AC_CONFIG_ALWAYS_CC_ASAN
 	ZFS_AC_CONFIG_ALWAYS_TOOLCHAIN_SIMD
@@ -164,19 +165,13 @@ AC_DEFUN([ZFS_AC_CONFIG_ALWAYS], [
 	ZFS_AC_CONFIG_ALWAYS_ARCH
 	ZFS_AC_CONFIG_ALWAYS_PYTHON
 	ZFS_AC_CONFIG_ALWAYS_PYZFS
+	ZFS_AC_CONFIG_ALWAYS_SED
 ])
 
 AC_DEFUN([ZFS_AC_CONFIG], [
 
         dnl # Remove the previous build test directory.
         rm -Rf build
-
-	AC_ARG_VAR([TEST_JOBS],
-	    [simultaneous jobs during configure (defaults to $(nproc))])
-	if test "x$ac_cv_env_TEST_JOBS_set" != "xset"; then
-		TEST_JOBS=$(nproc)
-	fi
-	AC_SUBST(TEST_JOBS)
 
 	ZFS_CONFIG=all
 	AC_ARG_WITH([config],
@@ -194,6 +189,16 @@ AC_DEFUN([ZFS_AC_CONFIG], [
 	AC_SUBST(ZFS_CONFIG)
 
 	ZFS_AC_CONFIG_ALWAYS
+
+
+	AM_COND_IF([BUILD_LINUX], [
+		AC_ARG_VAR([TEST_JOBS],
+		    [simultaneous jobs during configure (defaults to $(nproc))])
+		if test "x$ac_cv_env_TEST_JOBS_set" != "xset"; then
+			TEST_JOBS=$(nproc)
+		fi
+		AC_SUBST(TEST_JOBS)
+	])
 
 	case "$ZFS_CONFIG" in
 		kernel) ZFS_AC_CONFIG_KERNEL ;;
@@ -503,8 +508,10 @@ dnl #
 dnl # Default ZFS package configuration
 dnl #
 AC_DEFUN([ZFS_AC_PACKAGE], [
-	ZFS_AC_DEFAULT_PACKAGE
-	ZFS_AC_RPM
-	ZFS_AC_DPKG
-	ZFS_AC_ALIEN
+	AM_COND_IF([BUILD_LINUX], [
+		ZFS_AC_DEFAULT_PACKAGE
+		ZFS_AC_RPM
+		ZFS_AC_DPKG
+		ZFS_AC_ALIEN
+	])
 ])

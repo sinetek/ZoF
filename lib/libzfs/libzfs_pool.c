@@ -2633,13 +2633,19 @@ zpool_vdev_is_interior(const char *name)
 }
 
 nvlist_t *
-zpool_find_vdev(zpool_handle_t *zhp, const char *path, boolean_t *avail_spare,
+zpool_find_vdev(zpool_handle_t *zhp, const char *ipath, boolean_t *avail_spare,
     boolean_t *l2cache, boolean_t *log)
 {
 	char *end;
+	const char *path;
 	nvlist_t *nvroot, *search, *ret;
 	uint64_t guid;
+	int firstpass;
+	char buf[MAXPATHLEN+16];
 
+	firstpass = 1;
+	path = ipath;
+	retry:
 	verify(nvlist_alloc(&search, NV_UNIQUE_NAME, KM_SLEEP) == 0);
 
 	guid = strtoull(path, &end, 0);
@@ -2660,7 +2666,14 @@ zpool_find_vdev(zpool_handle_t *zhp, const char *path, boolean_t *avail_spare,
 		*log = B_FALSE;
 	ret = vdev_to_nvlist_iter(nvroot, search, avail_spare, l2cache, log);
 	nvlist_free(search);
-
+	if (ret == NULL && firstpass) {
+		sprintf(buf, "/dev/%s", path);
+		path = strdup(buf);
+		firstpass = 0;
+		goto retry;
+	}
+	if (path != ipath)
+		free((void *)path);
 	return (ret);
 }
 
@@ -3915,6 +3928,7 @@ zpool_vdev_name(libzfs_handle_t *hdl, zpool_handle_t *zhp, nvlist_t *nv,
 			path++;
 		}
 
+#ifndef __FreeBSD__
 		/*
 		 * Remove the partition from the path it this is a whole disk.
 		 */
@@ -3922,6 +3936,7 @@ zpool_vdev_name(libzfs_handle_t *hdl, zpool_handle_t *zhp, nvlist_t *nv,
 		    == 0 && value && !(name_flags & VDEV_NAME_PATH)) {
 			return (zfs_strip_partition(path));
 		}
+#endif
 	} else {
 		path = type;
 
@@ -4393,6 +4408,7 @@ zpool_obj_to_path(zpool_handle_t *zhp, uint64_t dsobj, uint64_t obj,
 	free(mntpnt);
 }
 
+#ifndef __FreeBSD__
 /*
  * Wait while the specified activity is in progress in the pool.
  */
@@ -4412,6 +4428,7 @@ zpool_wait(zpool_handle_t *zhp, zpool_wait_activity_t activity)
 		return (error);
 	}
 }
+#endif
 
 /*
  * Wait for the given activity and return the status of the wait (whether or not

@@ -36,7 +36,6 @@
 
 #include <sys/time.h>
 #include <sys/zio_priority.h>
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -115,7 +114,8 @@ typedef enum {
 	ZFS_PROP_READONLY,
 	ZFS_PROP_ZONED,
 	ZFS_PROP_SNAPDIR,
-	ZFS_PROP_PRIVATE,		/* not exposed to user, temporary */
+	ZFS_PROP_PRIVATE,		/* not exposed to the user, temporary */
+	ZFS_PROP_ACLMODE,
 	ZFS_PROP_ACLINHERIT,
 	ZFS_PROP_CREATETXG,
 	ZFS_PROP_NAME,			/* not exposed to the user */
@@ -1042,6 +1042,9 @@ typedef struct vdev_stat {
 	uint64_t	vs_trim_bytes_est;	/* total bytes to trim */
 	uint64_t	vs_trim_state;		/* vdev_trim_state_t */
 	uint64_t	vs_trim_action_time;	/* time_t */
+	uint64_t	vs_configured_ashift;	/* TLV vdev_ashift */
+	uint64_t	vs_logical_ashift;	/* vdev_logical_ashift  */
+	uint64_t	vs_physical_ashift;	/* vdev_physical_ashift */
 } vdev_stat_t;
 
 /*

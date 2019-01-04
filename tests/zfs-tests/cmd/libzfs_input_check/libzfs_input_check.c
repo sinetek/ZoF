@@ -27,6 +27,10 @@
 #include <sys/nvpair.h>
 #include <sys/zfs_ioctl.h>
 
+#ifdef __FreeBSD__
+#define	EBADE EILSEQ
+#endif
+
 /*
  * Test the nvpair inputs for the non-legacy zfs ioctl commands.
  */
@@ -156,6 +160,7 @@ lzc_ioctl_run(zfs_ioc_t ioc, const char *name, nvlist_t *innvl, int expected)
 	zc.zc_nvlist_src_size = size;
 	zc.zc_nvlist_dst_size = MAX(size * 2, 128 * 1024);
 	zc.zc_nvlist_dst = (uint64_t)(uintptr_t)malloc(zc.zc_nvlist_dst_size);
+
 
 	if (zfs_ioctl_fd(zfs_fd, ioc, &zc) != 0)
 		error = errno;

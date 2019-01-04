@@ -54,6 +54,9 @@ import copy
 from decimal import Decimal
 from signal import signal, SIGINT, SIGWINCH, SIG_DFL
 
+# Requires py27-sysctl on FreeBSD
+if sys.platform.startswith('freebsd'):
+    import sysctl
 
 cols = {
     # HDR:        [Size, Scale, Description]

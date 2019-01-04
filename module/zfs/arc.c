@@ -143,7 +143,7 @@
  * ability to store the physical data (b_pabd) associated with the DVA of the
  * arc_buf_hdr_t. Since the b_pabd is a copy of the on-disk physical block,
  * it will match its on-disk compression characteristics. This behavior can be
- * disabled by setting 'zfs_compressed_arc_enabled' to B_FALSE. When the
+ * disabled by setting 'zfs_arc_compression_enabled' to B_FALSE. When the
  * compressed ARC functionality is disabled, the b_pabd will point to an
  * uncompressed version of the on-disk data.
  *
@@ -285,6 +285,7 @@
 #include <sys/arc.h>
 #include <sys/refcount.h>
 #include <sys/vdev.h>
+#include <sys/vdev_trim.h>
 #include <sys/vdev_impl.h>
 #include <sys/dsl_pool.h>
 #include <sys/zio_checksum.h>
@@ -370,8 +371,8 @@ int			arc_no_grow_shift = 5;
  * minimum lifespan of a prefetch block in clock ticks
  * (initialized in arc_init())
  */
-static int		arc_min_prefetch_ms;
-static int		arc_min_prescient_prefetch_ms;
+int		arc_min_prefetch_ms;
+int		arc_min_prescient_prefetch_ms;
 
 /*
  * If this percent of memory is free, don't throttle.
@@ -398,8 +399,8 @@ int arc_zio_arena_free_shift = 2;
  */
 unsigned long zfs_arc_max = 0;
 unsigned long zfs_arc_min = 0;
-unsigned long zfs_arc_meta_limit = 0;
-unsigned long zfs_arc_meta_min = 0;
+unsigned long zfs_arc_metadata_limit = 0;
+unsigned long zfs_arc_metadata_min = 0;
 unsigned long zfs_arc_dnode_limit = 0;
 unsigned long zfs_arc_dnode_reduce_percent = 10;
 int zfs_arc_grow_retry = 0;
@@ -417,7 +418,7 @@ unsigned long zfs_arc_pool_dirty_percent = 20;	/* each pool's anon allowance */
 /*
  * Enable or disable compressed arc buffers.
  */
-int zfs_compressed_arc_enabled = B_TRUE;
+int zfs_arc_compression_enabled = B_TRUE;
 
 /*
  * ARC will evict meta buffers that exceed arc_meta_limit. This
@@ -441,6 +442,8 @@ int zfs_arc_meta_prune = 10000;
 int zfs_arc_meta_strategy = ARC_STRATEGY_META_BALANCED;
 int zfs_arc_meta_adjust_restarts = 4096;
 int zfs_arc_lotsfree_percent = 10;
+#define	ARC_BALANCED_MIN 8*1024UL*1024UL*1024UL
+
 
 /* The 6 states: */
 arc_state_t ARC_anon;
@@ -1123,7 +1126,7 @@ buf_init(void)
 	 * The hash table is big enough to fill all of physical memory
 	 * with an average block size of zfs_arc_average_blocksize (default 8K).
 	 * By default, the table will take up
-	 * totalmem * sizeof(void*) / 8K (1MB per GB with 8-byte pointers).
+	 * totalmem * sizeof (void*) / 8K (1MB per GB with 8-byte pointers).
 	 */
 	while (hsize * zfs_arc_average_blocksize < arc_all_memory())
 		hsize <<= 1;
@@ -1532,7 +1535,7 @@ arc_hdr_set_compress(arc_buf_hdr_t *hdr, enum zio_compress cmp)
 	 * we ignore the compression of the blkptr and set the
 	 * want to uncompress them. Mark them as uncompressed.
 	 */
-	if (!zfs_compressed_arc_enabled || HDR_GET_PSIZE(hdr) == 0) {
+	if (!zfs_arc_compression_enabled || HDR_GET_PSIZE(hdr) == 0) {
 		arc_hdr_clear_flags(hdr, ARC_FLAG_COMPRESSED_ARC);
 		ASSERT(!HDR_COMPRESSION_ENABLED(hdr));
 	} else {
@@ -4021,6 +4024,46 @@ arc_flush_state(arc_state_t *state, uint64_t spa, arc_buf_contents_t type,
 	return (evicted);
 }
 
+#if defined(__FreeBSD__) && defined(_KERNEL)
+extern struct vfsops zfs_vfsops;
+/*
+ * Helper function for arc_prune_async() it is responsible for safely
+ * handling the execution of a registered arc_prune_func_t.
+ */
+static void
+arc_prune_task(void *arg)
+{
+	int64_t nr_scan = *(int64_t *)arg;
+
+	free(arg, M_TEMP);
+	vnlru_free(nr_scan, &zfs_vfsops);
+}
+
+/*
+ * Notify registered consumers they must drop holds on a portion of the ARC
+ * buffered they reference.  This provides a mechanism to ensure the ARC can
+ * honor the arc_meta_limit and reclaim otherwise pinned ARC buffers.  This
+ * is analogous to dnlc_reduce_cache() but more generic.
+ *
+ * This operation is performed asynchronously so it may be safely called
+ * in the context of the arc_reclaim_thread().  A reference is taken here
+ * for each registered arc_prune_t and the arc_prune_task() is responsible
+ * for releasing it once the registered arc_prune_func_t has completed.
+ */
+static void
+arc_prune_async(int64_t adjust)
+{
+
+	int64_t *adjustptr;
+
+	if ((adjustptr = malloc(sizeof (int64_t), M_TEMP, M_NOWAIT)) == NULL)
+		return;
+
+	*adjustptr = adjust;
+	taskq_dispatch(arc_prune_taskq, arc_prune_task, adjustptr, TQ_SLEEP);
+	ARCSTAT_BUMP(arcstat_prune);
+}
+#else
 /*
  * Evict the specified number of bytes from the state specified,
  * restricting eviction to the spa and type given. This function
@@ -4189,10 +4232,16 @@ arc_adjust_meta_only(uint64_t meta_used)
 static uint64_t
 arc_adjust_meta(uint64_t meta_used)
 {
-	if (zfs_arc_meta_strategy == ARC_STRATEGY_META_ONLY)
+	/* BEGIN CSTYLED */
+	if (zfs_arc_meta_strategy == ARC_STRATEGY_META_ONLY
+#ifdef __FreeBSD__
+		|| (zfs_arc_max && (zfs_arc_max < ARC_BALANCED_MIN))
+#endif
+		)
 		return (arc_adjust_meta_only(meta_used));
 	else
 		return (arc_adjust_meta_balanced(meta_used));
+	/* END CSTYLED */
 }
 
 /*
@@ -4765,7 +4814,6 @@ arc_reap_cb(void *arg, zthr_t *zthr)
  *         already below arc_c_min, evicting any more would only
  *         increase this negative difference.
  */
-
 #endif /* _KERNEL */
 
 /*
@@ -6827,10 +6875,12 @@ arc_kstat_update(kstat_t *ksp, int rw)
 
 		as->arcstat_memory_all_bytes.value.ui64 =
 		    arc_all_memory();
+#ifdef __linux__
 		as->arcstat_memory_free_bytes.value.ui64 =
 		    arc_free_memory();
 		as->arcstat_memory_available_bytes.value.i64 =
 		    arc_available_memory();
+#endif
 	}
 
 	return (0);
@@ -6906,10 +6956,10 @@ arc_tuning_update(void)
 	}
 
 	/* Valid range: 16M - <arc_c_max> */
-	if ((zfs_arc_meta_min) && (zfs_arc_meta_min != arc_meta_min) &&
-	    (zfs_arc_meta_min >= 1ULL << SPA_MAXBLOCKSHIFT) &&
-	    (zfs_arc_meta_min <= arc_c_max)) {
-		arc_meta_min = zfs_arc_meta_min;
+	if ((zfs_arc_metadata_min) && (zfs_arc_metadata_min != arc_meta_min) &&
+	    (zfs_arc_metadata_min >= 1ULL << SPA_MAXBLOCKSHIFT) &&
+	    (zfs_arc_metadata_min <= arc_c_max)) {
+		arc_meta_min = zfs_arc_metadata_min;
 		if (arc_meta_limit < arc_meta_min)
 			arc_meta_limit = arc_meta_min;
 		if (arc_dnode_size_limit < arc_meta_min)
@@ -6917,7 +6967,7 @@ arc_tuning_update(void)
 	}
 
 	/* Valid range: <arc_meta_min> - <arc_c_max> */
-	limit = zfs_arc_meta_limit ? zfs_arc_meta_limit :
+	limit = zfs_arc_metadata_limit ? zfs_arc_metadata_limit :
 	    MIN(zfs_arc_meta_limit_percent, 100) * arc_c_max / 100;
 	if ((limit != arc_meta_limit) &&
 	    (limit >= arc_meta_min) &&
@@ -6966,6 +7016,37 @@ arc_tuning_update(void)
 		arc_sys_free = MIN(MAX(zfs_arc_sys_free, 0), allmem);
 
 }
+
+#if defined(_KERNEL) && defined(__FreeBSD__)
+static eventhandler_tag arc_event_lowmem = NULL;
+
+static void
+arc_lowmem(void *arg __unused, int howto __unused)
+{
+	int64_t free_memory, to_free;
+
+	arc_no_grow = B_TRUE;
+	arc_warm = B_TRUE;
+	arc_growtime = gethrtime() + SEC2NSEC(arc_grow_retry);
+	free_memory = arc_available_memory();
+	to_free = (arc_c >> arc_shrink_shift) - MIN(free_memory, 0);
+	DTRACE_PROBE2(arc__needfree, int64_t, free_memory, int64_t, to_free);
+	arc_reduce_target_size(to_free);
+
+	mutex_enter(&arc_adjust_lock);
+	arc_adjust_needed = B_TRUE;
+	zthr_wakeup(arc_adjust_zthr);
+
+	/*
+	 * It is unsafe to block here in arbitrary threads, because we can come
+	 * here from ARC itself and may hold ARC locks and thus risk a deadlock
+	 * with ARC reclaim thread.
+	 */
+	if (curproc == pageproc)
+		(void) cv_wait(&arc_adjust_waiters_cv, &arc_adjust_lock);
+	mutex_exit(&arc_adjust_lock);
+}
+#endif
 
 static void
 arc_state_init(void)
@@ -7188,11 +7269,15 @@ arc_init(void)
 		kstat_install(arc_ksp);
 	}
 
-	arc_adjust_zthr = zthr_create(arc_adjust_cb_check,
-	    arc_adjust_cb, NULL);
+	arc_adjust_zthr = zthr_create_timer(arc_adjust_cb_check,
+	    arc_adjust_cb, NULL, SEC2NSEC(1));
 	arc_reap_zthr = zthr_create_timer(arc_reap_cb_check,
 	    arc_reap_cb, NULL, SEC2NSEC(1));
 
+#if defined(_KERNEL) && defined(__FreeBSD__)
+	arc_event_lowmem = EVENTHANDLER_REGISTER(vm_lowmem, arc_lowmem, NULL,
+	    EVENTHANDLER_PRI_FIRST);
+#endif
 	arc_initialized = B_TRUE;
 	arc_warm = B_FALSE;
 
@@ -8241,7 +8326,7 @@ l2arc_write_buffers(spa_t *spa, l2arc_dev_t *dev, uint64_t target_sz)
 			hdr = multilist_sublist_tail(mls);
 
 		headroom = target_sz * l2arc_headroom;
-		if (zfs_compressed_arc_enabled)
+		if (zfs_arc_compression_enabled)
 			headroom = (headroom * l2arc_headroom_boost) / 100;
 
 		for (; hdr; hdr = hdr_prev) {
@@ -8563,6 +8648,8 @@ l2arc_add_vdev(spa_t *spa, vdev_t *vd)
 
 	ASSERT(!l2arc_vdev_present(vd));
 
+	vdev_ashift_optimize(vd);
+
 	/*
 	 * Create a new l2arc device entry.
 	 */
@@ -8752,7 +8839,7 @@ ZFS_MODULE_PARAM_CALL(zfs_arc, zfs_arc_, p_min_shift, param_set_arc_int,
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, average_blocksize, INT, ZMOD_RD,
 	"Target average block size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, compressed_arc_enabled, INT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, compression_enabled, INT, ZMOD_RW,
 	"Disable compressed arc buffers");
 
 ZFS_MODULE_PARAM_CALL(zfs_arc, zfs_arc_, min_prefetch_ms, param_set_arc_int,

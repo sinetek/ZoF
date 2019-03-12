@@ -2933,9 +2933,7 @@ dmu_recv_end_sync(void *arg, dmu_tx_t *tx)
 		    &drc->drc_ivset_guid, tx));
 	}
 
-#ifndef __FreeBSD__
 	zvol_create_minors(dp->dp_spa, drc->drc_tofs, B_TRUE);
-#endif
 
 	/*
 	 * Release the hold from dmu_recv_begin.  This must be done before

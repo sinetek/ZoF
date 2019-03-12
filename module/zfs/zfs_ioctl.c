@@ -4736,7 +4736,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 	if (input_fp == NULL)
 		return (SET_ERROR(EBADF));
 
-	geom_inhibited = 1;
+	atomic_inc_32(&geom_inhibited);
 	error = dmu_recv_begin(tofs, tosnap, begin_record, force,
 	    resumable, localprops, hidden_args, origin, &drc);
 	if (error != 0)
@@ -4920,7 +4920,6 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 		error = 1;
 	}
 #endif
-	geom_inhibited = 0;
 
 	/*
 	 * On error, restore the original props.
@@ -5015,7 +5014,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 		nvlist_free(inheritprops);
 	}
 out:
-	geom_inhibited = 0;
+	atomic_dec_32(&geom_inhibited);
 	releasef(input_fd);
 	nvlist_free(origrecvd);
 	nvlist_free(origprops);

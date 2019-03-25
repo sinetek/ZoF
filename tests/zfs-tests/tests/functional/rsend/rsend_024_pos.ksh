@@ -35,10 +35,6 @@
 
 verify_runnable "both"
 
-if [ is_freebsd ];then
-	log_unsupported "Skipping due to known issue and hanging."
-fi
-
 log_assert "Verify resumability of a full ZFS send/receive with the source " \
     "filesystem unmounted"
 sendfs=$POOL/sendfs

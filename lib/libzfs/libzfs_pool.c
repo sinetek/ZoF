@@ -2604,13 +2604,19 @@ zpool_vdev_is_interior(const char *name)
 }
 
 nvlist_t *
-zpool_find_vdev(zpool_handle_t *zhp, const char *path, boolean_t *avail_spare,
+zpool_find_vdev(zpool_handle_t *zhp, const char *ipath, boolean_t *avail_spare,
     boolean_t *l2cache, boolean_t *log)
 {
 	char *end;
+	const char *path;
 	nvlist_t *nvroot, *search, *ret;
 	uint64_t guid;
+	int firstpass;
+	char buf[1024];
 
+	firstpass = 1;
+	path = ipath;
+ retry:
 	verify(nvlist_alloc(&search, NV_UNIQUE_NAME, KM_SLEEP) == 0);
 
 	guid = strtoull(path, &end, 0);
@@ -2631,7 +2637,12 @@ zpool_find_vdev(zpool_handle_t *zhp, const char *path, boolean_t *avail_spare,
 		*log = B_FALSE;
 	ret = vdev_to_nvlist_iter(nvroot, search, avail_spare, l2cache, log);
 	nvlist_free(search);
-
+	if (ret == NULL && firstpass) {
+		snprintf(buf, sizeof(buf), "/dev/%s", path);
+		path = buf;
+		firstpass = 0;
+		goto retry;
+	}
 	return (ret);
 }
 
@@ -3261,7 +3272,6 @@ zpool_vdev_detach(zpool_handle_t *zhp, const char *path)
 {
 	zfs_cmd_t zc = {"\0"};
 	char msg[1024];
-	char buf[1024];
 	nvlist_t *tgt;
 	boolean_t avail_spare, l2cache;
 	libzfs_handle_t *hdl = zhp->zpool_hdl;
@@ -3271,12 +3281,9 @@ zpool_vdev_detach(zpool_handle_t *zhp, const char *path)
 
 	(void) strlcpy(zc.zc_name, zhp->zpool_name, sizeof (zc.zc_name));
 	if ((tgt = zpool_find_vdev(zhp, path, &avail_spare, &l2cache,
-		 NULL)) == NULL) {
-		snprintf(buf, sizeof(buf), "/dev/%s", path);
-		if ((tgt = zpool_find_vdev(zhp, buf, &avail_spare, &l2cache,
-		    NULL)) == NULL)
-			return (zfs_error(hdl, EZFS_NODEVICE, msg));
-	}
+	    NULL)) == NULL)
+		return (zfs_error(hdl, EZFS_NODEVICE, msg));
+
 	if (avail_spare)
 		return (zfs_error(hdl, EZFS_ISSPARE, msg));
 

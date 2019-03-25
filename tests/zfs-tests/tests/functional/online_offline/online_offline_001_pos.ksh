@@ -53,7 +53,11 @@ function cleanup
 	# Ensure we don't leave disks in the offline state
 	#
 	for disk in $DISKLIST; do
-		log_must zpool online $TESTPOOL $disk
+		if is_freebsd; then
+			log_must zpool online $TESTPOOL /dev/$disk
+		else 
+			log_must zpool online $TESTPOOL $disk
+		fi
 		check_state $TESTPOOL $disk "online"
 		if [[ $? != 0 ]]; then
 			log_fail "Unable to online $disk"
@@ -72,14 +76,22 @@ typeset killpid="$! "
 
 for disk in $DISKLIST; do
 	for i in 'do_offline' 'do_offline_while_already_offline'; do
-		log_must zpool offline $TESTPOOL $disk
+		if is_freebsd; then
+			log_must zpool offline $TESTPOOL /dev/$disk
+		else
+			log_must zpool offline $TESTPOOL $disk
+		fi
 		check_state $TESTPOOL $disk "offline"
 		if [[ $? != 0 ]]; then
 			log_fail "$disk of $TESTPOOL is not offline."
 		fi
 	done
 
-	log_must zpool online $TESTPOOL $disk
+	if is_freebsd; then
+		log_must zpool online $TESTPOOL /dev/$disk
+	else
+		log_must zpool online $TESTPOOL $disk
+	fi
 	check_state $TESTPOOL $disk "online"
 	if [[ $? != 0 ]]; then
 		log_fail "$disk of $TESTPOOL did not match online state"

@@ -58,6 +58,10 @@
 
 verify_runnable "global"
 
+if is_freebsd; then
+	log_unsupported "Xattr not supported on FreeBSD"
+fi
+
 function cleanup_fs
 {
 	rm -f $TESTDIR/checksum
@@ -120,7 +124,7 @@ log_must rmdir /$TESTPOOL/$TESTFS/dir_to_delete
 log_must mkdir -p $TESTDIR
 log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/payload bs=1k count=8
 if [ is_freebsd ];then
-	log_must eval "/sbin/sha256 -b /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
+	log_must eval "/sbin/sha256 /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
 else
 	log_must eval "sha256sum -b /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
 fi
@@ -136,7 +140,11 @@ log_must rm -rf /$TESTPOOL/$TESTFS/dict
 # TX_SETATTR
 log_must touch /$TESTPOOL/$TESTFS/setattr
 log_must chmod 567 /$TESTPOOL/$TESTFS/setattr
-log_must chgrp root /$TESTPOOL/$TESTFS/setattr
+if is_freebsd; then
+	log_must chgrp wheel /$TESTPOOL/$TESTFS/setattr
+else
+	log_must chgrp root /$TESTPOOL/$TESTFS/setattr
+fi
 log_must touch -cm -t 201311271200 /$TESTPOOL/$TESTFS/setattr
 
 # TX_TRUNCATE (to zero)

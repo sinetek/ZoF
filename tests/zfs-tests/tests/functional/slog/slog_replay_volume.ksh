@@ -87,18 +87,19 @@ log_must zfs set compression=on $TESTPOOL/$TESTVOL
 log_must zfs set sync=always $TESTPOOL/$TESTVOL
 log_must mkdir -p $TESTDIR
 log_must block_device_wait
-if [ is_freebsd ];then
+if [ is_freebsd ]; then
 	echo "y" | /sbin/newfs -T ext4 $VOLUME
 else
 	echo "y" | newfs -t ext4 -v $VOLUME
 fi
-log_must mkdir -p $MNTPNT if [ is_freebsd ];then
+log_must mkdir -p $MNTPNT
+if [ is_freebsd ]; then
 	#-o discard not supported on FreeBSD
 	log_must mount $VOLUME $MNTPNT
 else
 	log_must mount -o discard $VOLUME $MNTPNT
 fi
-if ! [ is_freebsd ];then
+if ! [ is_freebsd ]; then
 	log_must rmdir $MNTPNT/lost+found
 fi
 log_must zpool sync
@@ -113,8 +114,13 @@ log_must zpool freeze $TESTPOOL
 #
 
 # TX_WRITE
-log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
-log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
+if is_freebsd; then
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 conv=sync
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 conv=sync
+else
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
+fi
 
 # TX_WRITE (WR_INDIRECT)
 log_must zfs set logbias=throughput $TESTPOOL/$TESTVOL
@@ -137,7 +143,11 @@ fi
 #
 # 4. Generate checksums for all ext4 files.
 #
-log_must sha256sum -b $MNTPNT/* >$TESTDIR/checksum
+if is_freebsd; then
+	log_must /sbin/sha256 $MNTPNT/* >$TESTDIR/checksum
+else
+	log_must sha256sum -b $MNTPNT/* >$TESTDIR/checksum
+fi
 
 #
 # 5. Unmount filesystem and export the pool
@@ -169,6 +179,10 @@ log_note "Verify current block usage:"
 log_must zdb -bcv $TESTPOOL
 
 log_note "Verify checksums"
-log_must sha256sum -c $TESTDIR/checksum
+if is_freebsd; then
+	log_must /sbin/sha256 -c $TESTDIR/checksum
+else
+	log_must sha256sum -c $TESTDIR/checksum
+fi
 
 log_pass "Replay of intent log succeeds."

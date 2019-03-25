@@ -54,7 +54,11 @@ function cleanup
 	# Ensure we don't leave disks in the offline state
 	#
 	for disk in $DISKLIST; do
-		log_must zpool online $TESTPOOL $disk
+		if is_freebsd; then
+			log_must zpool online $TESTPOOL /dev/$disk
+		else
+			log_must zpool online $TESTPOOL $disk
+		fi
 		check_state $TESTPOOL $disk "online"
 		if [[ $? != 0 ]]; then
 			log_fail "Unable to online $disk"
@@ -87,7 +91,11 @@ while [[ $i -lt ${#disks[*]} ]]; do
 	typeset -i j=0
 	if [[ $pooltype = 'mirror' ]]; then
 		# Hold one disk online, verify the others can be offlined.
-		log_must zpool online $TESTPOOL ${disks[$i]}
+		if is_freebsd; then
+			log_must zpool online $TESTPOOL /dev/${disks[$i]}
+		else
+			log_must zpool online $TESTPOOL ${disks[$i]}
+		fi
 		check_state $TESTPOOL ${disks[$i]} "online" || \
 		    log_fail "Failed to set ${disks[$i]} online"
 		# Delay for resilver to complete
@@ -100,14 +108,22 @@ while [[ $i -lt ${#disks[*]} ]]; do
 				((j++))
 				continue
 			fi
-			log_must zpool offline $TESTPOOL ${disks[$j]}
+			if is_freebsd; then
+				log_must zpool offline $TESTPOOL /dev/${disks[$j]}
+			else
+				log_must zpool offline $TESTPOOL ${disks[$j]}
+			fi
 			check_state $TESTPOOL ${disks[$j]} "offline" || \
 			    log_fail "Failed to set ${disks[$j]} offline"
 			((j++))
 		done
 	elif [[ $pooltype = 'raidz' ]]; then
 		# Hold one disk offline, verify the others can't be offlined.
-		log_must zpool offline $TESTPOOL ${disks[$i]}
+		if is_freebsd; then
+			log_must zpool offline $TESTPOOL /dev/${disks[$i]}
+		else
+			log_must zpool offline $TESTPOOL ${disks[$i]}
+		fi
 		check_state $TESTPOOL ${disks[$i]} "offline" || \
 		    log_fail "Failed to set ${disks[$i]} offline"
 		while [[ $j -lt ${#disks[*]} ]]; do
@@ -115,14 +131,22 @@ while [[ $i -lt ${#disks[*]} ]]; do
 				((j++))
 				continue
 			fi
-			log_mustnot zpool offline $TESTPOOL ${disks[$j]}
+			if is_freebsd; then
+				log_mustnot zpool offline $TESTPOOL /dev/${disks[$j]}
+			else
+				log_mustnot zpool offline $TESTPOOL ${disks[$j]}
+			fi
 			check_state $TESTPOOL ${disks[$j]} "online" || \
 			    log_fail "Failed to set ${disks[$j]} online"
 			check_state $TESTPOOL ${disks[$i]} "offline" || \
 			    log_fail "Failed to set ${disks[$i]} offline"
 			((j++))
 		done
-		log_must zpool online $TESTPOOL ${disks[$i]}
+		if is_freebsd; then
+			log_must zpool online $TESTPOOL /dev/${disks[$i]}
+		else
+			log_must zpool online $TESTPOOL ${disks[$i]}
+		fi
 		check_state $TESTPOOL ${disks[$i]} "online" || \
 		    log_fail "Failed to set ${disks[$i]} online"
 		# Delay for resilver to complete

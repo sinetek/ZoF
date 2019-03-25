@@ -30,11 +30,15 @@
 #define	_OPENSOLARIS_SYS_TIME_H_
 
 #include_next <sys/time.h>
+#include <sys/debug.h>
+#ifndef _SYS_KERNEL_H_
+extern int hz;
+#endif
 
 #define SEC		1
-#define MILLISEC	1000
-#define MICROSEC	1000000
-#define NANOSEC		1000000000
+#define MILLISEC	1000UL
+#define MICROSEC	1000000UL
+#define NANOSEC	1000000000UL
 #define TIME_MAX	LLONG_MAX
 
 #define	MSEC2NSEC(m)	((hrtime_t)(m) * (NANOSEC / MILLISEC))
@@ -60,6 +64,7 @@ typedef longlong_t	hrtime_t;
 #define	NSEC_TO_TICK(nsec)	((nsec) / (NANOSEC / hz))
 
 #ifdef _KERNEL
+
 static __inline hrtime_t
 gethrtime(void) {
 
@@ -67,7 +72,7 @@ gethrtime(void) {
 	hrtime_t nsec;
 
 	getnanouptime(&ts);
-	nsec = (hrtime_t)ts.tv_sec * NANOSEC + ts.tv_nsec;
+	nsec = ((hrtime_t)ts.tv_sec * NANOSEC) + ts.tv_nsec;
 	return (nsec);
 }
 

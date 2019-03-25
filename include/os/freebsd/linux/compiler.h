@@ -68,8 +68,10 @@
 #define	noinline			__noinline
 #define	____cacheline_aligned		__aligned(CACHE_LINE_SIZE)
 
+#ifndef _KERNEL
 #define	likely(x)			__builtin_expect(!!(x), 1)
 #define	unlikely(x)			__builtin_expect(!!(x), 0)
+#endif
 #define typeof(x)			__typeof(x)
 
 #define	uninitialized_var(x)		x = x

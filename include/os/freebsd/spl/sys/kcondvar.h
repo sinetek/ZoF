@@ -80,12 +80,18 @@ static inline clock_t
 cv_timedwait_sig_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim,
     hrtime_t res, int flag)
 {
+	sbintime_t sbt;
+	hrtime_t hrtime;
 	int rc;
 
+	hrtime = gethrtime();
 	if (flag == 0)
-		tim += gethrtime();
+		tim += hrtime;
 
-	rc = cv_timedwait_sig_sbt(cvp, mp, nstosbt(tim), nstosbt(res), C_ABSOLUTE);
+	sbt = nstosbt(tim);
+	ASSERT(tim >= res);
+	ASSERT(tim > hrtime);
+	rc = cv_timedwait_sig_sbt(cvp, mp, sbt, nstosbt(res), C_ABSOLUTE);
 
 	KASSERT(rc == EWOULDBLOCK || rc == EINTR || rc == ERESTART || rc == 0, ("unexpected rc value %d", rc));
 	return (tim - gethrtime());

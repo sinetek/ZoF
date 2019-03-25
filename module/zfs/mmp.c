@@ -489,13 +489,14 @@ mmp_thread(void *arg)
 		    MAX(zfs_multihost_interval, MMP_MIN_INTERVAL));
 		boolean_t suspended = spa_suspended(spa);
 		boolean_t multihost = spa_multihost(spa);
-		hrtime_t next_time;
+		hrtime_t hrtime, next_time;
 
+		hrtime = gethrtime();
 		if (multihost)
-			next_time = gethrtime() + mmp_interval /
+			next_time = hrtime + mmp_interval /
 			    MAX(vdev_count_leaves(spa), 1);
 		else
-			next_time = gethrtime() +
+			next_time = hrtime +
 			    MSEC2NSEC(MMP_DEFAULT_INTERVAL);
 
 		/*

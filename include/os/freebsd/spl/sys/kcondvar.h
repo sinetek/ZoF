@@ -39,6 +39,24 @@
 #include <sys/time.h>
 #include <sys/kmem.h>
 
+static __inline sbintime_t
+zfs_nstosbt(int64_t _ns)
+{
+       sbintime_t sb = 0;
+
+#ifdef KASSERT
+       KASSERT(_ns >= 0, ("Negative values illegal for nstosbt: %jd", _ns));
+#endif
+       if (_ns >= SBT_1S) {
+               sb = (_ns / 1000000000) * SBT_1S;
+               _ns = _ns % 1000000000;
+       }
+       /* 9223372037 = ceil(2^63 / 1000000000) */
+       sb += ((_ns * 9223372037ull) + 0x7fffffff) >> 31;
+       return (sb);
+ }
+
+
 typedef struct cv	kcondvar_t;
 #define CALLOUT_FLAG_ABSOLUTE C_ABSOLUTE
 
@@ -70,7 +88,7 @@ cv_timedwait_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim, hrtime_t res,
 	if (flag == 0)
 		tim += gethrtime();
 
-	rc = cv_timedwait_sbt(cvp, mp, nstosbt(tim), nstosbt(res), C_ABSOLUTE);
+	rc = cv_timedwait_sbt(cvp, mp, zfs_nstosbt(tim), zfs_nstosbt(res), C_ABSOLUTE);
 
 	KASSERT(rc == EWOULDBLOCK || rc == 0, ("unexpected rc value %d", rc));
 	return (tim - gethrtime());
@@ -88,10 +106,10 @@ cv_timedwait_sig_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim,
 	if (flag == 0)
 		tim += hrtime;
 
-	sbt = nstosbt(tim);
+	sbt = zfs_nstosbt(tim);
 	ASSERT(tim >= res);
 	ASSERT(tim > hrtime);
-	rc = cv_timedwait_sig_sbt(cvp, mp, sbt, nstosbt(res), C_ABSOLUTE);
+	rc = cv_timedwait_sig_sbt(cvp, mp, sbt, zfs_nstosbt(res), C_ABSOLUTE);
 
 	KASSERT(rc == EWOULDBLOCK || rc == EINTR || rc == ERESTART || rc == 0, ("unexpected rc value %d", rc));
 	return (tim - gethrtime());

@@ -3840,6 +3840,7 @@ zpool_vdev_name(libzfs_handle_t *hdl, zpool_handle_t *zhp, nvlist_t *nv,
 			path++;
 		}
 
+#ifndef __FreeBSD__
 		/*
 		 * Remove the partition from the path it this is a whole disk.
 		 */
@@ -3847,6 +3848,7 @@ zpool_vdev_name(libzfs_handle_t *hdl, zpool_handle_t *zhp, nvlist_t *nv,
 		    == 0 && value && !(name_flags & VDEV_NAME_PATH)) {
 			return (zfs_strip_partition(path));
 		}
+#endif
 	} else {
 		path = type;
 

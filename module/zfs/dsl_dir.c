@@ -2109,6 +2109,9 @@ dsl_dir_rename_sync(void *arg, dmu_tx_t *tx)
 	VERIFY0(zap_add(mos, dsl_dir_phys(newparent)->dd_child_dir_zapobj,
 	    dd->dd_myname, 8, 1, &dd->dd_object, tx));
 
+#if defined(__FreeBSD__) && defined(_KERNEL)
+	zfsvfs_update_fromname(ddra->ddra_oldname, ddra->ddra_newname);
+#endif
 	zvol_rename_minors(dp->dp_spa, ddra->ddra_oldname,
 	    ddra->ddra_newname, B_TRUE);
 

@@ -288,7 +288,49 @@ out:
 	}
 
 	return (ret);
+}
 
+/*
+ * Open a URI for reading key material.
+ */
+static int
+uri_open(libzfs_handle_t *hdl, char *keylocation, FILE **fd_out)
+{
+	int ret = 0;
+	FILE *fd = NULL;
+#ifdef HAVE_BSD_FETCH
+	void *libfetch;
+	FILE *(*get_url)(char *, char *);
+	char *last_err_string;
+
+	libfetch = dlopen("libfetch.so", RTLD_LAZY);
+	if (libfetch != NULL) {
+		get_url = (void *)dlfunc(libfetch, "fetchGetURL");
+		last_err_string = (char *)dlsym(libfetch, "fetchLastErrString");
+		if (get_url != NULL && last_err_string != NULL) {
+			fd = (*get_url)(keylocation, "");
+			if (fd == NULL) {
+				zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
+				    "libfetch: %s"), last_err_string);
+			}
+		} else {
+			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
+			    "dynamic linker: %s"), dlerror());
+		}
+		dlclose(libfetch);
+	}
+	if (fd == NULL)
+#endif /* HAVE_BSD_FETCH */
+	fd = fopen(&keylocation[7], "r");
+	if (fd == NULL) {
+		zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
+		    "Failed to open key material file"));
+		ret = errno;
+		errno = 0;
+	}
+
+	*fd_out = fd;
+	return (ret);
 }
 
 /*
@@ -308,9 +350,6 @@ get_key_material(libzfs_handle_t *hdl, boolean_t do_verify, boolean_t newkey,
 	uint8_t *km = NULL, *km2 = NULL;
 	size_t kmlen, kmlen2;
 	boolean_t can_retry = B_FALSE;
-#ifdef HAVE_BSD_FETCH
-	void *libfetch;
-#endif
 
 	/* verify and parse the keylocation */
 	keyloc = zfs_prop_parse_keylocation(keylocation);
@@ -332,24 +371,9 @@ get_key_material(libzfs_handle_t *hdl, boolean_t do_verify, boolean_t newkey,
 		}
 		break;
 	case ZFS_KEYLOCATION_URI:
-#ifdef HAVE_BSD_FETCH
-		if ((libfetch = dlopen("libfetch.so", RTLD_LAZY)) != NULL) {
-			FILE *(*get_url)(char *, char *) = NULL;
-			if ((get_url = (void*)dlfunc(libfetch, "fetchGetURL"))
-			    != NULL) {
-				fd = (*get_url)(keylocation, "");
-			}
-			dlclose(libfetch);
-		} else
-#endif /* HAVE_BSD_FETCH */
-		fd = fopen(&keylocation[7], "r");
-		if (!fd) {
-			ret = errno;
-			errno = 0;
-			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-			    "Failed to open key material file"));
+		ret = uri_open(hdl, keylocation, &fd);
+		if (ret != 0)
 			goto error;
-		}
 		break;
 	default:
 		ret = EINVAL;

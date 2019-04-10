@@ -65,7 +65,7 @@ clean-FreeBSD:
 
 clean: clean-@ac_system@
 
-modules_install:
+modules_install-Linux:
 	@# Install the kernel modules
 	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` $@ \
 		INSTALL_MOD_PATH=$(DESTDIR)$(INSTALL_MOD_PATH) \
@@ -81,12 +81,25 @@ modules_install:
 		depmod -ae -F $$sysmap @LINUX_VERSION@; \
 	fi
 
-modules_uninstall:
+modules_install-FreeBSD:
+	@# Install the kernel modules
+	flags="$$(echo $$MAKEFLAGS | tr ' ' '\n' | grep '^-j')"; \
+	env MAKEFLAGS="" SYSDIR=@LINUX@ \
+		make $${flags} -f Makefile.bsd install
+
+modules_install: modules_install-@ac_system@
+
+modules_uninstall-Linux:
 	@# Uninstall the kernel modules
 	kmoddir=$(DESTDIR)$(INSTALL_MOD_PATH)/lib/modules/@LINUX_VERSION@
 	list='$(subdir-m)'; for subdir in $$list; do \
 		$(RM) -R $$kmoddir/$(INSTALL_MOD_DIR)/$$subdir; \
 	done
+
+modules_uninstall-FreeBSD:
+	@false
+
+modules_uninstall: modules_uninstall-@ac_system@
 
 distdir:
 	list='$(subdir-m)'; for subdir in $$list; do \

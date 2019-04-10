@@ -72,7 +72,7 @@ static char *
 zgetline(FILE *fd, const char *skip)
 {
 	static char line[MAXLINESIZE];
-	size_t len, skiplen;
+	size_t len, skiplen = 0;
 	char *s, last;
 
 	if (skip != NULL)

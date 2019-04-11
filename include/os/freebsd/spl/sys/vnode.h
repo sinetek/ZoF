@@ -320,10 +320,14 @@ vn_remove(char *fnamep, enum uio_seg seg, enum rm dirflag)
 	ASSERT(seg == UIO_SYSSPACE);
 	ASSERT(dirflag == RMFILE);
 
+#if __FreeBSD_version >= 1300018
+    rc = kern_funlinkat(curthread, AT_FDCWD, fnamep, FD_NONE, seg, 0, 0);
+#else
 #ifdef AT_BENEATH
 	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0, 0);
 #else
 	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0);
+#endif
 #endif
 	return (rc);
 }

@@ -487,6 +487,9 @@ differ(void *arg)
 	return ((void *)0);
 }
 
+#ifdef __FreeBSD__
+#define find_shares_object(di) (0)
+#else
 static int
 find_shares_object(differ_info_t *di)
 {
@@ -505,6 +508,7 @@ find_shares_object(differ_info_t *di)
 	di->shares = (uint64_t)sb.st_ino;
 	return (0);
 }
+#endif
 
 static int
 make_temp_snapshot(differ_info_t *di)

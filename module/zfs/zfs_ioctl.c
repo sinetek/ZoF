@@ -5906,7 +5906,7 @@ zfs_ioc_diff(zfs_cmd_t *zc)
 
 	off = fp->f_offset;
 
-	error = dmu_diff(zc->zc_name, zc->zc_value, fp->f_vnode, &off);
+	error = dmu_diff(zc->zc_name, zc->zc_value, fp, &off);
 
 	if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
 		fp->f_offset = off;

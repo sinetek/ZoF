@@ -165,7 +165,10 @@ dump_bytes(dmu_sendarg_t *dsp, void *buf, int len)
 	dbi.dbi_buf = buf;
 	dbi.dbi_len = len;
 
-#if defined(HAVE_LARGE_STACKS)
+	/*
+	 * XXX NB This should really be handled by resource checks checking lim_cur_proc
+	 */
+#if defined(HAVE_LARGE_STACKS) || defined(__FreeBSD__)
 	dump_bytes_cb(&dbi);
 #else
 	/*
@@ -173,6 +176,9 @@ dump_bytes(dmu_sendarg_t *dsp, void *buf, int len)
 	 * always enough stack space to write safely to the target filesystem.
 	 * The ZIO_TYPE_FREE threads are used because there can be a lot of
 	 * them and they are used in vdev_file.c for a similar purpose.
+	 */
+	/* on FreeBSD this is only safe because it is synchronous as the vn
+	 * resource checks reference the callers thread
 	 */
 	spa_taskq_dispatch_sync(dmu_objset_spa(dsp->dsa_os), ZIO_TYPE_FREE,
 	    ZIO_TASKQ_ISSUE, dump_bytes_cb, &dbi, TQ_SLEEP);

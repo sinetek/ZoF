@@ -28,6 +28,7 @@
 #include <sys/dmu_tx.h>
 #include <sys/dbuf.h>
 #include <sys/dnode.h>
+#include <sys/buf.h>
 #include <sys/zfs_context.h>
 #include <sys/dmu_objset.h>
 #include <sys/dmu_traverse.h>
@@ -41,7 +42,7 @@
 #include <sys/zfs_znode.h>
 
 struct diffarg {
-	struct vnode *da_vp;		/* file to which we are reporting */
+	struct file *da_fp;
 	offset_t *da_offp;
 	int da_err;			/* error that stopped diff search */
 	dmu_diff_record_t da_ddr;
@@ -50,16 +51,40 @@ struct diffarg {
 static int
 write_record(struct diffarg *da)
 {
-	ssize_t resid; /* have to get resid to get detailed errno */
 
 	if (da->da_ddr.ddr_type == DDR_NONE) {
 		da->da_err = 0;
 		return (0);
 	}
 
-	da->da_err = vn_rdwr(UIO_WRITE, da->da_vp, (caddr_t)&da->da_ddr,
+#if defined(_KERNEL) && defined(__FreeBSD__)
+	struct uio auio;
+	struct iovec aiov;
+	struct thread *td;
+
+
+	td = curthread;
+	aiov.iov_base = (caddr_t)&da->da_ddr;
+	aiov.iov_len = sizeof((caddr_t)&da->da_ddr);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = sizeof((caddr_t)&da->da_ddr);
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_offset = (off_t)-1;
+	auio.uio_td = td;
+
+	if (da->da_fp->f_type == DTYPE_VNODE)
+		bwillwrite();
+	da->da_err = fo_write(da->da_fp, &auio, td->td_ucred, 0,
+	    td);
+#else
+	ssize_t resid; /* have to get resid to get detailed errno */
+
+	da->da_err = vn_rdwr(UIO_WRITE, da->da_fp->f_vnode, (caddr_t)&da->da_ddr,
 	    sizeof (da->da_ddr), 0, UIO_SYSSPACE, FAPPEND,
 	    RLIM64_INFINITY, CRED(), &resid);
+#endif
 	*da->da_offp += sizeof (da->da_ddr);
 	return (da->da_err);
 }
@@ -160,7 +185,7 @@ diff_cb(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 
 int
 dmu_diff(const char *tosnap_name, const char *fromsnap_name,
-    struct vnode *vp, offset_t *offp)
+    struct file *fp, offset_t *offp)
 {
 	struct diffarg da;
 	dsl_dataset_t *fromsnap;
@@ -203,7 +228,7 @@ dmu_diff(const char *tosnap_name, const char *fromsnap_name,
 	dsl_dataset_long_hold(tosnap, FTAG);
 	dsl_pool_rele(dp, FTAG);
 
-	da.da_vp = vp;
+	da.da_fp = fp;
 	da.da_offp = offp;
 	da.da_ddr.ddr_type = DDR_NONE;
 	da.da_ddr.ddr_first = da.da_ddr.ddr_last = 0;

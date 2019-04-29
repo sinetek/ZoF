@@ -201,11 +201,11 @@
 #include <sys/zcp.h>
 #include <sys/zio_checksum.h>
 #include <sys/vdev_removal.h>
+#include <sys/vdev_trim.h>
 #ifdef __linux__
 #include <sys/zfs_sysfs.h>
 #include <sys/vdev_impl.h>
 #include <sys/vdev_initialize.h>
-#include <sys/vdev_trim.h>
 
 
 #include <linux/miscdevice.h>

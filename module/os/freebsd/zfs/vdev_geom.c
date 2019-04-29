@@ -975,7 +975,6 @@ vdev_geom_io_intr(struct bio *bp)
 			vd->vdev_nowritecache = B_TRUE;
 			break;
 		case BIO_DELETE:
-			vd->vdev_notrim = B_TRUE;
 			break;
 		}
 		break;
@@ -1042,9 +1041,7 @@ vdev_geom_io_start(zio_t *zio)
 		zio_execute(zio);
 		return;
 	case ZIO_TYPE_FREE:
-		if (vd->vdev_notrim) {
-			zio->io_error = SET_ERROR(ENOTSUP);
-		} else if (!vdev_geom_bio_delete_disable) {
+		if (!vdev_geom_bio_delete_disable) {
 			goto sendreq;
 		}
 		zio_execute(zio);

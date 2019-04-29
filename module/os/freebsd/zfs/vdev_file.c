@@ -145,8 +145,6 @@ skip_open:
 		return (error);
 	}
 
-	vd->vdev_notrim = B_TRUE;
-
 	*max_psize = *psize = vattr.va_size;
 	*ashift = SPA_MINBLOCKSHIFT;
 

@@ -198,11 +198,13 @@ extern kstat_t *__kstat_create(const char *ks_module, int ks_instance,
     const char *ks_name, const char *ks_class, uchar_t ks_type,
     uint_t ks_ndata, uchar_t ks_flags);
 
+#ifdef __linux__
 extern void kstat_proc_entry_init(kstat_proc_entry_t *kpep,
     const char *module, const char *name);
 extern void kstat_proc_entry_delete(kstat_proc_entry_t *kpep);
 extern void kstat_proc_entry_install(kstat_proc_entry_t *kpep, mode_t mode,
     const struct file_operations *file_ops, void *data);
+#endif
 
 extern void __kstat_install(kstat_t *ksp);
 extern void __kstat_delete(kstat_t *ksp);

@@ -359,6 +359,7 @@ int		arc_shrink_shift = 7;
 /* percent of pagecache to reclaim arc to */
 #if defined(_KERNEL) && defined(__linux__)
 static uint_t		zfs_arc_pc_percent = 0;
+#endif
 
 /*
  * log2(fraction of ARC which must be free to allow growing).

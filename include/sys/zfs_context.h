@@ -91,6 +91,7 @@
 #define tsd_set(key, value)             osd_thread_set(curthread, (key), (value))
 #define fm_panic panic
 
+#define	cond_resched()		kern_yield(PRI_USER)
 extern int zfs_debug_level;
 extern struct mtx zfs_debug_mtx;
 #define ZFS_LOG(lvl, ...)       do {                                    \
@@ -115,6 +116,7 @@ typedef int fstrans_cookie_t;
 #define current curthread
 #define thread_join(x)
 #define sys_shutdown rebooting
+#define	cv_wait_io(cv, mp)			cv_wait(cv, mp)
 typedef struct opensolaris_utsname     utsname_t;
 extern utsname_t *utsname(void);
 extern int spa_import_rootpool(const char *name);

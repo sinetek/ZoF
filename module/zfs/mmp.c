@@ -595,7 +595,6 @@ mmp_thread(void *arg)
 			skip_wait += leaves;
 		}
 
-		hrtime = gethrtime();
 		if (multihost)
 			next_time = gethrtime() + mmp_interval / leaves;
 

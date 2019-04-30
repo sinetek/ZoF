@@ -13,6 +13,17 @@ AC_DEFUN([ZFS_AC_PYTHON_VERSION], [
 ])
 
 dnl #
+dnl # ZFS_AC_PYTHON_VERSION_IS_2
+dnl # ZFS_AC_PYTHON_VERSION_IS_3
+dnl #
+dnl # Tests if the $PYTHON_VERSION matches 2.x or 3.x.
+dnl #
+AC_DEFUN([ZFS_AC_PYTHON_VERSION_IS_2],
+	[expr "${PYTHON_VERSION}" : 2\\. >/dev/null])
+AC_DEFUN([ZFS_AC_PYTHON_VERSION_IS_3],
+	[expr "${PYTHON_VERSION}" : 3\\. >/dev/null])
+
+dnl #
 dnl # ZFS_AC_PYTHON_MODULE(module_name, [action-if-true], [action-if-false])
 dnl #
 dnl # Checks for Python module. Freely inspired by AX_PYTHON_MODULE
@@ -47,9 +58,9 @@ AC_DEFUN([ZFS_AC_CONFIG_ALWAYS_PYTHON], [
 
 	AS_CASE([$with_python],
 		[check],
-		[AS_IF([test -x /usr/bin/python3],
+		[AS_IF([test -x `which python3`],
 			[PYTHON="python3"],
-			[AS_IF([test -x /usr/bin/python2],
+			[AS_IF([test -x `which python2`],
 				[PYTHON="python2"],
 				[PYTHON=""]
 			)]
@@ -62,26 +73,26 @@ AC_DEFUN([ZFS_AC_CONFIG_ALWAYS_PYTHON], [
 		[AC_MSG_ERROR([Unknown --with-python value '$with_python'])]
 	)
 
-	AS_IF([$PYTHON --version >/dev/null 2>&1], [ /bin/true ], [
+	AS_IF([$PYTHON --version >/dev/null 2>&1], [ true ], [
 		AC_MSG_ERROR([Cannot find $PYTHON in your system path])
 	])
 
 	AM_PATH_PYTHON([2.6], [], [:])
 	AM_CONDITIONAL([USING_PYTHON], [test "$PYTHON" != :])
-	AM_CONDITIONAL([USING_PYTHON_2], [test "${PYTHON_VERSION:0:2}" = "2."])
-	AM_CONDITIONAL([USING_PYTHON_3], [test "${PYTHON_VERSION:0:2}" = "3."])
+	AM_CONDITIONAL([USING_PYTHON_2], [ZFS_AC_PYTHON_VERSION_IS_2])
+	AM_CONDITIONAL([USING_PYTHON_3], [ZFS_AC_PYTHON_VERSION_IS_3])
 
 	dnl #
 	dnl # Minimum supported Python versions for utilities:
 	dnl # Python 2.6.x, or Python 3.4.x
 	dnl #
-	AS_IF([test "${PYTHON_VERSION:0:2}" = "2."], [
-		ZFS_AC_PYTHON_VERSION([>= '2.6'], [ /bin/true ],
+	AS_IF([ZFS_AC_PYTHON_VERSION_IS_2], [
+		ZFS_AC_PYTHON_VERSION([>= '2.6'], [ true ],
 			[AC_MSG_ERROR("Python >= 2.6.x is not available")])
 	])
 
-	AS_IF([test "${PYTHON_VERSION:0:2}" = "3."], [
-		ZFS_AC_PYTHON_VERSION([>= '3.4'], [ /bin/true ],
+	AS_IF([ZFS_AC_PYTHON_VERSION_IS_3], [
+		ZFS_AC_PYTHON_VERSION([>= '3.4'], [ true ],
 			[AC_MSG_ERROR("Python >= 3.4.x is not available")])
 	])
 

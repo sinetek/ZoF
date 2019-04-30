@@ -17,6 +17,14 @@ spa_stats_destroy(spa_t *spa)
 }
 
 void
+spa_iostats_trim_add(spa_t *spa, trim_type_t type,
+    uint64_t extents_written, uint64_t bytes_written,
+    uint64_t extents_skipped, uint64_t bytes_skipped,
+    uint64_t extents_failed, uint64_t bytes_failed)
+{
+}
+
+void
 spa_read_history_add(spa_t *spa, const zbookmark_phys_t *zb, uint32_t aflags)
 {
 }

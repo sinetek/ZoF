@@ -1384,7 +1384,7 @@ dmu_objset_clone_sync(void *arg, dmu_tx_t *tx)
 	VERIFY0(dsl_dataset_hold_obj(pdd->dd_pool, obj, FTAG, &ds));
 	dsl_dataset_name(origin, namebuf);
 	spa_history_log_internal_ds(ds, "clone", tx,
-	    "origin=%s (%llu)", namebuf, origin->ds_object);
+	    "origin=%s (%lu)", namebuf, origin->ds_object);
 #ifndef __FreeBSD__
 	/* XXX what are we missing out on */
 	zvol_create_minors(dp->dp_spa, doca->doca_clone, B_TRUE);

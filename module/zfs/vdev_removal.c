@@ -345,7 +345,7 @@ vdev_remove_initiate_sync(void *arg, dmu_tx_t *tx)
 	    vic->vic_mapping_object);
 
 	spa_history_log_internal(spa, "vdev remove started", tx,
-	    "%s vdev %llu %s", spa_name(spa), vd->vdev_id,
+	    "%s vdev %llu %s", spa_name(spa), (longlong_t)vd->vdev_id,
 	    (vd->vdev_path != NULL) ? vd->vdev_path : "-");
 	/*
 	 * Setting spa_vdev_removal causes subsequent frees to call
@@ -1106,7 +1106,7 @@ vdev_remove_complete_sync(void *arg, dmu_tx_t *tx)
 	spa_finish_removal(dmu_tx_pool(tx)->dp_spa, DSS_FINISHED, tx);
 	/* vd->vdev_path is not available here */
 	spa_history_log_internal(spa, "vdev remove completed",  tx,
-	    "%s vdev %llu", spa_name(spa), vd->vdev_id);
+	    "%s vdev %llu", spa_name(spa), (longlong_t)vd->vdev_id);
 }
 
 static void
@@ -1728,7 +1728,7 @@ spa_vdev_remove_cancel_sync(void *arg, dmu_tx_t *tx)
 	    vd->vdev_id, dmu_tx_get_txg(tx));
 	spa_history_log_internal(spa, "vdev remove canceled", tx,
 	    "%s vdev %llu %s", spa_name(spa),
-	    vd->vdev_id, (vd->vdev_path != NULL) ? vd->vdev_path : "-");
+	    (longlong_t)vd->vdev_id, (vd->vdev_path != NULL) ? vd->vdev_path : "-");
 }
 
 static int

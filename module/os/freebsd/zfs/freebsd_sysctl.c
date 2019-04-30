@@ -948,22 +948,30 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, min_auto_ashift,
     "Min ashift used when creating new top-level vdevs.");
 
 /* target number of metaslabs per top-level vdev */
-extern int vdev_max_ms_count;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, max_ms_count, CTLFLAG_RDTUN,
-    &vdev_max_ms_count, 0,
+extern int zfs_vdev_default_ms_count;
+SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, ms_count, CTLFLAG_RDTUN,
+    &zfs_vdev_default_ms_count, 0,
     "Maximum number of metaslabs per top-level vdev");
 
 /* minimum number of metaslabs per top-level vdev */
-extern int vdev_min_ms_count;
+extern int zfs_vdev_min_ms_count;
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, min_ms_count, CTLFLAG_RDTUN,
-    &vdev_min_ms_count, 0,
+    &zfs_vdev_min_ms_count, 0,
     "Minimum number of metaslabs per top-level vdev");
 
 /* lower limit for metaslab size (512M) */
-extern int vdev_default_ms_shift;
+extern int zfs_vdev_default_ms_shift;
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, default_ms_shift, CTLFLAG_RDTUN,
-    &vdev_default_ms_shift, 0,
+    &zfs_vdev_default_ms_shift, 0,
     "Shift between vdev size and number of metaslabs");
+
+/* lower limit for metaslab size (512M) */
+extern int zfs_vdev_max_ms_shift;
+SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, max_ms_shift, CTLFLAG_RDTUN,
+    &zfs_vdev_max_ms_shift, 0,
+    "Shift between vdev size and number of metaslabs");
+
+
 
 /*
  * Since the DTL space map of a vdev is not expected to have a lot of

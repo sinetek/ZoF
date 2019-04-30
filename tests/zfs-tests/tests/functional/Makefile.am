@@ -67,7 +67,6 @@ SUBDIRS = \
 	snapused \
 	sparse \
 	threadsappend \
-	tmpfile \
 	trim \
 	truncate \
 	upgrade \

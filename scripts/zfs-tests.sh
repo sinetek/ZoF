@@ -46,16 +46,18 @@ TAGS=""
 ITERATIONS=1
 ZFS_DBGMSG="$STF_SUITE/callbacks/zfs_dbgmsg.ksh"
 ZFS_DMESG="$STF_SUITE/callbacks/zfs_dmesg.ksh"
-ZFS_MMP="$STF_SUITE/callbacks/zfs_mmp.ksh"
-TESTFAIL_CALLBACKS=${TESTFAIL_CALLBACKS:-"$ZFS_DBGMSG:$ZFS_DMESG:$ZFS_MMP"}
-LOSETUP=${LOSETUP:-/sbin/losetup}
-DMSETUP=${DMSETUP:-/sbin/dmsetup}
 UNAME=$(uname -s)
 
 # Override some defaults if on FreeBSD
 if [ "$UNAME" = "FreeBSD" ] ; then
+	TESTFAIL_CALLBACKS=${TESTFAIL_CALLBACKS:-"$ZFS_DBGMSG:$ZFS_DMESG"}
 	LOSETUP=/sbin/mdconfig
 	DMSETUP=/sbin/gpart
+else
+	ZFS_MMP="$STF_SUITE/callbacks/zfs_mmp.ksh"
+	TESTFAIL_CALLBACKS=${TESTFAIL_CALLBACKS:-"$ZFS_DBGMSG:$ZFS_DMESG:$ZFS_MMP"}
+	LOSETUP=${LOSETUP:-/sbin/losetup}
+	DMSETUP=${DMSETUP:-/sbin/dmsetup}
 fi
 
 #
@@ -258,7 +260,7 @@ constrain_path() {
 	else
 		# Constrained path set to /var/tmp/constrained_path.*
 		SYSTEMDIR=${SYSTEMDIR:-/var/tmp/constrained_path.XXXX}
-		STF_PATH=$(/bin/mktemp -d "$SYSTEMDIR")
+		STF_PATH=$(mktemp -d "$SYSTEMDIR")
 		STF_PATH_REMOVE="yes"
 		STF_MISSING_BIN=""
 
@@ -505,7 +507,7 @@ if [ "$UNAME" = "FreeBSD" ] ; then
 	[ -e "/usr/local/bin/ksh93" ] || fail \
 		"Missing /usr/local/bin/ksh93 - Please install ksh93"
 	if [ ! -e "/bin/ksh" ] ; then
-		ln -s /usr/local/bin/ksh93 /bin/ksh
+		sudo ln -s /usr/local/bin/ksh93 /bin/ksh
 	fi
 else
 	[ -e "$STF_PATH/ksh" ] || fail "This test suite requires ksh."

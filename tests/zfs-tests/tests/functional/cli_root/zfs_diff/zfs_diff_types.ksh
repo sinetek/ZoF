@@ -70,10 +70,9 @@ DATASET="$TESTPOOL/$TESTFS/fs"
 TESTSNAP1="$DATASET@snap1"
 TESTSNAP2="$DATASET@snap2"
 FILEDIFF="$TESTDIR/zfs-diff.txt"
-if [ is_freebsd ];then
-	COMBINED=$(stat -f "%Z" /dev/null)
-	MAJOR=$(cut -d ',' -f1)
-	MINOR=$(cut -d ',' -f2)
+if is_freebsd; then
+	MAJOR=$(stat -f %Hr /dev/null)
+	MINOR=$(stat -f %Lr /dev/null)
 else
 	MAJOR=$(stat -c %t /dev/null)
 	MINOR=$(stat -c %T /dev/null)
@@ -112,7 +111,11 @@ verify_object_class "$MNTPOINT/cdev" "C"
 
 # 2. | (Named pipe)
 log_must zfs snapshot "$TESTSNAP1"
-log_must mknod "$MNTPOINT/fifo" p
+if is_freebsd; then
+    log_must mkfifo "$MNTPOINT/fifo"
+else
+    log_must mknod "$MNTPOINT/fifo" p
+fi
 log_must zfs snapshot "$TESTSNAP2"
 verify_object_class "$MNTPOINT/fifo" "|"
 

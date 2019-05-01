@@ -354,17 +354,20 @@ zvol_get_stats(objset_t *os, nvlist_t *nv)
 }
 
 static zvol_state_t *
-zvol_minor_lookup(const char *name)
+zvol_find_by_name(const char *name, int mode)
 {
-	zvol_state_t *zv;
+	zvol_state_t *zv = NULL;
 
-	ASSERT(RW_WRITE_HELD(&zvol_state_lock));
+	rw_enter(&zvol_state_lock, RW_READER);
 	LIST_FOREACH(zv, &all_zvols, zv_links) {
-		if (strcmp(zv->zv_name, name) == 0)
-			return (zv);
+		if (strcmp(zv->zv_name, name) == 0) {
+			mutex_enter(&zv->zv_state_lock);
+			break;
+		}
 	}
+	rw_exit(&zvol_state_lock);
 
-	return (NULL);
+	return (zv);
 }
 
 /* extent mapping arg */
@@ -521,10 +524,9 @@ zvol_create_minor(const char *name)
 
 	ZFS_LOG(1, "Creating ZVOL %s...", name);
 
-	rw_enter(&zvol_state_lock, RW_WRITER);
 
-	if (zvol_minor_lookup(name) != NULL) {
-	    rw_exit(&zvol_state_lock);
+	if ((zv = zvol_find_by_name(name, RW_NONE)) != NULL) {
+		mutex_exit(&zv->zv_state_lock);
 		return (SET_ERROR(EEXIST));
 	}
 
@@ -605,6 +607,7 @@ zvol_create_minor(const char *name)
 		g_topology_unlock();
 	}
 
+	rw_enter(&zvol_state_lock, RW_WRITER);
 	LIST_INSERT_HEAD(&all_zvols, zv, zv_links);
 	zvol_minors++;
 	rw_exit(&zvol_state_lock);
@@ -626,6 +629,7 @@ zvol_remove_zv(zvol_state_t *zv)
 	ZFS_LOG(1, "ZVOL %s destroyed.", zv->zv_name);
 
 	LIST_REMOVE(zv, zv_links);
+	mutex_exit(&zv->zv_state_lock);
 	if (zv->zv_volmode == ZFS_VOLMODE_GEOM) {
 		g_topology_lock();
 		zvol_geom_destroy(zv);
@@ -640,23 +644,6 @@ zvol_remove_zv(zvol_state_t *zv)
 	zvol_minors--;
 	return (0);
 }
-
-int
-zvol_remove_minor(const char *name)
-{
-	zvol_state_t *zv;
-	int rc;
-
-	rw_enter(&zvol_state_lock, RW_WRITER);
-	if ((zv = zvol_minor_lookup(name)) == NULL) {
-		rw_exit(&zvol_state_lock);
-		SET_ERROR(ENXIO);
-	}
-	rc = zvol_remove_zv(zv);
-	rw_exit(&zvol_state_lock);
-	return (rc);
-}
-
 
 /*
  * Setup zv after we just own the zv->objset
@@ -777,8 +764,7 @@ zvol_update_volsize(objset_t *os, uint64_t volsize)
 {
 	dmu_tx_t *tx;
 	int error;
-
-	ASSERT(RW_WRITE_HELD(&zvol_state_lock));
+	uint64_t txg;
 
 	tx = dmu_tx_create(os);
 	dmu_tx_hold_zap(tx, ZVOL_ZAP_OBJ, TRUE, NULL);
@@ -788,10 +774,13 @@ zvol_update_volsize(objset_t *os, uint64_t volsize)
 		dmu_tx_abort(tx);
 		return (error);
 	}
+	txg = dmu_tx_get_txg(tx);
 
 	error = zap_update(os, ZVOL_ZAP_OBJ, "size", 8, 1,
 	    &volsize, tx);
 	dmu_tx_commit(tx);
+
+	txg_wait_synced(dmu_objset_pool(os), txg);
 
 	if (error == 0)
 		error = dmu_free_long_range(os,
@@ -815,7 +804,9 @@ zvol_remove_minors_impl(const char *name)
 		    (strncmp(zv->zv_name, name, namelen) == 0 &&
 		    strlen(zv->zv_name) > namelen && (zv->zv_name[namelen] == '/' ||
 		    zv->zv_name[namelen] == '@'))) {
-			(void) zvol_remove_zv(zv);
+			mutex_enter(&zv->zv_state_lock);
+			if (zvol_remove_zv(zv))
+				mutex_exit(&zv->zv_state_lock);
 		}
 	}
 
@@ -875,14 +866,14 @@ zvol_set_volsize(const char *name, uint64_t volsize)
 	if (readonly)
 		return (SET_ERROR(EROFS));
 
-	rw_enter(&zvol_state_lock, RW_WRITER);
-	zv = zvol_minor_lookup(name);
+	zv = zvol_find_by_name(name, RW_READER);
 
 	if (zv == NULL || zv->zv_objset == NULL) {
 		if ((error = dmu_objset_own(name, DMU_OST_ZVOL, B_FALSE, B_TRUE,
 		    FTAG, &os)) != 0) {
-			rw_exit(&zvol_state_lock);
-			return (error);
+			if (zv != NULL)
+				mutex_exit(&zv->zv_state_lock);
+			return (SET_ERROR(error));
 		}
 		owned = B_TRUE;
 		if (zv != NULL)
@@ -905,7 +896,8 @@ out:
 		if (zv != NULL)
 			zv->zv_objset = NULL;
 	}
-	rw_exit(&zvol_state_lock);
+	if (zv != NULL)
+		mutex_exit(&zv->zv_state_lock);
 	return (error);
 }
 
@@ -1581,6 +1573,7 @@ zvol_geom_destroy(zvol_state_t *zv)
 	wakeup_one(&zv->zv_queue);
 	while (zv->zv_state != 2)
 		msleep(&zv->zv_state, &zv->zv_queue_mtx, 0, "zvol:w", 0);
+	mtx_unlock(&zv->zv_queue_mtx);
 	mtx_destroy(&zv->zv_queue_mtx);
 	pp = zv->zv_provider;
 	zv->zv_provider = NULL;

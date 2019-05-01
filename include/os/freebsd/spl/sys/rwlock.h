@@ -40,9 +40,11 @@ typedef enum {
 	RW_DEFAULT = 4		/* kernel default rwlock */
 } krw_type_t;
 
+
 typedef enum {
-	RW_WRITER,
-	RW_READER
+	RW_NONE		= 0,
+	RW_WRITER	= 1,
+	RW_READER	= 2
 } krw_t;
 
 typedef	struct sx	krwlock_t;

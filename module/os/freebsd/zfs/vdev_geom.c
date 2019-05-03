@@ -779,7 +779,7 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 {
 	struct g_provider *pp;
 	struct g_consumer *cp;
-	int error;
+	int error, has_trim;
 
 	/* Set the TLS to indicate downstack that we should not access zvols*/
 	VERIFY(tsd_set(zfs_geom_probe_vdev_key, vd) == 0);
@@ -928,6 +928,17 @@ skip_open:
 	 */
 	vd->vdev_nowritecache = B_FALSE;
 
+	/* Inform the ZIO pipeline that we are non-rotational */
+	vd->vdev_nonrot = (vd->vdev_rotation_rate == VDEV_RATE_UNKNOWN);
+
+	/* Set when device reports it supports TRIM. */
+	error = g_getattr("GEOM::candelete", cp, &has_trim);
+	vd->vdev_has_trim = (error == 0 && has_trim);
+
+	/* Set when device reports it supports secure TRIM. */
+	/* unavailable on FreeBSD */
+	vd->vdev_has_securetrim = B_FALSE;
+
 	return (0);
 }
 
@@ -1040,7 +1051,7 @@ vdev_geom_io_start(zio_t *zio)
 
 		zio_execute(zio);
 		return;
-	case ZIO_TYPE_FREE:
+	case ZIO_TYPE_TRIM:
 		if (!vdev_geom_bio_delete_disable) {
 			goto sendreq;
 		}
@@ -1053,7 +1064,7 @@ vdev_geom_io_start(zio_t *zio)
 sendreq:
 	ASSERT(zio->io_type == ZIO_TYPE_READ ||
 	    zio->io_type == ZIO_TYPE_WRITE ||
-	    zio->io_type == ZIO_TYPE_FREE ||
+	    zio->io_type == ZIO_TYPE_TRIM ||
 	    zio->io_type == ZIO_TYPE_IOCTL);
 
 	cp = vd->vdev_tsd;
@@ -1080,7 +1091,7 @@ sendreq:
 			    abd_borrow_buf_copy(zio->io_abd, zio->io_size);
 		}
 		break;
-	case ZIO_TYPE_FREE:
+	case ZIO_TYPE_TRIM:
 		bp->bio_cmd = BIO_DELETE;
 		bp->bio_data = NULL;
 		bp->bio_offset = zio->io_offset;

@@ -533,10 +533,8 @@ zvol_create_minor(const char *name)
 	/* lie and say we're read-only */
 	error = dmu_objset_own(name, DMU_OST_ZVOL, B_TRUE, B_TRUE, FTAG, &os);
 
-	if (error) {
-	    rw_exit(&zvol_state_lock);
+	if (error)
 		return (error);
-	}
 
 	zv = kmem_zalloc(sizeof(*zv), KM_SLEEP);
 	zv->zv_state = 0;

@@ -8384,7 +8384,7 @@ spa_sync(spa_t *spa, uint64_t txg)
 
 	spa_sync_iterate_to_convergence(spa, tx);
 
-#ifdef ZFS_DEBUG
+#if defined(ZFS_DEBUG) && !defined(NDEBUG)
 	if (!list_is_empty(&spa->spa_config_dirty_list)) {
 	/*
 	 * Make sure that the number of ZAPs for all the vdevs matches

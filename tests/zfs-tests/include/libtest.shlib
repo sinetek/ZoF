@@ -159,24 +159,22 @@ function ismounted
 		;;
 		ufs|nfs)
 			if is_freebsd; then
-				# a = device, b = "on", c = mount point", d = flags
-				mount | grep $fstype | while read a b c d
-				do
-					 [[ "$1" == "$a" || "$1" == "$c" ]] && return 0
+				mount -pt $fstype | while read dev dir _t _flags; do
+					[[ "$1" == "$dev" || "$1" == "$dir" ]] && return 0
 				done
 			else
 				out=$(df -F $fstype $1 2>/dev/null)
+				ret=$?
+				(($ret != 0)) && return $ret
+
+				dir=${out%%\(*}
+				dir=${dir%% *}
+				name=${out##*\(}
+				name=${name%%\)*}
+				name=${name%% *}
+
+				[[ "$1" == "$dir" || "$1" == "$name" ]] && return 0
 			fi
-			ret=$?
-			(($ret != 0)) && return $ret
-
-			dir=${out%%\(*}
-			dir=${dir%% *}
-			name=${out##*\(}
-			name=${name%%\)*}
-			name=${name%% *}
-
-			[[ "$1" == "$dir" || "$1" == "$name" ]] && return 0
 		;;
 		ext*)
 			out=$(df -t $fstype $1 2>/dev/null)

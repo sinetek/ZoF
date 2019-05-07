@@ -62,22 +62,23 @@ AC_DEFUN([ZFS_AC_CONFIG_ALWAYS_PYTHON], [
 			[PYTHON="python3"],
 			[AS_IF([test -x `which python2`],
 				[PYTHON="python2"],
-				[PYTHON=""]
+				[PYTHON=":"]
 			)]
 		)],
 		[2*], [PYTHON="python${with_python}"],
 		[*python2*], [PYTHON="${with_python}"],
 		[3*], [PYTHON="python${with_python}"],
 		[*python3*], [PYTHON="${with_python}"],
-		[no], [PYTHON=""],
+		[no], [PYTHON=":"],
 		[AC_MSG_ERROR([Unknown --with-python value '$with_python'])]
 	)
 
-	AS_IF([$PYTHON --version >/dev/null 2>&1], [ true ], [
-		AC_MSG_ERROR([Cannot find $PYTHON in your system path])
+	AS_IF([test $PYTHON != :], [
+		AS_IF([$PYTHON --version >/dev/null 2>&1],
+			[AM_PATH_PYTHON([2.6], [], [:])],
+			[AC_MSG_ERROR([Cannot find $PYTHON in your system path])]
+		)
 	])
-
-	AM_PATH_PYTHON([2.6], [], [:])
 	AM_CONDITIONAL([USING_PYTHON], [test "$PYTHON" != :])
 	AM_CONDITIONAL([USING_PYTHON_2], [ZFS_AC_PYTHON_VERSION_IS_2])
 	AM_CONDITIONAL([USING_PYTHON_3], [ZFS_AC_PYTHON_VERSION_IS_3])

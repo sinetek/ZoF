@@ -152,8 +152,13 @@ log_must mkfile 4k /$TESTPOOL/$TESTFS/truncated_file
 log_must truncate -s 0 /$TESTPOOL/$TESTFS/truncated_file
 
 # TX_WRITE (large file)
-log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/large \
-    bs=128k count=64 oflag=sync
+if is_freebsd; then
+	log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/large \
+	    bs=128k count=64
+else
+	log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/large \
+	    bs=128k count=64 oflag=sync
+fi
 
 # Write zeros, which compress to holes, in the middle of a file
 log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/holes.1 bs=128k count=8

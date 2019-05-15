@@ -58,10 +58,6 @@
 
 verify_runnable "global"
 
-if is_freebsd; then
-	log_unsupported "Xattr not supported on FreeBSD"
-fi
-
 function cleanup_fs
 {
 	rm -f $TESTDIR/checksum
@@ -172,15 +168,17 @@ log_must dd if=/dev/zero of=/$TESTPOOL/$TESTFS/holes.3 bs=128k count=2 \
    seek=2 conv=notrunc
 
 # TX_MKXATTR
-log_must mkdir /$TESTPOOL/$TESTFS/xattr.dir
-log_must attr -qs fileattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.dir
-log_must attr -qs tmpattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.dir
-log_must attr -qr tmpattr /$TESTPOOL/$TESTFS/xattr.dir
+if is_linux; then
+	log_must mkdir /$TESTPOOL/$TESTFS/xattr.dir
+	log_must attr -qs fileattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.dir
+	log_must attr -qs tmpattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.dir
+	log_must attr -qr tmpattr /$TESTPOOL/$TESTFS/xattr.dir
 
-log_must touch /$TESTPOOL/$TESTFS/xattr.file
-log_must attr -qs fileattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.file
-log_must attr -qs tmpattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.file
-log_must attr -qr tmpattr /$TESTPOOL/$TESTFS/xattr.file
+	log_must touch /$TESTPOOL/$TESTFS/xattr.file
+	log_must attr -qs fileattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.file
+	log_must attr -qs tmpattr -V HelloWorld /$TESTPOOL/$TESTFS/xattr.file
+	log_must attr -qr tmpattr /$TESTPOOL/$TESTFS/xattr.file
+fi
 
 #
 # 4. Copy TESTFS to temporary location (TESTDIR/copy)
@@ -215,9 +213,11 @@ log_must zpool import -f -d $VDIR $TESTPOOL
 log_note "Verify current block usage:"
 log_must zdb -bcv $TESTPOOL
 
-log_note "Verify copy of xattrs:"
-log_must attr -l /$TESTPOOL/$TESTFS/xattr.dir
-log_must attr -l /$TESTPOOL/$TESTFS/xattr.file
+if is_linux; then
+	log_note "Verify copy of xattrs:"
+	log_must attr -l /$TESTPOOL/$TESTFS/xattr.dir
+	log_must attr -l /$TESTPOOL/$TESTFS/xattr.file
+fi
 
 log_note "Verify working set diff:"
 log_must diff -r /$TESTPOOL/$TESTFS $TESTDIR/copy

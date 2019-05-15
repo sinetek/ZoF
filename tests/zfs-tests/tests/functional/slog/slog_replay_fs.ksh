@@ -124,7 +124,7 @@ log_must rmdir /$TESTPOOL/$TESTFS/dir_to_delete
 log_must mkdir -p $TESTDIR
 log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/payload bs=1k count=8
 if is_freebsd; then
-	log_must eval "/sbin/sha256 /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
+	log_must eval "sha256 /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
 else
 	log_must eval "sha256sum -b /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
 fi
@@ -219,7 +219,7 @@ log_must diff -r /$TESTPOOL/$TESTFS $TESTDIR/copy
 
 log_note "Verify file checksum:"
 if is_freebsd; then
-	log_must /sbin/sha256 -c $TESTDIR/checksum
+	log_must sha256 -c $TESTDIR/checksum
 else
 	log_must sha256sum -c $TESTDIR/checksum
 fi

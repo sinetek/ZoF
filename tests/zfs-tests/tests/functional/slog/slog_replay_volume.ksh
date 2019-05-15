@@ -144,9 +144,9 @@ fi
 # 4. Generate checksums for all ext4 files.
 #
 if is_freebsd; then
-	log_must /sbin/sha256 $MNTPNT/* >$TESTDIR/checksum
+	log_must eval "sha256 $MNTPNT/* >$TESTDIR/checksum"
 else
-	log_must sha256sum -b $MNTPNT/* >$TESTDIR/checksum
+	log_must eval "sha256sum -b $MNTPNT/* >$TESTDIR/checksum"
 fi
 
 #
@@ -180,7 +180,7 @@ log_must zdb -bcv $TESTPOOL
 
 log_note "Verify checksums"
 if is_freebsd; then
-	log_must /sbin/sha256 -c $TESTDIR/checksum
+	log_must sha256 -c $TESTDIR/checksum
 else
 	log_must sha256sum -c $TESTDIR/checksum
 fi

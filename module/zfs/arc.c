@@ -4039,6 +4039,45 @@ arc_flush_state(arc_state_t *state, uint64_t spa, arc_buf_contents_t type,
 	return (evicted);
 }
 
+#if defined(__FreeBSD__) && defined(_KERNEL)
+extern struct vfsops zfs_vfsops;
+/*
+ * Helper function for arc_prune_async() it is responsible for safely
+ * handling the execution of a registered arc_prune_func_t.
+ */
+static void
+arc_prune_task(void *arg)
+{
+	int64_t nr_scan = *(int64_t*)arg;
+
+	free(arg, M_TEMP);
+	vnlru_free(nr_scan, &zfs_vfsops);
+}
+
+/*
+ * Notify registered consumers they must drop holds on a portion of the ARC
+ * buffered they reference.  This provides a mechanism to ensure the ARC can
+ * honor the arc_meta_limit and reclaim otherwise pinned ARC buffers.  This
+ * is analogous to dnlc_reduce_cache() but more generic.
+ *
+ * This operation is performed asynchronously so it may be safely called
+ * in the context of the arc_reclaim_thread().  A reference is taken here
+ * for each registered arc_prune_t and the arc_prune_task() is responsible
+ * for releasing it once the registered arc_prune_func_t has completed.
+ */
+static void
+arc_prune_async(int64_t adjust)
+{
+
+	int64_t *adjustptr;
+
+	if ((adjustptr = malloc(sizeof(int64_t), M_TEMP, M_NOWAIT)) == NULL)
+		return;
+
+	taskq_dispatch(arc_prune_taskq, arc_prune_task, adjustptr, TQ_SLEEP);
+	ARCSTAT_BUMP(arcstat_prune);
+}
+#else
 /*
  * Helper function for arc_prune_async() it is responsible for safely
  * handling the execution of a registered arc_prune_func_t.
@@ -4089,6 +4128,7 @@ arc_prune_async(int64_t adjust)
 	}
 	mutex_exit(&arc_prune_mtx);
 }
+#endif
 
 /*
  * Evict the specified number of bytes from the state specified,
@@ -7472,6 +7512,37 @@ arc_tuning_update(void)
 
 }
 
+#if defined(_KERNEL) && defined(__FreeBSD__)
+static eventhandler_tag arc_event_lowmem = NULL;
+
+static void
+arc_lowmem(void *arg __unused, int howto __unused)
+{
+	int64_t free_memory, to_free;
+
+	arc_no_grow = B_TRUE;
+	arc_warm = B_TRUE;
+	arc_growtime = gethrtime() + SEC2NSEC(arc_grow_retry);
+	free_memory = arc_available_memory();
+	to_free = (arc_c >> arc_shrink_shift) - MIN(free_memory, 0);
+	DTRACE_PROBE2(arc__needfree, int64_t, free_memory, int64_t, to_free);
+	arc_reduce_target_size(to_free);
+
+	mutex_enter(&arc_adjust_lock);
+	arc_adjust_needed = B_TRUE;
+	zthr_wakeup(arc_adjust_zthr);
+
+	/*
+	 * It is unsafe to block here in arbitrary threads, because we can come
+	 * here from ARC itself and may hold ARC locks and thus risk a deadlock
+	 * with ARC reclaim thread.
+	 */
+	if (curproc == pageproc)
+		(void) cv_wait(&arc_adjust_waiters_cv, &arc_adjust_lock);
+	mutex_exit(&arc_adjust_lock);
+}
+#endif
+
 static void
 arc_state_init(void)
 {
@@ -7707,6 +7778,10 @@ arc_init(void)
 	arc_reap_zthr = zthr_create_timer(arc_reap_cb_check,
 	    arc_reap_cb, NULL, SEC2NSEC(1));
 
+#if defined(_KERNEL) && defined(__FreeBSD__)
+	arc_event_lowmem = EVENTHANDLER_REGISTER(vm_lowmem, arc_lowmem, NULL,
+	    EVENTHANDLER_PRI_FIRST);
+#endif
 	arc_initialized = B_TRUE;
 	arc_warm = B_FALSE;
 
@@ -7735,8 +7810,13 @@ arc_fini(void)
 {
 	arc_prune_t *p;
 
-#if defined(_KERNEL) && defined(__linux__)
+#if defined(_KERNEL)
+#if defined(__linux__)
 	spl_unregister_shrinker(&arc_shrinker);
+#elif defined(__FreeBSD__)
+	if (arc_event_lowmem != NULL)
+		EVENTHANDLER_DEREGISTER(vm_lowmem, arc_event_lowmem);
+#endif
 #endif /* _KERNEL */
 
 	/* Use B_TRUE to ensure *all* buffers are evicted */

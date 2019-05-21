@@ -27,6 +27,10 @@ CFLAGS+= -D__KERNEL__ -DFREEBSD_NAMECACHE -DBUILDING_ZFS  -D__BSD_VISIBLE=1
 CFLAGS+= -DHAVE_UIO_ZEROCOPY -DHAVE_KSID -DWITHOUT_NETDUMP
 CFLAGS+= -D_SYS_VMEM_H_ -D_MACHINE_ENDIAN_H_ -DKDTRACE_HOOKS
 
+.if ${MACHINE_ARCH} == "amd64" 
+CFLAGS+= -DHAVE_AVX2 -D__x86_64
+.endif
+
 .if defined(WITH_DEBUG) && ${WITH_DEBUG} == "true"
 CFLAGS+= -DINVARIANTS -DWITNESS -g -O0 -DZFS_DEBUG -DOPENSOLARIS_WITNESS
 .else
@@ -36,6 +40,7 @@ CFLAGS += -DNDEBUG
 .if defined(WITH_GCOV) && ${WITH_GCOV} == "true"
 CFLAGS+=	 -fprofile-arcs -ftest-coverage
 .endif
+
 
 
 DEBUG_FLAGS=-g
@@ -228,6 +233,7 @@ SRCS+=	aggsum.c \
 	vdev_raidz.c \
 	vdev_raidz_math.c \
 	vdev_raidz_math_scalar.c \
+	vdev_raidz_math_avx2.c \
 	vdev_removal.c \
 	vdev_root.c \
 	vdev_trim.c \
@@ -323,6 +329,7 @@ CFLAGS.vdev_queue.c= -Wno-missing-prototypes
 CFLAGS.vdev_raidz.c= -Wno-cast-qual
 CFLAGS.vdev_raidz_math.c= -Wno-cast-qual
 CFLAGS.vdev_raidz_math_scalar.c= -Wno-cast-qual -Wno-missing-prototypes
+CFLAGS.vdev_raidz_math_avx2.c= -Wno-cast-qual -Wno-duplicate-decl-specifier
 CFLAGS.zap_leaf.c= -Wno-cast-qual
 CFLAGS.zap_micro.c= -Wno-missing-prototypes -Wno-cast-qual
 CFLAGS.zcp.c= -Wno-cast-qual

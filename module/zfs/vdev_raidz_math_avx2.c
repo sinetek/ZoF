@@ -28,6 +28,8 @@
 #include <sys/types.h>
 #ifdef __linux__
 #include <linux/simd_x86.h>
+#elif defined(__FreeBSD__)
+#include <sys/simd_x86.h>
 #endif
 #define	__asm __asm__ __volatile__
 
@@ -59,6 +61,7 @@
 #define	ASM_BUG()	ASSERT(0)
 
 extern const uint8_t gf_clmul_mod_lt[4*256][16];
+
 
 #define	ELEM_SIZE 32
 
@@ -297,12 +300,14 @@ static const uint8_t __attribute__((aligned(32))) _mul_mask = 0x0F;
 	}								\
 }
 
+#ifdef __linux__
 #define	raidz_math_begin()	kfpu_begin()
 #define	raidz_math_end()						\
 {									\
 	FLUSH();							\
 	kfpu_end();							\
 }
+#endif
 
 
 #define	SYN_STRIDE		4

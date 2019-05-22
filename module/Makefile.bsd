@@ -237,6 +237,10 @@ SRCS+=	aggsum.c \
 	vdev_raidz_math.c \
 	vdev_raidz_math_scalar.c \
 	vdev_raidz_math_avx2.c \
+	vdev_raidz_math_avx512bw.c \
+	vdev_raidz_math_avx512f.c \
+	vdev_raidz_math_sse2.c \
+	vdev_raidz_math_ssse3.c \
 	vdev_removal.c \
 	vdev_root.c \
 	vdev_trim.c \
@@ -336,6 +340,8 @@ CFLAGS.vdev_raidz.c= -Wno-cast-qual
 CFLAGS.vdev_raidz_math.c= -Wno-cast-qual
 CFLAGS.vdev_raidz_math_scalar.c= -Wno-cast-qual -Wno-missing-prototypes
 CFLAGS.vdev_raidz_math_avx2.c= -Wno-cast-qual -Wno-duplicate-decl-specifier
+CFLAGS.vdev_raidz_math_avx512f.c= -Wno-cast-qual -Wno-duplicate-decl-specifier
+CFLAGS.vdev_raidz_math_sse2.c= -Wno-cast-qual -Wno-duplicate-decl-specifier
 CFLAGS.zap_leaf.c= -Wno-cast-qual
 CFLAGS.zap_micro.c= -Wno-missing-prototypes -Wno-cast-qual
 CFLAGS.zcp.c= -Wno-cast-qual

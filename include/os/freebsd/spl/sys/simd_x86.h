@@ -89,11 +89,7 @@ static inline boolean_t
 zfs_sse2_available(void)
 {
 #if defined(_KERNEL)
-#if defined(KERNEL_EXPORTS_X86_FPU)
-	return (!!boot_cpu_has(X86_FEATURE_XMM2));
-#else
-	return (B_FALSE);
-#endif
+	return !!(cpu_feature & CPUID_SSE2);
 #elif !defined(_KERNEL)
 	return (__cpuid_has_sse2());
 #endif
@@ -106,11 +102,7 @@ static inline boolean_t
 zfs_sse3_available(void)
 {
 #if defined(_KERNEL)
-#if defined(KERNEL_EXPORTS_X86_FPU)
-	return (!!boot_cpu_has(X86_FEATURE_XMM3));
-#else
-	return (B_FALSE);
-#endif
+	return !!(cpu_feature2 & CPUID2_SSE3);
 #elif !defined(_KERNEL)
 	return (__cpuid_has_sse3());
 #endif
@@ -303,12 +295,7 @@ zfs_avx512bw_available(void)
 	boolean_t has_avx512 = B_FALSE;
 
 #if defined(_KERNEL)
-#if defined(X86_FEATURE_AVX512BW) && defined(KERNEL_EXPORTS_X86_FPU)
-	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
-	    boot_cpu_has(X86_FEATURE_AVX512BW);
-#else
-	has_avx512 = B_FALSE;
-#endif
+	has_avx512 = !!(cpu_stdext_feature & CPUID_STDEXT_AVX512BW);
 #elif !defined(_KERNEL)
 	has_avx512 = __cpuid_has_avx512bw();
 #endif

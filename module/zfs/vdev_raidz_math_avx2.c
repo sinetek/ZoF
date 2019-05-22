@@ -26,11 +26,13 @@
 #if defined(__x86_64) && defined(HAVE_AVX2)
 
 #include <sys/types.h>
-#ifdef __linux__
+#if defined(__linux__)  || !defined(_KERNEL)
 #include <linux/simd_x86.h>
+
 #elif defined(__FreeBSD__)
-#include <sys/simd_x86.h>
+#include <os/freebsd/spl/sys/simd_x86.h>
 #endif
+
 #define	__asm __asm__ __volatile__
 
 #define	_REG_CNT(_0, _1, _2, _3, _4, _5, _6, _7, N, ...) N
@@ -301,12 +303,6 @@ static const uint8_t __attribute__((aligned(32))) _mul_mask = 0x0F;
 }
 
 #ifdef __linux__
-#define	raidz_math_begin()	kfpu_begin()
-#define	raidz_math_end()						\
-{									\
-	FLUSH();							\
-	kfpu_end();							\
-}
 #endif
 
 
@@ -392,6 +388,13 @@ static const uint8_t __attribute__((aligned(32))) _mul_mask = 0x0F;
 #define	REC_PQR_XS		6, 7
 #define	REC_PQR_YS		8, 9
 
+
+#define	raidz_math_begin() kfpu_begin()
+#define	raidz_math_end()						\
+{									\
+	FLUSH();							\
+	kfpu_end();							\
+}
 
 #include <sys/vdev_raidz_impl.h>
 #include "vdev_raidz_math_impl.h"

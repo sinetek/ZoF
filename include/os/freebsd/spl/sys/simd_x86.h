@@ -1,45 +1,26 @@
-#include <sys/pcpu.h>
 
+#ifdef _KERNEL
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/systm.h>
 #include <machine/fpu.h>
 #include <x86/x86_var.h>
 #include <x86/specialreg.h>
-
-#ifdef notyety
-DPCPU_DECLARE(struct fpu_kern_ctx *, zfs_fpu_ctx);
- 
-#define FPU_CTX_INIT() { \
-	int i; \
-	struct fpu_kern_ctx *ctx; \
-												\
-    CPU_FOREACH(i) {								\
-		ctx = fpu_kern_alloc_ctx(0);				\
-		DPCPU_SET(zfs_fpu_ctx, ctx);				\
-	}												\
-}
-
-#define FPU_CTX_FINI() { \
-	int i; \
-	struct fpu_kern_ctx *ctx; \
-												\
-    CPU_FOREACH(i) {								\
-		ctx = DPCPU_GET(zfs_fpu_ctx);				\
-		fpu_kern_free_ctx(ctx);						\
-	}												\
-}
 #endif
 
-#define	raidz_math_begin() {					\
+#ifdef _KERNEL
+#define	kfpu_begin() {					\
 	critical_enter();							\
 	fpu_kern_enter(curthread, NULL, FPU_KERN_NOCTX); \
 }
 
-#define	raidz_math_end()						\
-	{												   \
-	FLUSH();										   \
+#define	kfpu_end()						\
+{												   \
 	fpu_kern_leave(curthread, NULL);				   \
 	critical_exit();								   \
 }
-
+#else
+#endif
 /*
  * Check if OS supports AVX and AVX2 by checking XCR0
  * Only call this function if CPUID indicates that AVX feature is

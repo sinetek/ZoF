@@ -28,7 +28,7 @@ CFLAGS+= -DHAVE_UIO_ZEROCOPY -DHAVE_KSID -DWITHOUT_NETDUMP
 CFLAGS+= -D_SYS_VMEM_H_ -D_MACHINE_ENDIAN_H_ -DKDTRACE_HOOKS
 
 .if ${MACHINE_ARCH} == "amd64" 
-CFLAGS+= -DHAVE_AVX2 -D__x86_64
+CFLAGS+= -DHAVE_AVX2 -DHAVE_AVX -D__x86_64 -DHAVE_SSE2 -DHAVE_AVX512F
 .endif
 
 .if defined(WITH_DEBUG) && ${WITH_DEBUG} == "true"
@@ -148,6 +148,9 @@ SRCS+=	zfeature_common.c \
 	zfs_comutil.c \
 	zfs_deleg.c \
 	zfs_fletcher.c \
+	zfs_fletcher_avx512.c \
+	zfs_fletcher_intel.c \
+	zfs_fletcher_sse.c \
 	zfs_fletcher_superscalar.c \
 	zfs_fletcher_superscalar4.c \
 	zfs_namecheck.c \
@@ -295,6 +298,9 @@ CFLAGS.zfs_znode.c= -Wno-missing-prototypes
 CFLAGS.zvol.c= -Wno-missing-prototypes
 CFLAGS.u8_textprep.c= -Wno-cast-qual
 CFLAGS.zfs_fletcher.c= -Wno-cast-qual -Wno-pointer-arith
+CFLAGS.zfs_fletcher_intel.c= -Wno-cast-qual -Wno-pointer-arith
+CFLAGS.zfs_fletcher_sse.c= -Wno-cast-qual -Wno-pointer-arith
+CFLAGS.zfs_fletcher_avx512.c= -Wno-cast-qual -Wno-pointer-arith
 CFLAGS.zprop_common.c= -Wno-cast-qual
 CFLAGS.arc.c= -Wno-missing-prototypes
 CFLAGS.blkptr.c= -Wno-missing-prototypes

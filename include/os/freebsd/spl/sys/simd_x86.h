@@ -68,6 +68,101 @@ __simd_state_enabled(const uint64_t state)
 #define	__ymm_enabled() __simd_state_enabled(_XSTATE_SSE_AVX)
 #define	__zmm_enabled() __simd_state_enabled(_XSTATE_AVX512)
 
+
+/*
+ * Check if SSE instruction set is available
+ */
+static inline boolean_t
+zfs_sse_available(void)
+{
+#if defined(_KERNEL)
+	return !!(cpu_feature & CPUID_SSE);
+#elif !defined(_KERNEL)
+	return (__cpuid_has_sse());
+#endif
+}
+
+/*
+ * Check if SSE2 instruction set is available
+ */
+static inline boolean_t
+zfs_sse2_available(void)
+{
+#if defined(_KERNEL)
+#if defined(KERNEL_EXPORTS_X86_FPU)
+	return (!!boot_cpu_has(X86_FEATURE_XMM2));
+#else
+	return (B_FALSE);
+#endif
+#elif !defined(_KERNEL)
+	return (__cpuid_has_sse2());
+#endif
+}
+
+/*
+ * Check if SSE3 instruction set is available
+ */
+static inline boolean_t
+zfs_sse3_available(void)
+{
+#if defined(_KERNEL)
+#if defined(KERNEL_EXPORTS_X86_FPU)
+	return (!!boot_cpu_has(X86_FEATURE_XMM3));
+#else
+	return (B_FALSE);
+#endif
+#elif !defined(_KERNEL)
+	return (__cpuid_has_sse3());
+#endif
+}
+
+/*
+ * Check if SSSE3 instruction set is available
+ */
+static inline boolean_t
+zfs_ssse3_available(void)
+{
+#if defined(_KERNEL)
+	return !!(cpu_feature2 & CPUID2_SSSE3);
+#elif !defined(_KERNEL)
+	return (__cpuid_has_ssse3());
+#endif
+}
+
+/*
+ * Check if SSE4.1 instruction set is available
+ */
+static inline boolean_t
+zfs_sse4_1_available(void)
+{
+#if defined(_KERNEL)
+#if defined(KERNEL_EXPORTS_X86_FPU)
+	return (!!boot_cpu_has(X86_FEATURE_XMM4_1));
+#else
+	return (B_FALSE);
+#endif
+#elif !defined(_KERNEL)
+	return (__cpuid_has_sse4_1());
+#endif
+}
+
+/*
+ * Check if SSE4.2 instruction set is available
+ */
+static inline boolean_t
+zfs_sse4_2_available(void)
+{
+#if defined(_KERNEL)
+#if defined(KERNEL_EXPORTS_X86_FPU)
+	return (!!boot_cpu_has(X86_FEATURE_XMM4_2));
+#else
+	return (B_FALSE);
+#endif
+#elif !defined(_KERNEL)
+	return (__cpuid_has_sse4_2());
+#endif
+}
+
 /*
  * Check if AVX instruction set is available
  */
@@ -101,15 +196,7 @@ zfs_avx2_available(void)
 {
 	boolean_t has_avx2;
 #if defined(_KERNEL)
-#ifdef __linux__
-#if defined(X86_FEATURE_AVX2) && defined(KERNEL_EXPORTS_X86_FPU)
-	has_avx2 = !!boot_cpu_has(X86_FEATURE_AVX2);
-#else
-	has_avx2 = B_FALSE;
-#endif
-#elif defined(__FreeBSD__)
 	has_avx2 = !!(cpu_stdext_feature & CPUID_STDEXT_AVX2);
-#endif
 #elif !defined(_KERNEL)
 	has_avx2 = __cpuid_has_avx2();
 #endif
@@ -117,3 +204,195 @@ zfs_avx2_available(void)
 	return (has_avx2 && __ymm_enabled());
 }
 
+/*
+   * AVX-512 family of instruction sets:
+ *
+ * AVX512F	Foundation
+ * AVX512CD	Conflict Detection Instructions
+ * AVX512ER	Exponential and Reciprocal Instructions
+ * AVX512PF	Prefetch Instructions
+ *
+ * AVX512BW	Byte and Word Instructions
+ * AVX512DQ	Double-word and Quadword Instructions
+ * AVX512VL	Vector Length Extensions
+ *
+ * AVX512IFMA	Integer Fused Multiply Add (Not supported by kernel 4.4)
+ * AVX512VBMI	Vector Byte Manipulation Instructions
+ */
+
+
+/* Check if AVX512F instruction set is available */
+static inline boolean_t
+zfs_avx512f_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+	has_avx512 = !!(cpu_stdext_feature & CPUID_STDEXT_AVX512F);
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512f();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512CD instruction set is available */
+static inline boolean_t
+zfs_avx512cd_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512CD) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512CD);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512cd();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512ER instruction set is available */
+static inline boolean_t
+zfs_avx512er_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512ER) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512ER);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512er();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512PF instruction set is available */
+static inline boolean_t
+zfs_avx512pf_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512PF) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512PF);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512pf();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512BW instruction set is available */
+static inline boolean_t
+zfs_avx512bw_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512BW) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512BW);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512bw();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512DQ instruction set is available */
+static inline boolean_t
+zfs_avx512dq_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512DQ) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512DQ);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512dq();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512VL instruction set is available */
+static inline boolean_t
+zfs_avx512vl_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512VL) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512VL);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512vl();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512IFMA instruction set is available */
+static inline boolean_t
+zfs_avx512ifma_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512IFMA) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512IFMA);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512ifma();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}
+
+/* Check if AVX512VBMI instruction set is available */
+static inline boolean_t
+zfs_avx512vbmi_available(void)
+{
+	boolean_t has_avx512 = B_FALSE;
+
+#if defined(_KERNEL)
+#if defined(X86_FEATURE_AVX512VBMI) && defined(KERNEL_EXPORTS_X86_FPU)
+	has_avx512 = boot_cpu_has(X86_FEATURE_AVX512F) &&
+	    boot_cpu_has(X86_FEATURE_AVX512VBMI);
+#else
+	has_avx512 = B_FALSE;
+#endif
+#elif !defined(_KERNEL)
+	has_avx512 = __cpuid_has_avx512f() &&
+	    __cpuid_has_avx512vbmi();
+#endif
+
+	return (has_avx512 && __zmm_enabled());
+}

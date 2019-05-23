@@ -297,6 +297,8 @@
 #include <sys/vmsystm.h>
 #include <sys/zpl.h>
 #include <linux/page_compat.h>
+#elif defined(__FreeBSD__)
+#include <sys/eventhandler.h>
 #endif
 #endif
 #include <sys/callb.h>

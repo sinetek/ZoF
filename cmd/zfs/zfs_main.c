@@ -726,12 +726,16 @@ zfs_mount_and_share(libzfs_handle_t *hdl, const char *dataset, zfs_type_t type)
 	 */
 	if (zfs_prop_valid_for_type(ZFS_PROP_CANMOUNT, type, B_FALSE) &&
 	    zfs_prop_get_int(zhp, ZFS_PROP_CANMOUNT) == ZFS_CANMOUNT_ON) {
+#ifdef __linux__
+		/* Let Linux prevent user delegation */
 		if (geteuid() != 0) {
 			(void) fprintf(stderr, gettext("filesystem "
 			    "successfully created, but it may only be "
 			    "mounted by root\n"));
 			ret = 1;
-		} else if (zfs_mount(zhp, NULL, 0) != 0) {
+		} else
+#endif
+		  if (zfs_mount(zhp, NULL, 0) != 0) {
 			(void) fprintf(stderr, gettext("filesystem "
 			    "successfully created, but not mounted\n"));
 			ret = 1;

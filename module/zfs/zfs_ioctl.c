@@ -6268,6 +6268,68 @@ zfs_ioc_send_new(const char *snapname, nvlist_t *innvl, nvlist_t *outnvl)
 	releasef(fd);
 	return (error);
 }
+
+static int
+zfs_ioc_jail(zfs_cmd_t *zc)
+{
+
+	return (zone_dataset_attach(curthread->td_ucred, zc->zc_name,
+	    (int)zc->zc_jailid));
+}
+
+static int
+zfs_ioc_unjail(zfs_cmd_t *zc)
+{
+
+	return (zone_dataset_detach(curthread->td_ucred, zc->zc_name,
+	    (int)zc->zc_jailid));
+}
+
+static int
+zfs_ioc_nextboot(const char *unused, nvlist_t *innvl, nvlist_t *outnvl)
+{
+	char name[MAXNAMELEN];
+	spa_t *spa;
+	vdev_t *vd;
+	char *command;
+	uint64_t pool_guid;
+	uint64_t vdev_guid;
+	int error;
+
+	if (nvlist_lookup_uint64(innvl,
+	    ZPOOL_CONFIG_POOL_GUID, &pool_guid) != 0)
+		return (EINVAL);
+	if (nvlist_lookup_uint64(innvl,
+	    ZPOOL_CONFIG_GUID, &vdev_guid) != 0)
+		return (EINVAL);
+	if (nvlist_lookup_string(innvl,
+	    "command", &command) != 0)
+		return (EINVAL);
+
+	mutex_enter(&spa_namespace_lock);
+	spa = spa_by_guid(pool_guid, vdev_guid);
+	if (spa != NULL)
+		strcpy(name, spa_name(spa));
+	mutex_exit(&spa_namespace_lock);
+	if (spa == NULL)
+		return (ENOENT);
+
+	if ((error = spa_open(name, &spa, FTAG)) != 0)
+		return (error);
+	spa_vdev_state_enter(spa, SCL_ALL);
+	vd = spa_lookup_by_guid(spa, vdev_guid, B_TRUE);
+	if (vd == NULL) {
+		(void) spa_vdev_state_exit(spa, NULL, ENXIO);
+		spa_close(spa, FTAG);
+		return (ENODEV);
+	}
+	error = vdev_label_write_pad2(vd, command, strlen(command));
+	(void) spa_vdev_state_exit(spa, NULL, 0);
+	txg_wait_synced(spa->spa_dsl_pool, 0);
+	spa_close(spa, FTAG);
+	return (error);
+}
+
 #else
 static int
 zfs_ioc_send_new(const char *snapname, nvlist_t *innvl, nvlist_t *outnvl)
@@ -6977,7 +7039,18 @@ zfs_ioctl_init(void)
 	    zfs_secpolicy_config, NO_NAME, B_FALSE, POOL_CHECK_NONE);
 	zfs_ioctl_register_legacy(ZFS_IOC_EVENTS_SEEK, zfs_ioc_events_seek,
 	    zfs_secpolicy_config, NO_NAME, B_FALSE, POOL_CHECK_NONE);
+
+#ifdef __FreeBSD__
+	zfs_ioctl_register_dataset_nolog(ZFS_IOC_JAIL, zfs_ioc_jail,
+	    zfs_secpolicy_config, POOL_CHECK_NONE);
+	zfs_ioctl_register_dataset_nolog(ZFS_IOC_UNJAIL, zfs_ioc_unjail,
+	    zfs_secpolicy_config, POOL_CHECK_NONE);
+	zfs_ioctl_register("fbsd_nextboot", ZFS_IOC_NEXTBOOT,
+	    zfs_ioc_nextboot, zfs_secpolicy_config, NO_NAME,
+		POOL_CHECK_NONE, B_FALSE, B_FALSE, NULL, 0);
+#endif
 }
+
 
 /*
  * Verify that for non-legacy ioctls the input nvlist

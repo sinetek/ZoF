@@ -22,5 +22,5 @@ zfs_LDADD = \
 
 # XXX
 if BUILD_FREEBSD
-zfs_LDADD += -L/usr/local/lib -lintl -lgeom
+zfs_LDADD += -L/usr/local/lib -lintl -lgeom -ljail
 endif

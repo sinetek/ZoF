@@ -498,7 +498,7 @@ zfs_dozonecheck(const char *dataset, cred_t *cr)
 {
 	uint64_t zoned;
 
-	if (dsl_prop_get_integer(dataset, "zoned", &zoned, NULL))
+	if (dsl_prop_get_integer(dataset, ZONED, &zoned, NULL))
 		return (SET_ERROR(ENOENT));
 
 	return (zfs_dozonecheck_impl(dataset, zoned, cr));
@@ -509,7 +509,7 @@ zfs_dozonecheck_ds(const char *dataset, dsl_dataset_t *ds, cred_t *cr)
 {
 	uint64_t zoned;
 
-	if (dsl_prop_get_int_ds(ds, "zoned", &zoned))
+	if (dsl_prop_get_int_ds(ds, ZONED, &zoned))
 		return (SET_ERROR(ENOENT));
 
 	return (zfs_dozonecheck_impl(dataset, zoned, cr));
@@ -694,7 +694,7 @@ zfs_secpolicy_setprop(const char *dsname, zfs_prop_t prop, nvpair_t *propval,
 			 * limit on things *under* (ie. contained by)
 			 * the thing they own.
 			 */
-			if (dsl_prop_get_integer(dsname, "zoned", &zoned,
+			if (dsl_prop_get_integer(dsname, ZONED, &zoned,
 			    setpoint))
 				return (SET_ERROR(EPERM));
 			if (!zoned || strlen(dsname) <= strlen(setpoint))

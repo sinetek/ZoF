@@ -1283,19 +1283,17 @@ typedef enum zfs_ioc {
 	/*
 	 * Linux - 3/64 numbers reserved.
 	 */
-	ZFS_IOC_LINUX = ('Z' << 8) + 0x80,
+	ZFS_IOC_LINUX = ZFS_IOC_FIRST + 0x80,
 	ZFS_IOC_EVENTS_NEXT,			/* 0x5a81 */
 	ZFS_IOC_EVENTS_CLEAR,			/* 0x5a82 */
 	ZFS_IOC_EVENTS_SEEK,			/* 0x5a83 */
-
 	/*
 	 * FreeBSD - 1/64 numbers reserved.
 	 */
-	ZFS_IOC_FREEBSD = ('Z' << 8) + 0xc00,
-	ZFS_IOC_NEXTBOOT,			/* 0x5bc1 */
-	ZFS_IOC_JAIL,			/* 0x5bc2 */
-	ZFS_IOC_UNJAIL,			/* 0x5bc3 */
-
+	ZFS_IOC_FREEBSD = ZFS_IOC_FIRST + 0xc0,
+	ZFS_IOC_NEXTBOOT,			/* 0xc1 */
+	ZFS_IOC_JAIL,			/* 0xc2 */
+	ZFS_IOC_UNJAIL,			/* 0xc3 */
 	ZFS_IOC_LAST
 } zfs_ioc_t;
 

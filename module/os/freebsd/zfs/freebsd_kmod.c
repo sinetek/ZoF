@@ -68,6 +68,12 @@
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_DECL(_vfs_zfs_vdev);
 
+
+static int zfs_version_ioctl = ZFS_IOCVER_ZOF;
+SYSCTL_DECL(_vfs_zfs_version);
+SYSCTL_INT(_vfs_zfs_version, OID_AUTO, ioctl, CTLFLAG_RD, &zfs_version_ioctl,
+    0, "ZFS_IOCTL_VERSION");
+
 static struct cdev *zfsdev;
 
 extern void zfs_init(void);

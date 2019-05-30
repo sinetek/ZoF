@@ -55,7 +55,7 @@
 #include <sys/vdev_removal.h>
 #include <sys/dsl_crypt.h>
 
-#include <zfs_ioctl_compat.h>
+#include <sys/zfs_ioctl_compat.h>
 
 #include <sys/arc_impl.h>
 #include <sys/dsl_pool.h>

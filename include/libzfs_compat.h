@@ -26,7 +26,7 @@
 #ifndef	_LIBZFS_COMPAT_H
 #define	_LIBZFS_COMPAT_H
 
-#include <zfs_ioctl_compat.h>
+#include <os/freebsd/zfs/sys/zfs_ioctl_compat.h>
 
 #ifdef	__cplusplus
 extern "C" {

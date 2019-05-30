@@ -25,7 +25,7 @@
 
 #include <sys/zfs_ioctl.h>
 #include <zfs_ioctl_compat.h>
-#include "libzfs_core_compat.h"
+#include <sys/libzfs_core_compat.h>
 
 extern int zfs_ioctl_version;
 

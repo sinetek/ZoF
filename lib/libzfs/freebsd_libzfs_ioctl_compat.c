@@ -35,7 +35,7 @@
 #include <sys/dsl_deleg.h>
 #include <sys/zfs_ioctl.h>
 #include "zfs_namecheck.h"
-#include "zfs_ioctl_compat.h"
+#include <os/freebsd/zfs/sys/zfs_ioctl_compat.h>
 
 //static int zfs_version_ioctl = ZFS_IOCVER_CURRENT;
 
@@ -227,7 +227,7 @@ zcmd_ioctl_compat(int fd, int request, zfs_cmd_t *zc, const int cflag)
 		ncmd = _IOWR('Z', request, zfs_iocparm_t);
 		zp.zfs_cmd = (uint64_t)zc;
 		zp.zfs_cmd_size = sizeof(zfs_cmd_t);
-		zp.zfs_ioctl_version = ZFS_IOCVER_CURRENT;
+		zp.zfs_ioctl_version = ZFS_IOCVER_ZOF;
 		return (ioctl(fd, ncmd, &zp));
 	default:
 		abort();

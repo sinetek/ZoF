@@ -58,7 +58,7 @@
 #include <sys/vdev_removal.h>
 #include <sys/dsl_crypt.h>
 
-#include <zfs_ioctl_compat.h>
+#include <sys/zfs_ioctl_compat.h>
 
 #include "zfs_namecheck.h"
 #include "zfs_prop.h"
@@ -121,6 +121,14 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 	len = IOCPARM_LEN(zcmd);
 	vecnum = zcmd & 0xff;
 	zp = (void *)arg;
+	/*
+	 * Remap ioctl code for legacy user binaries
+	 */
+	if (zp->zfs_ioctl_version == ZFS_IOCVER_FREEBSD) {
+		if (vecnum >= sizeof(zfs_ioctl_bsd12_to_zof)/sizeof(long))
+			return (ENOTSUP);
+		vecnum = zfs_ioctl_bsd12_to_zof[vecnum];
+	}
 	if (len != sizeof(zfs_iocparm_t)) {
 		printf("len %d vecnum: %d sizeof(zfs_cmd_t) %lu\n",
 			   len, vecnum, sizeof(zfs_cmd_t));

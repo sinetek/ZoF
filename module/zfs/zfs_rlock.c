@@ -631,8 +631,8 @@ rangelock_reduce(locked_range_t *lr, uint64_t off, uint64_t len)
 }
 
 #if defined(_KERNEL)
-EXPORT_SYMBOL(rangelock_init);
-EXPORT_SYMBOL(rangelock_fini);
+EXPORT_SYMBOL(zfs_rangelock_init);
+EXPORT_SYMBOL(zfs_rangelock_fini);
 EXPORT_SYMBOL(rangelock_enter);
 EXPORT_SYMBOL(rangelock_exit);
 EXPORT_SYMBOL(rangelock_reduce);

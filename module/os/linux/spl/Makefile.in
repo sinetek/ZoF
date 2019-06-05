@@ -1,4 +1,4 @@
-src = @abs_top_srcdir@/module/spl
+src = @abs_top_srcdir@/module/os/linux/spl
 obj = @abs_builddir@
 
 MODULE := spl

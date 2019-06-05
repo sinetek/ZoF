@@ -57,10 +57,10 @@ void spl_dumpstack(void);
 #ifndef expect
 #define expect(expr, value) (__builtin_expect((expr), (value)))
 #endif
-#ifndef likely
+#ifndef __linux__
 #define likely(expr)   expect((expr) != 0, 1)
 #endif
-#ifndef unlikely
+#ifndef __linux__
 #define unlikely(expr) expect((expr) != 0, 0)
 #endif
 

@@ -106,21 +106,18 @@ $(MODULE)-objs += zcp_global.o
 $(MODULE)-objs += zcp_iter.o
 $(MODULE)-objs += zcp_synctask.o
 $(MODULE)-objs += zfeature.o
-$(MODULE)-objs += zfs_acl.o
 $(MODULE)-objs += zfs_byteswap.o
 $(MODULE)-objs += zfs_fm.o
 $(MODULE)-objs += zfs_fuid.o
-$(MODULE)-objs += zfs_log.o
+$(MODULE)-objs += zfs_ioctl.o
 $(MODULE)-objs += zfs_onexit.o
 $(MODULE)-objs += zfs_ratelimit.o
-$(MODULE)-objs += zfs_replay.o
 $(MODULE)-objs += zfs_rlock.o
 $(MODULE)-objs += zfs_sa.o
 $(MODULE)-objs += zil.o
 $(MODULE)-objs += zio.o
 $(MODULE)-objs += zio_checksum.o
 $(MODULE)-objs += zio_compress.o
-$(MODULE)-objs += zio_crypt.o
 $(MODULE)-objs += zio_inject.o
 $(MODULE)-objs += zle.o
 $(MODULE)-objs += zrlock.o
@@ -139,3 +136,5 @@ $(MODULE)-$(CONFIG_X86) += vdev_raidz_math_avx512bw.o
 
 $(MODULE)-$(CONFIG_ARM64) += vdev_raidz_math_aarch64_neon.o
 $(MODULE)-$(CONFIG_ARM64) += vdev_raidz_math_aarch64_neonx2.o
+
+include @abs_top_srcdir@/module/os/linux/zfs/Makefile

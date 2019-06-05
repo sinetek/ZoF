@@ -102,6 +102,16 @@ typedef struct kstat_raw_ops {
 	void *(*addr)(kstat_t *ksp, loff_t index);
 } kstat_raw_ops_t;
 
+#ifdef __linux__
+typedef struct kstat_proc_entry {
+	char	kpe_name[KSTAT_STRLEN+1];	/* kstat name */
+	char	kpe_module[KSTAT_STRLEN+1];	/* provider module name */
+	kstat_module_t		*kpe_owner;	/* kstat module linkage */
+	struct list_head	kpe_list;	/* kstat linkage */
+	struct proc_dir_entry	*kpe_proc;	/* procfs entry */
+} kstat_proc_entry_t;
+#endif
+
 struct kstat_s {
 	int		ks_magic;		/* magic value */
 	kid_t		ks_kid;			/* unique kstat ID */
@@ -116,7 +126,7 @@ struct kstat_s {
 	void		*ks_data;		/* kstat type-specific data */
 	uint_t		ks_ndata;		/* # of data records */
 	size_t		ks_data_size;		/* size of kstat data section */
-	struct proc_dir_entry *ks_proc;		/* proc linkage */
+	kstat_proc_entry_t ks_proc;		/* proc linkage */
 	kstat_update_t	*ks_update;		/* dynamic updates */
 	void		*ks_private;		/* private data */
 	kmutex_t	ks_private_lock;	/* kstat private data lock */

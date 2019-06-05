@@ -28,4 +28,6 @@
 #define	bcopy(src, dest, size)		memmove(dest, src, size)
 #define	bcmp(src, dest, size)		memcmp((src), (dest), (size_t)(size))
 
+#define	spl_strdup(str)			strdup(str)
+
 #endif	/* _SPL_SYS_STRINGS_H */

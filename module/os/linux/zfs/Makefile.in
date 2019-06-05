@@ -1,44 +1,33 @@
-src = @abs_top_srcdir@/module/zfs
-obj = @abs_builddir@
-target_cpu = @target_cpu@
-
-MODULE := zfs
-
-obj-$(CONFIG_ZFS) := $(MODULE).o
-
-ccflags-y := $(ZFS_MODULE_CFLAGS) $(ZFS_MODULE_CPPFLAGS)
-
 # Suppress unused-value warnings in sparc64 architecture headers
 ifeq ($(target_cpu),sparc64)
 ccflags-y += -Wno-unused-value
 endif
 
-# Suppress unused but set variable warnings often due to ASSERTs
-ccflags-y += $(NO_UNUSED_BUT_SET_VARIABLE)
+ccflags-y += -I@abs_top_srcdir@/module/os/linux/zfs
 
-$(MODULE)-objs += abd.o
-$(MODULE)-objs += policy.o
-$(MODULE)-objs += qat.o
-$(MODULE)-objs += qat_compress.o
-$(MODULE)-objs += qat_crypt.o
-$(MODULE)-objs += vdev_disk.o
-$(MODULE)-objs += vdev_file.o
-$(MODULE)-objs += zfs_acl.o
-$(MODULE)-objs += zfs_ctldir.o
-$(MODULE)-objs += zfs_debug.o
-$(MODULE)-objs += zfs_dir.o
-$(MODULE)-objs += zfs_log.o
-$(MODULE)-objs += zfs_replay.o
-$(MODULE)-objs += zfs_sysfs.o
-$(MODULE)-objs += zfs_vfsops.o
-$(MODULE)-objs += zfs_vnops.o
-$(MODULE)-objs += zfs_znode.o
-$(MODULE)-objs += zio_crypt.o
-$(MODULE)-objs += zle.o
-$(MODULE)-objs += zpl_ctldir.o
-$(MODULE)-objs += zpl_export.o
-$(MODULE)-objs += zpl_file.o
-$(MODULE)-objs += zpl_inode.o
-$(MODULE)-objs += zpl_super.o
-$(MODULE)-objs += zpl_xattr.o
-$(MODULE)-objs += zvol.o
+$(MODULE)-objs += ../os/linux/zfs/abd.o
+$(MODULE)-objs += ../os/linux/zfs/policy.o
+$(MODULE)-objs += ../os/linux/zfs/qat.o
+$(MODULE)-objs += ../os/linux/zfs/qat_compress.o
+$(MODULE)-objs += ../os/linux/zfs/qat_crypt.o
+$(MODULE)-objs += ../os/linux/zfs/spa_stats.o
+$(MODULE)-objs += ../os/linux/zfs/vdev_disk.o
+$(MODULE)-objs += ../os/linux/zfs/vdev_file.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_acl.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_ctldir.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_debug.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_dir.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_log.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_replay.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_sysfs.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_vfsops.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_vnops.o
+$(MODULE)-objs += ../os/linux/zfs/zfs_znode.o
+$(MODULE)-objs += ../os/linux/zfs/zio_crypt.o
+$(MODULE)-objs += ../os/linux/zfs/zpl_ctldir.o
+$(MODULE)-objs += ../os/linux/zfs/zpl_export.o
+$(MODULE)-objs += ../os/linux/zfs/zpl_file.o
+$(MODULE)-objs += ../os/linux/zfs/zpl_inode.o
+$(MODULE)-objs += ../os/linux/zfs/zpl_super.o
+$(MODULE)-objs += ../os/linux/zfs/zpl_xattr.o
+$(MODULE)-objs += ../os/linux/zfs/zvol.o

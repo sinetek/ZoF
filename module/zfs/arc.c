@@ -9362,7 +9362,7 @@ MODULE_PARM_DESC(l2arc_feed_secs, "Seconds between L2ARC writing");
 module_param(l2arc_feed_min_ms, ulong, 0644);
 MODULE_PARM_DESC(l2arc_feed_min_ms, "Min feed interval in milliseconds");
 
-vmodule_param(l2arc_noprefetch, int, 0644);
+module_param(l2arc_noprefetch, int, 0644);
 MODULE_PARM_DESC(l2arc_noprefetch, "Skip caching prefetched buffers");
 
 module_param(l2arc_feed_again, int, 0644);

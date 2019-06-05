@@ -1582,7 +1582,7 @@ zfs_acl_chmod_setattr(znode_t *zp, zfs_acl_t **aclp, uint64_t mode)
 	mutex_exit(&zp->z_lock);
 	mutex_exit(&zp->z_acl_lock);
 	ASSERT(*aclp);
-	return (0)
+	return (0);
 }
 
 /*

@@ -33,7 +33,13 @@
 #ifndef _SYS_SPA_H
 #define	_SYS_SPA_H
 
+#ifndef __linux__
 #include <sys/cdefs.h>
+#else
+#if !defined(__printflike)
+#define __printflike(x, y) __attribute__((__format__(__printf__, x, y)))
+#endif
+#endif
 #include <sys/avl.h>
 #include <sys/zfs_context.h>
 #include <sys/kstat.h>
@@ -904,7 +910,7 @@ typedef struct spa_history_kstat {
 
 typedef struct spa_history_list {
 	uint64_t		size;
-#if defined(__linux_) || !defined(_KERNEL)
+#if defined(__linux__)
 	procfs_list_t		procfs_list;
 #endif
 } spa_history_list_t;

@@ -35,6 +35,12 @@
 #include <sys/spa.h>
 #include <sys/zfs_stat.h>
 
+#ifdef __FreeBSD__
+#define ZFS_CMD_PLATFORM_PAD uint64_t zc_freebsd_drr_pad
+#else
+#define ZFS_CMD_PLATFORM_PAD
+#endif
+
 #ifdef _KERNEL
 #include <sys/nvpair.h>
 #endif	/* _KERNEL */
@@ -453,6 +459,7 @@ typedef struct zfs_cmd {
 	zfs_share_t	zc_share;
 	uint64_t	zc_jailid;
 	dmu_objset_stats_t zc_objset_stats;
+	ZFS_CMD_PLATFORM_PAD;
 	struct drr_begin zc_begin_record;
 	zinject_record_t zc_inject_record;
 	uint32_t	zc_defer_destroy;

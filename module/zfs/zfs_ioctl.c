@@ -6290,6 +6290,7 @@ zfs_ioc_unjail(zfs_cmd_t *zc)
 }
 
 static const zfs_ioc_key_t zfs_keys_nextboot[] = {
+	{"command",		DATA_TYPE_STRING,	0}
 };
 
 static int
@@ -7054,7 +7055,7 @@ zfs_ioctl_init(void)
 	    zfs_secpolicy_config, POOL_CHECK_NONE);
 	zfs_ioctl_register("fbsd_nextboot", ZFS_IOC_NEXTBOOT,
 	    zfs_ioc_nextboot, zfs_secpolicy_config, NO_NAME,
-		POOL_CHECK_NONE, B_FALSE, B_FALSE, zfs_keys_nextboot, 0);
+		POOL_CHECK_NONE, B_FALSE, B_FALSE, zfs_keys_nextboot, 1);
 #endif
 }
 

@@ -5551,7 +5551,11 @@ zfs_ioc_clear(zfs_cmd_t *zc)
  * outnvl is unused
  */
 static const zfs_ioc_key_t zfs_keys_pool_reopen[] = {
+#ifdef __FreeBSD__
+	{"scrub_restart",	DATA_TYPE_BOOLEAN_VALUE,	ZK_OPTIONAL},
+#else
 	{"scrub_restart",	DATA_TYPE_BOOLEAN_VALUE,	0},
+#endif
 };
 
 /* ARGSUSED */
@@ -6284,6 +6288,9 @@ zfs_ioc_unjail(zfs_cmd_t *zc)
 	return (zone_dataset_detach(curthread->td_ucred, zc->zc_name,
 	    (int)zc->zc_jailid));
 }
+
+static const zfs_ioc_key_t zfs_keys_nextboot[] = {
+};
 
 static int
 zfs_ioc_nextboot(const char *unused, nvlist_t *innvl, nvlist_t *outnvl)
@@ -7047,7 +7054,7 @@ zfs_ioctl_init(void)
 	    zfs_secpolicy_config, POOL_CHECK_NONE);
 	zfs_ioctl_register("fbsd_nextboot", ZFS_IOC_NEXTBOOT,
 	    zfs_ioc_nextboot, zfs_secpolicy_config, NO_NAME,
-		POOL_CHECK_NONE, B_FALSE, B_FALSE, NULL, 0);
+		POOL_CHECK_NONE, B_FALSE, B_FALSE, zfs_keys_nextboot, 0);
 #endif
 }
 

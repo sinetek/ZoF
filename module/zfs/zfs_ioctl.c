@@ -7057,7 +7057,7 @@ zfs_ioctl_init(void)
 	    zfs_secpolicy_config, POOL_CHECK_NONE);
 	zfs_ioctl_register("fbsd_nextboot", ZFS_IOC_NEXTBOOT,
 	    zfs_ioc_nextboot, zfs_secpolicy_config, NO_NAME,
-		POOL_CHECK_NONE, B_FALSE, B_FALSE, zfs_keys_nextboot, 1);
+		POOL_CHECK_NONE, B_FALSE, B_FALSE, zfs_keys_nextboot, 3);
 #endif
 }
 

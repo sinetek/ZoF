@@ -4076,6 +4076,7 @@ arc_prune_async(int64_t adjust)
 	if ((adjustptr = malloc(sizeof(int64_t), M_TEMP, M_NOWAIT)) == NULL)
 		return;
 
+	*adjustptr = adjust;
 	taskq_dispatch(arc_prune_taskq, arc_prune_task, adjustptr, TQ_SLEEP);
 	ARCSTAT_BUMP(arcstat_prune);
 }

@@ -106,7 +106,7 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_feed_again, CTLFLAG_RW,
     &l2arc_feed_again, 0, "turbo warmup");
 SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_norw, CTLFLAG_RW,
     &l2arc_norw, 0, "no reads during writes");
-SYSCTL_INT(_vfs_zfs, OID_AUTO, zfs_compressed_arc_enabled, CTLFLAG_RW,
+SYSCTL_INT(_vfs_zfs, OID_AUTO, compressed_arc_enabled, CTLFLAG_RW,
     &zfs_compressed_arc_enabled, 1, "compressed arc buffers");
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,

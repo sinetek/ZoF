@@ -126,7 +126,9 @@ struct kstat_s {
 	void		*ks_data;		/* kstat type-specific data */
 	uint_t		ks_ndata;		/* # of data records */
 	size_t		ks_data_size;		/* size of kstat data section */
+#if defined(__linux__) || !defined(_KERNEL)
 	kstat_proc_entry_t ks_proc;		/* proc linkage */
+#endif
 	kstat_update_t	*ks_update;		/* dynamic updates */
 	void		*ks_private;		/* private data */
 	kmutex_t	ks_private_lock;	/* kstat private data lock */
@@ -137,8 +139,8 @@ struct kstat_s {
 	char		*ks_raw_buf;		/* buf used for raw ops */
 	size_t		ks_raw_bufsize;		/* size of raw ops buffer */
 #if defined(_KERNEL) && defined(__FreeBSD__)
-        struct sysctl_ctx_list ks_sysctl_ctx;
-        struct sysctl_oid *ks_sysctl_root;
+	struct sysctl_ctx_list ks_sysctl_ctx;
+	struct sysctl_oid *ks_sysctl_root;
 #endif
 
 };

@@ -602,7 +602,7 @@ zfs_zevent_fd_hold(int fd, minor_t *minorp, zfs_zevent_t **ze)
 int
 zfs_zevent_fd_hold(int fd, minor_t *minorp, zfs_zevent_t **ze)
 {
-	panic("implement me XXX");
+	printf("%s unimplemented\n", %s);
 	return (ENOTSUP);
 }
 #endif

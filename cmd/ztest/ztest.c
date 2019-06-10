@@ -123,6 +123,9 @@
 #ifdef __linux__
 #include <stdio_ext.h>
 #endif
+#ifdef __FreeBSD__
+#define getexecname getprogname
+#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>

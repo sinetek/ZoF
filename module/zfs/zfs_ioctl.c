@@ -229,6 +229,12 @@
 #endif
 volatile int geom_inhibited;
 
+#ifdef __GNUC__
+#define _CC_UNUSED_ __attribute__((unused))
+#else
+#define _CC_UNUSED_ __unused
+#endif
+
 /*
  * Limit maximum nvlist size.  We don't want users passing in insane values
  * for zc->zc_nvlist_src_size, since we will need to allocate that much memory.
@@ -4150,7 +4156,7 @@ static int
 zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 {
 	zfsvfs_t *zfsvfs;
-	zvol_state_t *zv __unused;
+	zvol_state_t *zv _CC_UNUSED_;
 	char *target = NULL;
 	int error;
 
@@ -4853,7 +4859,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 
 	if (error == 0) {
 		zfsvfs_t *zfsvfs = NULL;
-		zvol_state_t *zv __unused = NULL;
+		zvol_state_t *zv _CC_UNUSED_ = NULL;
 
 		if (getzfsvfs(tofs, &zfsvfs) == 0) {
 			/* online recv */
@@ -5910,7 +5916,11 @@ zfs_ioc_diff(zfs_cmd_t *zc)
 
 	off = fp->f_offset;
 
+#if defined(_KERNEL) && defined(__FreeBSD__)
 	error = dmu_diff(zc->zc_name, zc->zc_value, fp, &off);
+#else
+	error = dmu_diff(zc->zc_name, zc->zc_value, fp->f_vnode, &off);
+#endif
 
 	if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
 		fp->f_offset = off;
@@ -7552,7 +7562,7 @@ out:
 static long
 zfsdev_compat_ioctl(struct file *filp, unsigned cmd, unsigned long arg)
 {
-	return (zfsdev_ioctl(filp, cmd, arg));
+	return (zfsdev_ioctl_linux(filp, cmd, arg));
 }
 #else
 #define	zfsdev_compat_ioctl	NULL
@@ -7562,7 +7572,7 @@ zfsdev_compat_ioctl(struct file *filp, unsigned cmd, unsigned long arg)
 static const struct file_operations zfsdev_fops = {
 	.open		= zfsdev_open,
 	.release	= zfsdev_release,
-	.unlocked_ioctl	= zfsdev_ioctl,
+	.unlocked_ioctl	= zfsdev_ioctl_linux,
 	.compat_ioctl	= zfsdev_compat_ioctl,
 	.owner		= THIS_MODULE,
 };

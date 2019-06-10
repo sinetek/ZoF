@@ -2,7 +2,7 @@ subdir-m += avl
 subdir-m += icp
 subdir-m += lua
 subdir-m += nvpair
-subdir-m += spl
+subdir-m += os/linux/spl
 subdir-m += unicode
 subdir-m += zcommon
 subdir-m += zfs
@@ -13,8 +13,9 @@ ZFS_MODULE_CFLAGS += -std=gnu99 -Wno-declaration-after-statement
 ZFS_MODULE_CFLAGS += @KERNEL_DEBUG_CFLAGS@
 ZFS_MODULE_CFLAGS += -include @abs_top_builddir@/zfs_config.h
 ZFS_MODULE_CFLAGS += -I@abs_top_srcdir@/include/spl
+@BUILD_LINUX_TRUE@ZFS_MODULE_CFLAGS += -I@abs_top_srcdir@/include/os/linux/spl
+@BUILD_LINUX_TRUE@ZFS_MODULE_CFLAGS += -I@abs_top_srcdir@/include/os/linux/zfs
 ZFS_MODULE_CFLAGS += -I@abs_top_srcdir@/include
-
 ZFS_MODULE_CPPFLAGS += -D_KERNEL
 ZFS_MODULE_CPPFLAGS += @KERNEL_DEBUG_CPPFLAGS@
 
@@ -35,7 +36,7 @@ modules-Linux:
 	list='$(SUBDIR_TARGETS)'; for targetdir in $$list; do \
 		$(MAKE) -C $$targetdir; \
 	done
-	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` @KERNEL_MAKE@ CONFIG_ZFS=m $@
+	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` @KERNEL_MAKE@ CONFIG_ZFS=m modules
 
 # Only pass down gmake -j flag, if used.
 modules-FreeBSD:
@@ -51,7 +52,7 @@ modules: modules-@ac_system@
 clean-Linux:
 	@# Only cleanup the kernel build directories when CONFIG_KERNEL
 	@# is defined.  This indicates that kernel modules should be built.
-@CONFIG_KERNEL_TRUE@	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` @KERNEL_MAKE@ $@
+@CONFIG_KERNEL_TRUE@	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` @KERNEL_MAKE@ clean
 
 	if [ -f @LINUX_SYMBOLS@ ]; then $(RM) @LINUX_SYMBOLS@; fi
 	if [ -f Module.markers ]; then $(RM) Module.markers; fi

@@ -40,12 +40,12 @@
 #include <sys/zio_checksum.h>
 #include <sys/zfs_znode.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(__FreeBSD__)
 #include <sys/buf.h>
 #endif
 
 struct diffarg {
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(__FreeBSD__)
 	struct file *da_fp;
 #else
 	struct vnode *da_vp;
@@ -89,7 +89,7 @@ write_record(struct diffarg *da)
 	ssize_t resid; /* have to get resid to get detailed errno */
 	struct vnode *vp;
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(__FreeBSD__)
 	vp = da->da_fp->f_vnode;
 #else
 	vp = da->da_vp;
@@ -197,7 +197,7 @@ diff_cb(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 	return (0);
 }
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(__FreeBSD__)
 int
 dmu_diff(const char *tosnap_name, const char *fromsnap_name,
     struct file *fp, offset_t *offp)
@@ -248,7 +248,7 @@ dmu_diff(const char *tosnap_name, const char *fromsnap_name,
 	dsl_dataset_long_hold(tosnap, FTAG);
 	dsl_pool_rele(dp, FTAG);
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(__FreeBSD__)
 	da.da_fp = fp;
 #else
 	da.da_vp = vp;

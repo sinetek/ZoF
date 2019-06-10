@@ -203,9 +203,10 @@ libzpool_la_LIBADD = \
 
 if BUILD_FREEBSD
 libzpool_la_LIBADD += $(ZLIB) -ldl -lgeom
+libzpool_la_LDFLAGS = -pthread -version-info 4:0:0
 else
 libzpool_la_LIBADD += $(ZLIB) -ldl
-endif
 libzpool_la_LDFLAGS = -pthread -version-info 2:0:0
+endif
 
 EXTRA_DIST = $(USER_C)

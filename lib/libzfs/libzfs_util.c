@@ -57,6 +57,8 @@
 #include <sys/zfs_sysfs.h>
 
 #ifdef __FreeBSD__
+#include <sys/linker.h>
+#include <sys/module.h>
 #define execvpe exect
 #define ESTRPIPE EPIPE
 #endif
@@ -70,6 +72,10 @@ libzfs_errno(libzfs_handle_t *hdl)
 const char *
 libzfs_error_init(int error)
 {
+#ifdef __FreeBSD__
+
+	return strerror(error);
+#else
 	switch (error) {
 	case ENXIO:
 		return (dgettext(TEXT_DOMAIN, "The ZFS modules are not "
@@ -90,6 +96,7 @@ libzfs_error_init(int error)
 		return (dgettext(TEXT_DOMAIN, "Failed to initialize the "
 		    "libzfs library.\n"));
 	}
+#endif
 }
 
 const char *
@@ -708,6 +715,7 @@ libzfs_print_on_error(libzfs_handle_t *hdl, boolean_t printerr)
 	hdl->libzfs_printerr = printerr;
 }
 
+#ifdef __linux__
 static int
 libzfs_module_loaded(const char *module)
 {
@@ -719,6 +727,7 @@ libzfs_module_loaded(const char *module)
 
 	return (access(path, F_OK) == 0);
 }
+#endif
 
 
 /*
@@ -911,6 +920,17 @@ libzfs_envvar_is_set(char *envvar)
 static int
 libzfs_load_module(const char *module)
 {
+#ifdef __FreeBSD__
+
+	if (modfind(module) < 0) {
+		/* Not present in kernel, try loading it. */
+		if (kldload(module) < 0 || modfind(module) < 0) {
+			if (errno != EEXIST)
+				return (errno);
+		}
+	}
+	return (0);
+#else
 	char *argv[4] = {"/sbin/modprobe", "-q", (char *)module, (char *)0};
 	char *load_str, *timeout_str;
 	long timeout = 10; /* seconds */
@@ -918,9 +938,6 @@ libzfs_load_module(const char *module)
 	int load = 0, fd;
 	hrtime_t start;
 
-#ifdef __FreeBSD__
-	return (0);
-#endif
 	/* Optionally request module loading */
 	if (!libzfs_module_loaded(module)) {
 		load_str = getenv("ZFS_MODULE_LOADING");
@@ -971,6 +988,7 @@ libzfs_load_module(const char *module)
 	} while (NSEC2MSEC(gethrtime() - start) < (timeout * MILLISEC));
 
 	return (ENOENT);
+#endif
 }
 
 libzfs_handle_t *

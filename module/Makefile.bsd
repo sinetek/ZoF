@@ -4,7 +4,7 @@
 SRCDIR= ${.CURDIR}
 INCDIR=${.CURDIR:H}/include
 
-KMOD=	zfs
+KMOD=	openzfs
 
 .PATH:	${SRCDIR}/avl \
 	${SRCDIR}/lua \

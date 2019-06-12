@@ -624,7 +624,7 @@ static arc_state_t	*arc_l2c_only;
 #define	arc_tempreserve	ARCSTAT(arcstat_tempreserve)
 #define	arc_loaned_bytes	ARCSTAT(arcstat_loaned_bytes)
 #define	arc_meta_limit	ARCSTAT(arcstat_meta_limit) /* max size for metadata */
-#define	arc_dnode_limit	ARCSTAT(arcstat_dnode_limit) /* max size for dnodes */
+#define	arc_dnode_size_limit	ARCSTAT(arcstat_dnode_limit) /* max size for dnodes */
 #define	arc_meta_min	ARCSTAT(arcstat_meta_min) /* min size for metadata */
 #define	arc_meta_max	ARCSTAT(arcstat_meta_max) /* max size of metadata */
 #define	arc_need_free	ARCSTAT(arcstat_need_free) /* bytes to be freed */
@@ -3939,9 +3939,9 @@ arc_evict_state(arc_state_t *state, uint64_t spa, int64_t bytes,
 		 * shrinker.
 		 */
 		if (type == ARC_BUFC_DATA && aggsum_compare(&astat_dnode_size,
-		    arc_dnode_limit) > 0) {
+		    arc_dnode_size_limit) > 0) {
 			arc_prune_async((aggsum_upper_bound(&astat_dnode_size) -
-			    arc_dnode_limit) / sizeof (dnode_t) /
+			    arc_dnode_size_limit) / sizeof (dnode_t) /
 			    zfs_arc_dnode_reduce_percent);
 		}
 
@@ -7441,8 +7441,8 @@ arc_tuning_update(void)
 		arc_p = (arc_c >> 1);
 		if (arc_meta_limit > arc_c_max)
 			arc_meta_limit = arc_c_max;
-		if (arc_dnode_limit > arc_meta_limit)
-			arc_dnode_limit = arc_meta_limit;
+		if (arc_dnode_size_limit > arc_meta_limit)
+			arc_dnode_size_limit = arc_meta_limit;
 	}
 
 	/* Valid range: 32M - <arc_c_max> */
@@ -7460,8 +7460,8 @@ arc_tuning_update(void)
 		arc_meta_min = zfs_arc_metadata_min;
 		if (arc_meta_limit < arc_meta_min)
 			arc_meta_limit = arc_meta_min;
-		if (arc_dnode_limit < arc_meta_min)
-			arc_dnode_limit = arc_meta_min;
+		if (arc_dnode_size_limit < arc_meta_min)
+			arc_dnode_size_limit = arc_meta_min;
 	}
 
 	/* Valid range: <arc_meta_min> - <arc_c_max> */
@@ -7475,10 +7475,10 @@ arc_tuning_update(void)
 	/* Valid range: <arc_meta_min> - <arc_meta_limit> */
 	limit = zfs_arc_dnode_limit ? zfs_arc_dnode_limit :
 	    MIN(zfs_arc_dnode_limit_percent, 100) * arc_meta_limit / 100;
-	if ((limit != arc_dnode_limit) &&
+	if ((limit != arc_dnode_size_limit) &&
 	    (limit >= arc_meta_min) &&
 	    (limit <= arc_meta_limit))
-		arc_dnode_limit = limit;
+		arc_dnode_size_limit = limit;
 
 	/* Valid range: 1 - N */
 	if (zfs_arc_grow_retry)
@@ -7739,7 +7739,7 @@ arc_init(void)
 	percent = MIN(zfs_arc_meta_limit_percent, 100);
 	arc_meta_limit = MAX(arc_meta_min, (percent * arc_c_max) / 100);
 	percent = MIN(zfs_arc_dnode_limit_percent, 100);
-	arc_dnode_limit = (percent * arc_meta_limit) / 100;
+	arc_dnode_size_limit = (percent * arc_meta_limit) / 100;
 
 	/* Apply user specified tunings */
 	arc_tuning_update();
@@ -9290,12 +9290,10 @@ EXPORT_SYMBOL(arc_add_prune_callback);
 EXPORT_SYMBOL(arc_remove_prune_callback);
 
 /* BEGIN CSTYLED */
-module_param(zfs_arc_min, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_min, "Min arc size");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_min, UQUAD, CTLFLAG_RWTUN, "Min arc size");
 
-
-module_param(zfs_arc_max, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_max, "Max arc size");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_max, UQUAD, CTLFLAG_RWTUN,
+    "Maximum ARC size");
 
 ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_limit, UQUAD, CTLFLAG_RW,
 	"Min limit for arc size");
@@ -9335,8 +9333,7 @@ MODULE_PARM_DESC(zfs_arc_p_min_shift, "arc_c shift to calc min/max arc_p");
 module_param(zfs_arc_average_blocksize, int, 0444);
 MODULE_PARM_DESC(zfs_arc_average_blocksize, "Target average block size");
 
-module_param(zfs_compressed_arc_enabled, int, 0644);
-MODULE_PARM_DESC(zfs_compressed_arc_enabled, "Disable compressed arc buffers");
+ZFS_MODULE_PARAM(zfs, zfs_, compressed_arc_enabled, UINT, CTLFLAG_RW,"Disable compressed arc buffers");
 
 ZFS_MODULE_PARAM(zfs, , arc_min_prefetch_ms, UINT, CTLFLAG_RW,
 	"Min life of prefetch block in ms");
@@ -9364,11 +9361,9 @@ ZFS_MODULE_PARAM(zfs, , l2arc_feed_min_ms, UQUAD, CTLFLAG_RW,
 
 ZFS_MODULE_PARAM(zfs, , l2arc_noprefetch, UINT, CTLFLAG_RW, "Skip caching prefetched buffers");
 
-module_param(l2arc_feed_again, int, 0644);
-MODULE_PARM_DESC(l2arc_feed_again, "Turbo L2ARC warmup");
+ZFS_MODULE_PARAM(zfs, , l2arc_feed_again, UINT, CTLFLAG_RW, "Turbo L2ARC warmup");
 
-module_param(l2arc_norw, int, 0644);
-MODULE_PARM_DESC(l2arc_norw, "No reads during writes");
+ZFS_MODULE_PARAM(zfs, , l2arc_norw, UINT, CTLFLAG_RW, "No reads during writes");
 
 module_param(zfs_arc_lotsfree_percent, int, 0644);
 MODULE_PARM_DESC(zfs_arc_lotsfree_percent,
@@ -9377,15 +9372,12 @@ MODULE_PARM_DESC(zfs_arc_lotsfree_percent,
 module_param(zfs_arc_sys_free, ulong, 0644);
 MODULE_PARM_DESC(zfs_arc_sys_free, "System free memory target size in bytes");
 
-module_param(zfs_arc_dnode_limit, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_dnode_limit, "Minimum bytes of dnodes in arc");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit, UQUAD, CTLFLAG_RW, "Minimum bytes of dnodes in arc");
 
-module_param(zfs_arc_dnode_limit_percent, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_dnode_limit_percent,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit_percent, UQUAD, CTLFLAG_RW,
 	"Percent of ARC meta buffers for dnodes");
 
-module_param(zfs_arc_dnode_reduce_percent, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_dnode_reduce_percent,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_reduce_percent, UQUAD, CTLFLAG_RW,
 	"Percentage of excess dnodes to try to unpin");
 /* END CSTYLED */
 #endif

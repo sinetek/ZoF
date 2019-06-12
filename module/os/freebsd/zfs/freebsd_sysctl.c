@@ -83,19 +83,9 @@ extern int l2arc_norw;			/* no reads during writes */
  * minimum lifespan of a prefetch block in clock ticks
  * (initialized in arc_init())
  */
-extern int		zfs_compressed_arc_enabled;
 
 /* arc.c */
 SYSCTL_DECL(_vfs_zfs);
-
-SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_noprefetch, CTLFLAG_RW,
-    &l2arc_noprefetch, 0, "don't cache prefetch bufs");
-SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_feed_again, CTLFLAG_RW,
-    &l2arc_feed_again, 0, "turbo warmup");
-SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_norw, CTLFLAG_RW,
-    &l2arc_norw, 0, "no reads during writes");
-SYSCTL_INT(_vfs_zfs, OID_AUTO, compressed_arc_enabled, CTLFLAG_RW,
-    &zfs_compressed_arc_enabled, 1, "compressed arc buffers");
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,
     &ARC_anon.arcs_size.rc_count, 0, "size of anonymous state");
@@ -145,12 +135,8 @@ SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, mfu_ghost_data_esize, CTLFLAG_RD,
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2c_only_size, CTLFLAG_RD,
     &ARC_l2c_only.arcs_size.rc_count, 0, "size of mru state");
 
-extern unsigned long zfs_arc_max;
-extern unsigned long zfs_arc_min;
-extern unsigned long zfs_arc_meta_min;
 extern int			arc_no_grow_shift;
 extern int		arc_shrink_shift;
-static uint64_t arc_abs_min = 16 << 20;
 
 extern arc_stats_t arc_stats;
 #define	ARCSTAT(stat)	(arc_stats.stat.value.ui64)
@@ -186,80 +172,6 @@ sysctl_vfs_zfs_arc_no_grow_shift(SYSCTL_HANDLER_ARGS)
 	return (0);
 }
 
-static int
-sysctl_vfs_zfs_arc_max(SYSCTL_HANDLER_ARGS)
-{
-	uint64_t val;
-	int err;
-
-	val = zfs_arc_max;
-	err = sysctl_handle_64(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-	if (zfs_arc_max == 0) {
-		/* Loader tunable so blindly set */
-		zfs_arc_max = val;
-		return (0);
-	}
-
-	if (val < arc_abs_min || val > kmem_size())
-		return (EINVAL);
-	if (val < arc_c_min)
-		return (EINVAL);
-
-	arc_c_max = val;
-
-	arc_c = arc_c_max;
-	arc_p = (arc_c >> 1);
-
-
-	/* if kmem_flags are set, lets try to use less memory */
-	if (kmem_debugging())
-		arc_c = arc_c / 2;
-
-	zfs_arc_max = arc_c;
-
-	return (0);
-}
-
-static int
-sysctl_vfs_zfs_arc_min(SYSCTL_HANDLER_ARGS)
-{
-	uint64_t val;
-	int err;
-
-	val = zfs_arc_min;
-	err = sysctl_handle_64(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-	if (zfs_arc_min == 0) {
-		/* Loader tunable so blindly set */
-		zfs_arc_min = val;
-		return (0);
-	}
-
-	if (val < arc_abs_min || val > arc_c_max)
-		return (EINVAL);
-
-	arc_c_min = val;
-
-	if (zfs_arc_meta_min == 0)
-                arc_meta_min = arc_c_min / 2;
-
-	if (arc_c < arc_c_min)
-                arc_c = arc_c_min;
-
-	zfs_arc_min = arc_c_min;
-
-	return (0);
-}
-
-SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_max, CTLTYPE_U64 | CTLFLAG_RWTUN,
-    0, sizeof(uint64_t), sysctl_vfs_zfs_arc_max, "QU", "Maximum ARC size");
-SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_min, CTLTYPE_U64 | CTLFLAG_RWTUN,
-    0, sizeof(uint64_t), sysctl_vfs_zfs_arc_min, "QU", "Minimum ARC size");
 SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_no_grow_shift, CTLTYPE_U32 | CTLFLAG_RWTUN,
     0, sizeof(uint32_t), sysctl_vfs_zfs_arc_no_grow_shift, "U",
     "log2(fraction of ARC which must be free to allow growing)");

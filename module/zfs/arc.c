@@ -407,8 +407,8 @@ int arc_zio_arena_free_shift = 2;
  */
 unsigned long zfs_arc_max = 0;
 unsigned long zfs_arc_min = 0;
-unsigned long zfs_arc_meta_limit = 0;
-unsigned long zfs_arc_meta_min = 0;
+unsigned long zfs_arc_metadata_limit = 0;
+unsigned long zfs_arc_metadata_min = 0;
 unsigned long zfs_arc_dnode_limit = 0;
 unsigned long zfs_arc_dnode_reduce_percent = 10;
 int zfs_arc_grow_retry = 0;
@@ -7454,10 +7454,10 @@ arc_tuning_update(void)
 	}
 
 	/* Valid range: 16M - <arc_c_max> */
-	if ((zfs_arc_meta_min) && (zfs_arc_meta_min != arc_meta_min) &&
-	    (zfs_arc_meta_min >= 1ULL << SPA_MAXBLOCKSHIFT) &&
-	    (zfs_arc_meta_min <= arc_c_max)) {
-		arc_meta_min = zfs_arc_meta_min;
+	if ((zfs_arc_metadata_min) && (zfs_arc_metadata_min != arc_meta_min) &&
+	    (zfs_arc_metadata_min >= 1ULL << SPA_MAXBLOCKSHIFT) &&
+	    (zfs_arc_metadata_min <= arc_c_max)) {
+		arc_meta_min = zfs_arc_metadata_min;
 		if (arc_meta_limit < arc_meta_min)
 			arc_meta_limit = arc_meta_min;
 		if (arc_dnode_limit < arc_meta_min)
@@ -7465,7 +7465,7 @@ arc_tuning_update(void)
 	}
 
 	/* Valid range: <arc_meta_min> - <arc_c_max> */
-	limit = zfs_arc_meta_limit ? zfs_arc_meta_limit :
+	limit = zfs_arc_metadata_limit ? zfs_arc_metadata_limit :
 	    MIN(zfs_arc_meta_limit_percent, 100) * arc_c_max / 100;
 	if ((limit != arc_meta_limit) &&
 	    (limit >= arc_meta_min) &&
@@ -9280,7 +9280,7 @@ l2arc_stop(void)
 	mutex_exit(&l2arc_feed_thr_lock);
 }
 
-#if defined(_KERNEL) && defined(__linux__)
+#if defined(_KERNEL)
 EXPORT_SYMBOL(arc_buf_size);
 EXPORT_SYMBOL(arc_write);
 EXPORT_SYMBOL(arc_read);
@@ -9293,18 +9293,18 @@ EXPORT_SYMBOL(arc_remove_prune_callback);
 module_param(zfs_arc_min, ulong, 0644);
 MODULE_PARM_DESC(zfs_arc_min, "Min arc size");
 
+
 module_param(zfs_arc_max, ulong, 0644);
 MODULE_PARM_DESC(zfs_arc_max, "Max arc size");
 
-module_param(zfs_arc_meta_limit, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_meta_limit, "Meta limit for arc size");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_limit, UQUAD, CTLFLAG_RW,
+	"Min limit for arc size");
 
-module_param(zfs_arc_meta_limit_percent, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_meta_limit_percent,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_meta_limit_percent, UQUAD, CTLFLAG_RW,
 	"Percent of arc size for arc meta limit");
 
-module_param(zfs_arc_meta_min, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_meta_min, "Min arc metadata");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_min, UQUAD, CTLFLAG_RW,
+	"Min arc metadata");
 
 module_param(zfs_arc_meta_prune, int, 0644);
 MODULE_PARM_DESC(zfs_arc_meta_prune, "Meta objects to scan for prune");
@@ -9338,33 +9338,31 @@ MODULE_PARM_DESC(zfs_arc_average_blocksize, "Target average block size");
 module_param(zfs_compressed_arc_enabled, int, 0644);
 MODULE_PARM_DESC(zfs_compressed_arc_enabled, "Disable compressed arc buffers");
 
-module_param(zfs_arc_min_prefetch_ms, int, 0644);
-MODULE_PARM_DESC(zfs_arc_min_prefetch_ms, "Min life of prefetch block in ms");
+ZFS_MODULE_PARAM(zfs, , arc_min_prefetch_ms, UINT, CTLFLAG_RW,
+	"Min life of prefetch block in ms");
 
-module_param(zfs_arc_min_prescient_prefetch_ms, int, 0644);
-MODULE_PARM_DESC(zfs_arc_min_prescient_prefetch_ms,
+ZFS_MODULE_PARAM(zfs, , arc_min_prescient_prefetch_ms, UINT, CTLFLAG_RW,
 	"Min life of prescient prefetched block in ms");
 
-module_param(l2arc_write_max, ulong, 0644);
-MODULE_PARM_DESC(l2arc_write_max, "Max write bytes per interval");
+ZFS_MODULE_PARAM(zfs, , l2arc_write_max, UQUAD, CTLFLAG_RW,
+	"Max write bytes per interval");
 
-module_param(l2arc_write_boost, ulong, 0644);
-MODULE_PARM_DESC(l2arc_write_boost, "Extra write bytes during device warmup");
+ZFS_MODULE_PARAM(zfs, , l2arc_write_boost, UQUAD, CTLFLAG_RW,
+	"Extra write bytes during device warmup");
 
-module_param(l2arc_headroom, ulong, 0644);
-MODULE_PARM_DESC(l2arc_headroom, "Number of max device writes to precache");
+ZFS_MODULE_PARAM(zfs, , l2arc_headroom, UQUAD, CTLFLAG_RW,
+	"Number of max device writes to precache");
 
-module_param(l2arc_headroom_boost, ulong, 0644);
-MODULE_PARM_DESC(l2arc_headroom_boost, "Compressed l2arc_headroom multiplier");
+ZFS_MODULE_PARAM(zfs, , l2arc_headroom_boost, UQUAD, CTLFLAG_RW,
+	"Compressed l2arc_headroom multiplier");
 
-module_param(l2arc_feed_secs, ulong, 0644);
-MODULE_PARM_DESC(l2arc_feed_secs, "Seconds between L2ARC writing");
+ZFS_MODULE_PARAM(zfs, , l2arc_feed_secs, UQUAD, CTLFLAG_RW,
+    "Seconds between L2ARC writing");
 
-module_param(l2arc_feed_min_ms, ulong, 0644);
-MODULE_PARM_DESC(l2arc_feed_min_ms, "Min feed interval in milliseconds");
+ZFS_MODULE_PARAM(zfs, , l2arc_feed_min_ms, UQUAD, CTLFLAG_RW,
+    "Min feed interval in milliseconds");
 
-module_param(l2arc_noprefetch, int, 0644);
-MODULE_PARM_DESC(l2arc_noprefetch, "Skip caching prefetched buffers");
+ZFS_MODULE_PARAM(zfs, , l2arc_noprefetch, UINT, CTLFLAG_RW, "Skip caching prefetched buffers");
 
 module_param(l2arc_feed_again, int, 0644);
 MODULE_PARM_DESC(l2arc_feed_again, "Turbo L2ARC warmup");

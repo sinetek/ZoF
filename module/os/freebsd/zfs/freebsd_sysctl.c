@@ -83,22 +83,10 @@ extern int l2arc_norw;			/* no reads during writes */
  * minimum lifespan of a prefetch block in clock ticks
  * (initialized in arc_init())
  */
-extern int		arc_min_prefetch_ms;
-extern int		arc_min_prescient_prefetch_ms;
 extern int		zfs_compressed_arc_enabled;
 
 /* arc.c */
 SYSCTL_DECL(_vfs_zfs);
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_write_max, CTLFLAG_RW,
-    &l2arc_write_max, 0, "max write size");
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_write_boost, CTLFLAG_RW,
-    &l2arc_write_boost, 0, "extra write during warmup");
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_headroom, CTLFLAG_RW,
-    &l2arc_headroom, 0, "number of dev writes");
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_feed_secs, CTLFLAG_RW,
-    &l2arc_feed_secs, 0, "interval seconds");
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_feed_min_ms, CTLFLAG_RW,
-    &l2arc_feed_min_ms, 0, "min interval milliseconds");
 
 SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_noprefetch, CTLFLAG_RW,
     &l2arc_noprefetch, 0, "don't cache prefetch bufs");
@@ -157,14 +145,8 @@ SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, mfu_ghost_data_esize, CTLFLAG_RD,
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2c_only_size, CTLFLAG_RD,
     &ARC_l2c_only.arcs_size.rc_count, 0, "size of mru state");
 
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, arc_min_prefetch_ms, CTLFLAG_RW,
-    &arc_min_prefetch_ms, 0, "Min life of prefetch block in ms");
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, arc_min_prescient_prefetch_ms, CTLFLAG_RW,
-    &arc_min_prescient_prefetch_ms, 0, "Min life of prescient prefetched block in ms");
-
 extern unsigned long zfs_arc_max;
 extern unsigned long zfs_arc_min;
-extern unsigned long zfs_arc_meta_limit;
 extern unsigned long zfs_arc_meta_min;
 extern int			arc_no_grow_shift;
 extern int		arc_shrink_shift;
@@ -185,26 +167,6 @@ extern arc_stats_t arc_stats;
 #define	arc_meta_max	ARCSTAT(arcstat_meta_max) /* max size of metadata */
 #define	arc_need_free	ARCSTAT(arcstat_need_free) /* bytes to be freed */
 #define	arc_sys_free	ARCSTAT(arcstat_sys_free) /* target system free bytes */
-
-#ifdef notyet
-static int
-sysctl_vfs_zfs_arc_meta_limit(SYSCTL_HANDLER_ARGS)
-{
-	uint64_t val;
-	int err;
-
-	val = zfs_arc_meta_limit;
-	err = sysctl_handle_64(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-        if (val <= 0 || val > arc_c_max)
-		return (EINVAL);
-
-	arc_meta_limit = val;
-	return (0);
-}
-#endif
 
 static int
 sysctl_vfs_zfs_arc_no_grow_shift(SYSCTL_HANDLER_ARGS)
@@ -245,18 +207,12 @@ sysctl_vfs_zfs_arc_max(SYSCTL_HANDLER_ARGS)
 		return (EINVAL);
 	if (val < arc_c_min)
 		return (EINVAL);
-	if (zfs_arc_meta_limit > 0 && val < zfs_arc_meta_limit)
-		return (EINVAL);
 
 	arc_c_max = val;
 
 	arc_c = arc_c_max;
-        arc_p = (arc_c >> 1);
+	arc_p = (arc_c >> 1);
 
-	if (zfs_arc_meta_limit == 0) {
-		/* limit meta-data to 1/4 of the arc capacity */
-		arc_meta_limit = arc_c_max / 4;
-	}
 
 	/* if kmem_flags are set, lets try to use less memory */
 	if (kmem_debugging())
@@ -307,12 +263,6 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_min, CTLTYPE_U64 | CTLFLAG_RWTUN,
 SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_no_grow_shift, CTLTYPE_U32 | CTLFLAG_RWTUN,
     0, sizeof(uint32_t), sysctl_vfs_zfs_arc_no_grow_shift, "U",
     "log2(fraction of ARC which must be free to allow growing)");
-#ifdef notyet
-SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_meta_limit,
-    CTLTYPE_U64 | CTLFLAG_MPSAFE | CTLFLAG_RW, 0, sizeof(uint64_t),
-    sysctl_vfs_zfs_arc_meta_limit, "QU",
-    "ARC metadata limit");
-#endif
 /* dbuf.c */
 
 extern uint64_t dbuf_cache_max_bytes;

@@ -68,6 +68,16 @@
 #include <sys/procfs_list.h>
 #include <linux/dcache_compat.h>
 #include <linux/utsname_compat.h>
+
+#define CTLFLAG_RW 0644
+#define UINT uint
+#define UQUAD ulong
+
+#define ZFS_MODULE_PARAM(name_prefix, name, type, perm, desc) \
+	module_param(name_prefix ## name, type, perm);				\
+	MODULE_PARM_DESC(name_prefix ## name, desc)
+
+
 #elif defined(__FreeBSD__)
 #include <sys/kcondvar.h>
 #include <sys/rwlock.h>
@@ -79,6 +89,12 @@
 #include <sys/conf.h>
 /* XXX move us */
 
+#include <sys/sysctl.h>
+#define ZFS_MODULE_PARAM(scope_prefix, name_prefix, name, type, perm, desc) \
+	SYSCTL_DECL(_vfs_ ## scope_prefix);									\
+	SYSCTL_##type(_vfs_ ## scope_prefix, OID_AUTO, name, perm,	\
+				  &name_prefix ## name, 0, desc)
+
 #define	taskq_create_sysdc(a, b, d, e, p, dc, f) \
 	    (taskq_create(a, b, maxclsyspri, d, e, f))
 
@@ -86,6 +102,11 @@
         *(keyp) = osd_thread_register((destructor));                    \
         KASSERT(*(keyp) > 0, ("cannot register OSD"));                  \
 } while (0)
+#define EXPORT_SYMBOL(x)
+#define module_param(a, b, c)
+#define  MODULE_PARM_DESC(a, b)
+
+
 #define tsd_destroy(keyp)               osd_thread_deregister(*(keyp))
 #define tsd_get(key)                    osd_thread_get(curthread, (key))
 #define tsd_set(key, value)             osd_thread_set(curthread, (key), (value))

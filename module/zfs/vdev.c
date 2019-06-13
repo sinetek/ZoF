@@ -4793,36 +4793,29 @@ EXPORT_SYMBOL(vdev_offline);
 EXPORT_SYMBOL(vdev_clear);
 
 /* BEGIN CSTYLED */
-module_param(zfs_vdev_default_ms_count, int, 0644);
-MODULE_PARM_DESC(zfs_vdev_default_ms_count,
+ZFS_MODULE_PARAM(zfs_vdev, zfs_vdev_, default_ms_count, UINT, ZMOD_RW,
 	"Target number of metaslabs per top-level vdev");
 
-module_param(zfs_vdev_min_ms_count, int, 0644);
-MODULE_PARM_DESC(zfs_vdev_min_ms_count,
+ZFS_MODULE_PARAM(zfs_vdev, zfs_vdev_, min_ms_count, UINT, ZMOD_RW,
 	"Minimum number of metaslabs per top-level vdev");
 
-module_param(zfs_vdev_ms_count_limit, int, 0644);
-MODULE_PARM_DESC(zfs_vdev_ms_count_limit,
+ZFS_MODULE_PARAM(zfs_vdev, zfs_vdev_, ms_count_limit, UINT, ZMOD_RW,
 	"Practical upper limit of total metaslabs per top-level vdev");
 
-module_param(zfs_slow_io_events_per_second, uint, 0644);
-MODULE_PARM_DESC(zfs_slow_io_events_per_second,
+ZFS_MODULE_PARAM(zfs, zfs_, slow_io_events_per_second, UINT, ZMOD_RW,
 	"Rate limit slow IO (delay) events to this many per second");
 
-module_param(zfs_checksum_events_per_second, uint, 0644);
-MODULE_PARM_DESC(zfs_checksum_events_per_second, "Rate limit checksum events "
+ZFS_MODULE_PARAM(zfs, zfs_, checksum_events_per_second, UINT, ZMOD_RW,
 	"to this many checksum errors per second (do not set below zed"
 	"threshold).");
 
-module_param(zfs_scan_ignore_errors, int, 0644);
-MODULE_PARM_DESC(zfs_scan_ignore_errors,
+ZFS_MODULE_PARAM(zfs, zfs_, scan_ignore_errors, UINT, ZMOD_RW,
 	"Ignore errors during resilver/scrub");
 
-module_param(vdev_validate_skip, int, 0644);
-MODULE_PARM_DESC(vdev_validate_skip,
+ZFS_MODULE_PARAM(zfs_vdev, vdev_, validate_skip, UINT, ZMOD_RW,
 	"Bypass vdev_validate()");
 
-module_param(zfs_nocacheflush, int, 0644);
-MODULE_PARM_DESC(zfs_nocacheflush, "Disable cache flushes");
+ZFS_MODULE_PARAM(zfs, zfs_, nocacheflush, UINT, ZMOD_RW,
+    "Disable cache flushes");
 /* END CSTYLED */
 #endif

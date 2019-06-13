@@ -809,32 +809,6 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, min_auto_ashift,
     sysctl_vfs_zfs_min_auto_ashift, "QU",
     "Min ashift used when creating new top-level vdevs.");
 
-/* target number of metaslabs per top-level vdev */
-extern int zfs_vdev_default_ms_count;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, ms_count, CTLFLAG_RDTUN,
-    &zfs_vdev_default_ms_count, 0,
-    "Maximum number of metaslabs per top-level vdev");
-
-/* minimum number of metaslabs per top-level vdev */
-extern int zfs_vdev_min_ms_count;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, min_ms_count, CTLFLAG_RDTUN,
-    &zfs_vdev_min_ms_count, 0,
-    "Minimum number of metaslabs per top-level vdev");
-
-/* lower limit for metaslab size (512M) */
-extern int zfs_vdev_default_ms_shift;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, default_ms_shift, CTLFLAG_RDTUN,
-    &zfs_vdev_default_ms_shift, 0,
-    "Shift between vdev size and number of metaslabs");
-
-/* lower limit for metaslab size (512M) */
-extern int zfs_vdev_max_ms_shift;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, max_ms_shift, CTLFLAG_RDTUN,
-    &zfs_vdev_max_ms_shift, 0,
-    "Shift between vdev size and number of metaslabs");
-
-
-
 /*
  * Since the DTL space map of a vdev is not expected to have a lot of
  * entries, we default its block size to 4K.
@@ -863,18 +837,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, validate_skip, CTLFLAG_RDTUN,
 /* vdev_cache.c */
 SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, cache, CTLFLAG_RW, 0, "ZFS VDEV Cache");
 
-extern int zfs_vdev_cache_max;			/* 16KB */
-SYSCTL_INT(_vfs_zfs_vdev_cache, OID_AUTO, max, CTLFLAG_RDTUN,
-    &zfs_vdev_cache_max, 0, "Maximum I/O request size that increase read size");
-
-extern int zfs_vdev_cache_size;
-SYSCTL_INT(_vfs_zfs_vdev_cache, OID_AUTO, size, CTLFLAG_RDTUN,
-    &zfs_vdev_cache_size, 0, "Size of VDEV cache");
-
-extern int zfs_vdev_cache_bshift;
-SYSCTL_INT(_vfs_zfs_vdev_cache, OID_AUTO, bshift, CTLFLAG_RDTUN,
-    &zfs_vdev_cache_bshift, 0, "Turn too small requests into 1 << this value");
-
 /* vdev_mirror.c */
 /*
  * The load configuration settings below are tuned by default for
@@ -889,34 +851,6 @@ SYSCTL_INT(_vfs_zfs_vdev_cache, OID_AUTO, bshift, CTLFLAG_RDTUN,
 
 static SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, mirror, CTLFLAG_RD, 0,
     "ZFS VDEV Mirror");
-/* Rotating media load calculation configuration. */
-extern int zfs_vdev_mirror_rotating_inc;
-SYSCTL_INT(_vfs_zfs_vdev_mirror, OID_AUTO, rotating_inc, CTLFLAG_RWTUN,
-	&zfs_vdev_mirror_rotating_inc, 0,
-	"Rotating media load increment for non-seeking I/O's");
-
-extern int zfs_vdev_mirror_rotating_seek_inc;
-SYSCTL_INT(_vfs_zfs_vdev_mirror, OID_AUTO, rotating_seek_inc, CTLFLAG_RWTUN,
-	&zfs_vdev_mirror_rotating_seek_inc, 0,
-	"Rotating media load increment for seeking I/O's");
-
-extern int zfs_vdev_mirror_rotating_seek_offset;
-SYSCTL_INT(_vfs_zfs_vdev_mirror, OID_AUTO, rotating_seek_offset, CTLFLAG_RWTUN,
-	&zfs_vdev_mirror_rotating_seek_offset, 0,
-    "Offset in bytes from the last I/O which "
-    "triggers a reduced rotating media seek increment");
-
-/* Non-rotating media load calculation configuration. */
-extern int zfs_vdev_mirror_non_rotating_inc;
-SYSCTL_INT(_vfs_zfs_vdev_mirror, OID_AUTO, non_rotating_inc, CTLFLAG_RWTUN,
-    &zfs_vdev_mirror_non_rotating_inc, 0,
-    "Non-rotating media load increment for non-seeking I/O's");
-
-extern int zfs_vdev_mirror_non_rotating_seek_inc;
-SYSCTL_INT(_vfs_zfs_vdev_mirror, OID_AUTO, non_rotating_seek_inc, CTLFLAG_RWTUN,
-    &zfs_vdev_mirror_non_rotating_seek_inc, 0,
-    "Non-rotating media load increment for seeking I/O's");
-
 
 /* vdev_queue.c */
 static int sysctl_zfs_async_write_active_min_dirty_percent(SYSCTL_HANDLER_ARGS);
@@ -933,11 +867,6 @@ SYSCTL_PROC(_vfs_zfs_vdev, OID_AUTO, async_write_active_max_dirty_percent,
     "Percentage of async write dirty data above which "
     "async_write_max_active is used.");
 
-extern uint32_t zfs_vdev_max_active;
-SYSCTL_UINT(_vfs_zfs_vdev, OID_AUTO, max_active, CTLFLAG_RWTUN,
-    &zfs_vdev_max_active, 0,
-    "The maximum number of I/Os of all types active for each device.");
-
 #define ZFS_VDEV_QUEUE_KNOB_MIN(name)					\
 extern uint32_t zfs_vdev_ ## name ## _min_active;				\
 SYSCTL_UINT(_vfs_zfs_vdev, OID_AUTO, name ## _min_active, CTLFLAG_RWTUN,\
@@ -952,48 +881,8 @@ SYSCTL_UINT(_vfs_zfs_vdev, OID_AUTO, name ## _max_active, CTLFLAG_RWTUN, \
     "Maximum number of I/O requests of type " #name			\
     " active for each device");
 
-ZFS_VDEV_QUEUE_KNOB_MIN(sync_read);
-ZFS_VDEV_QUEUE_KNOB_MAX(sync_read);
-ZFS_VDEV_QUEUE_KNOB_MIN(sync_write);
-ZFS_VDEV_QUEUE_KNOB_MAX(sync_write);
-ZFS_VDEV_QUEUE_KNOB_MIN(async_read);
-ZFS_VDEV_QUEUE_KNOB_MAX(async_read);
-ZFS_VDEV_QUEUE_KNOB_MIN(async_write);
-ZFS_VDEV_QUEUE_KNOB_MAX(async_write);
-ZFS_VDEV_QUEUE_KNOB_MIN(scrub);
-ZFS_VDEV_QUEUE_KNOB_MAX(scrub);
-#ifdef notyet
-ZFS_VDEV_QUEUE_KNOB_MIN(trim);
-ZFS_VDEV_QUEUE_KNOB_MAX(trim);
-#endif
-ZFS_VDEV_QUEUE_KNOB_MIN(removal);
-ZFS_VDEV_QUEUE_KNOB_MAX(removal);
-#ifdef notyet
-ZFS_VDEV_QUEUE_KNOB_MIN(initializing);
-ZFS_VDEV_QUEUE_KNOB_MAX(initializing);
-#endif
 
 #undef ZFS_VDEV_QUEUE_KNOB
-
-extern int zfs_vdev_aggregation_limit;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, aggregation_limit, CTLFLAG_RWTUN,
-    &zfs_vdev_aggregation_limit, 0,
-    "I/O requests are aggregated up to this size");
-
-extern int zfs_vdev_read_gap_limit;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, read_gap_limit, CTLFLAG_RWTUN,
-    &zfs_vdev_read_gap_limit, 0,
-    "Acceptable gap between two reads being aggregated");
-
-extern int zfs_vdev_write_gap_limit;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, write_gap_limit, CTLFLAG_RWTUN,
-    &zfs_vdev_write_gap_limit, 0,
-    "Acceptable gap between two writes being aggregated");
-
-extern int zfs_vdev_queue_depth_pct;
-SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, queue_depth_pct, CTLFLAG_RWTUN,
-    &zfs_vdev_queue_depth_pct, 0,
-    "Queue depth percentage for each top-level");
 
 extern int zfs_vdev_def_queue_depth;
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, def_queue_depth, CTLFLAG_RWTUN,
@@ -1043,39 +932,12 @@ sysctl_zfs_async_write_active_max_dirty_percent(SYSCTL_HANDLER_ARGS)
 	return (0);
 }
 
-/* zil.c */
-extern int zil_replay_disable;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, zil_replay_disable, CTLFLAG_RWTUN,
-    &zil_replay_disable, 0, "Disable intent logging replay");
-
-/*
- * Tunable parameter for debugging or performance analysis.  Setting
- * zfs_nocacheflush will cause corruption on power loss if a volatile
- * out-of-order write cache is enabled.
- */
-extern boolean_t zfs_nocacheflush;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, cache_flush_disable, CTLFLAG_RDTUN,
-    &zfs_nocacheflush, 0, "Disable cache flush");
 #ifdef notyet
 extern boolean_t zfs_trim_enabled;
 SYSCTL_DECL(_vfs_zfs_trim);
 SYSCTL_INT(_vfs_zfs_trim, OID_AUTO, enabled, CTLFLAG_RDTUN, &zfs_trim_enabled, 0,
     "Enable ZFS TRIM");
 #endif
-/*
- * Limit SLOG write size per commit executed with synchronous priority.
- * Any writes above that will be executed with lower (asynchronous) priority
- * to limit potential SLOG device abuse by single active ZIL writer.
- */
-extern uint64_t zil_slog_bulk;
-SYSCTL_QUAD(_vfs_zfs, OID_AUTO, zil_slog_bulk, CTLFLAG_RWTUN,
-    &zil_slog_bulk, 0, "Maximal SLOG commit size with sync priority");
-
-/* XXX make proc to validate */
-extern uint64_t zfs_commit_timeout_pct;
-SYSCTL_QUAD(_vfs_zfs, OID_AUTO, commit_timeout_pct, CTLFLAG_RWTUN,
-    &zfs_commit_timeout_pct, 0, "ZIL block open timeout percentage");
-
 #ifdef notyet
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, trim_on_init, CTLFLAG_RW,
     &vdev_trim_on_init, 0, "Enable/disable full vdev trim on initialisation");
@@ -1095,18 +957,3 @@ SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, use_uma, CTLFLAG_RDTUN, &zio_use_uma, 0,
 extern  int zio_exclude_metadata;
 SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, exclude_metadata, CTLFLAG_RDTUN, &zio_exclude_metadata, 0,
     "Exclude metadata buffers from dumps as well");
-extern boolean_t zio_dva_throttle_enabled;
-SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, dva_throttle_enabled, CTLFLAG_RWTUN,
-    &zio_dva_throttle_enabled, 0, "Enable allocation throttling");
-extern boolean_t zio_requeue_io_start_cut_in_line;
-SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, requeue_io_start_cut_in_line, CTLFLAG_RWTUN,
-    &zio_requeue_io_start_cut_in_line, 0, "Prioritize requeued I/O");
-extern int zfs_sync_pass_deferred_free; /* defer frees starting in this pass */
-SYSCTL_INT(_vfs_zfs, OID_AUTO, sync_pass_deferred_free, CTLFLAG_RDTUN,
-    &zfs_sync_pass_deferred_free, 0, "defer frees starting in this pass");
-extern int zfs_sync_pass_dont_compress; /* don't compress starting in this pass */
-SYSCTL_INT(_vfs_zfs, OID_AUTO, sync_pass_dont_compress, CTLFLAG_RDTUN,
-    &zfs_sync_pass_dont_compress, 0, "don't compress starting in this pass");
-extern int zfs_sync_pass_rewrite; /* rewrite new bps starting in this pass */
-SYSCTL_INT(_vfs_zfs, OID_AUTO, sync_pass_rewrite, CTLFLAG_RDTUN,
-    &zfs_sync_pass_rewrite, 0, "rewrite new bps starting in this pass");

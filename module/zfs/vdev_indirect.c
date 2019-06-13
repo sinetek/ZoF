@@ -1870,25 +1870,20 @@ EXPORT_SYMBOL(vdev_indirect_sync_obsolete);
 EXPORT_SYMBOL(vdev_obsolete_counts_are_precise);
 EXPORT_SYMBOL(vdev_obsolete_sm_object);
 
-module_param(zfs_condense_indirect_vdevs_enable, int, 0644);
-MODULE_PARM_DESC(zfs_condense_indirect_vdevs_enable,
+ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, indirect_vdevs_enable, UINT, ZMOD_RW,
 	"Whether to attempt condensing indirect vdev mappings");
 
 /* CSTYLED */
-module_param(zfs_condense_min_mapping_bytes, ulong, 0644);
-MODULE_PARM_DESC(zfs_condense_min_mapping_bytes,
+ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, min_mapping_bytes, UQUAD, ZMOD_RW,
 	"Minimum size of vdev mapping to condense");
 
 /* CSTYLED */
-module_param(zfs_condense_max_obsolete_bytes, ulong, 0644);
-MODULE_PARM_DESC(zfs_condense_max_obsolete_bytes,
+ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, max_obsolete_bytes, UQUAD, ZMOD_RW,
 	"Minimum size obsolete spacemap to attempt condensing");
 
-module_param(zfs_condense_indirect_commit_entry_delay_ms, int, 0644);
-MODULE_PARM_DESC(zfs_condense_indirect_commit_entry_delay_ms,
+ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, indirect_commit_entry_delay_ms, UINT, ZMOD_RW,
 	"Delay while condensing vdev mapping");
 
-module_param(zfs_reconstruct_indirect_combinations_max, int, 0644);
-MODULE_PARM_DESC(zfs_reconstruct_indirect_combinations_max,
+ZFS_MODULE_PARAM(zfs_reconstruct, zfs_reconstruct_, indirect_combinations_max, UINT, ZMOD_RW,
 	"Maximum number of combinations when reconstructing split segments");
 #endif

@@ -9290,18 +9290,18 @@ EXPORT_SYMBOL(arc_add_prune_callback);
 EXPORT_SYMBOL(arc_remove_prune_callback);
 
 /* BEGIN CSTYLED */
-ZFS_MODULE_PARAM(zfs, zfs_, arc_min, UQUAD, CTLFLAG_RWTUN, "Min arc size");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_min, UQUAD, ZMOD_RW, "Min arc size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_max, UQUAD, CTLFLAG_RWTUN,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_max, UQUAD, ZMOD_RW,
     "Maximum ARC size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_limit, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_limit, UQUAD, ZMOD_RW,
 	"Min limit for arc size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_meta_limit_percent, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_meta_limit_percent, UQUAD, ZMOD_RW,
 	"Percent of arc size for arc meta limit");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_min, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_min, UQUAD, ZMOD_RW,
 	"Min arc metadata");
 
 module_param(zfs_arc_meta_prune, int, 0644);
@@ -9333,37 +9333,37 @@ MODULE_PARM_DESC(zfs_arc_p_min_shift, "arc_c shift to calc min/max arc_p");
 module_param(zfs_arc_average_blocksize, int, 0444);
 MODULE_PARM_DESC(zfs_arc_average_blocksize, "Target average block size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, compressed_arc_enabled, UINT, CTLFLAG_RW,"Disable compressed arc buffers");
+ZFS_MODULE_PARAM(zfs, zfs_, compressed_arc_enabled, UINT, ZMOD_RW,"Disable compressed arc buffers");
 
-ZFS_MODULE_PARAM(zfs, , arc_min_prefetch_ms, UINT, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , arc_min_prefetch_ms, UINT, ZMOD_RW,
 	"Min life of prefetch block in ms");
 
-ZFS_MODULE_PARAM(zfs, , arc_min_prescient_prefetch_ms, UINT, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , arc_min_prescient_prefetch_ms, UINT, ZMOD_RW,
 	"Min life of prescient prefetched block in ms");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_write_max, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , l2arc_write_max, UQUAD, ZMOD_RW,
 	"Max write bytes per interval");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_write_boost, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , l2arc_write_boost, UQUAD, ZMOD_RW,
 	"Extra write bytes during device warmup");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_headroom, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , l2arc_headroom, UQUAD, ZMOD_RW,
 	"Number of max device writes to precache");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_headroom_boost, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , l2arc_headroom_boost, UQUAD, ZMOD_RW,
 	"Compressed l2arc_headroom multiplier");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_feed_secs, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , l2arc_feed_secs, UQUAD, ZMOD_RW,
     "Seconds between L2ARC writing");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_feed_min_ms, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, , l2arc_feed_min_ms, UQUAD, ZMOD_RW,
     "Min feed interval in milliseconds");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_noprefetch, UINT, CTLFLAG_RW, "Skip caching prefetched buffers");
+ZFS_MODULE_PARAM(zfs, , l2arc_noprefetch, UINT, ZMOD_RW, "Skip caching prefetched buffers");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_feed_again, UINT, CTLFLAG_RW, "Turbo L2ARC warmup");
+ZFS_MODULE_PARAM(zfs, , l2arc_feed_again, UINT, ZMOD_RW, "Turbo L2ARC warmup");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_norw, UINT, CTLFLAG_RW, "No reads during writes");
+ZFS_MODULE_PARAM(zfs, , l2arc_norw, UINT, ZMOD_RW, "No reads during writes");
 
 module_param(zfs_arc_lotsfree_percent, int, 0644);
 MODULE_PARM_DESC(zfs_arc_lotsfree_percent,
@@ -9372,12 +9372,12 @@ MODULE_PARM_DESC(zfs_arc_lotsfree_percent,
 module_param(zfs_arc_sys_free, ulong, 0644);
 MODULE_PARM_DESC(zfs_arc_sys_free, "System free memory target size in bytes");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit, UQUAD, CTLFLAG_RW, "Minimum bytes of dnodes in arc");
+ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit, UQUAD, ZMOD_RW, "Minimum bytes of dnodes in arc");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit_percent, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit_percent, UQUAD, ZMOD_RW,
 	"Percent of ARC meta buffers for dnodes");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_reduce_percent, UQUAD, CTLFLAG_RW,
+ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_reduce_percent, UQUAD, ZMOD_RW,
 	"Percentage of excess dnodes to try to unpin");
 /* END CSTYLED */
 #endif

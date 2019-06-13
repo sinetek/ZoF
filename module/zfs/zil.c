@@ -3624,16 +3624,16 @@ EXPORT_SYMBOL(zil_set_sync);
 EXPORT_SYMBOL(zil_set_logbias);
 
 /* BEGIN CSTYLED */
-module_param(zfs_commit_timeout_pct, int, 0644);
-MODULE_PARM_DESC(zfs_commit_timeout_pct, "ZIL block open timeout percentage");
+ZFS_MODULE_PARAM(zfs, zfs_, commit_timeout_pct, UINT, ZMOD_RW,
+    "ZIL block open timeout percentage");
 
-module_param(zil_replay_disable, int, 0644);
-MODULE_PARM_DESC(zil_replay_disable, "Disable intent logging replay");
+ZFS_MODULE_PARAM(zfs_zil, zil_, replay_disable, UINT, ZMOD_RW,
+    "Disable intent logging replay");
 
-module_param(zil_nocacheflush, int, 0644);
-MODULE_PARM_DESC(zil_nocacheflush, "Disable ZIL cache flushes");
+ZFS_MODULE_PARAM(zfs_zil, zil_, nocacheflush, UINT, ZMOD_RW,
+    "Disable ZIL cache flushes");
 
-module_param(zil_slog_bulk, ulong, 0644);
-MODULE_PARM_DESC(zil_slog_bulk, "Limit in bytes slog sync writes per commit");
+ZFS_MODULE_PARAM(zfs_zil, zil_, slog_bulk, UQUAD, ZMOD_RW,
+    "Limit in bytes slog sync writes per commit");
 /* END CSTYLED */
 #endif

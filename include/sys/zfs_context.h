@@ -69,7 +69,9 @@
 #include <linux/dcache_compat.h>
 #include <linux/utsname_compat.h>
 
-#define CTLFLAG_RW 0644
+#define ZMOD_RW 0644
+#define ZMOD_RD 0444
+
 #define UINT uint
 #define UQUAD ulong
 
@@ -90,6 +92,9 @@
 /* XXX move us */
 
 #include <sys/sysctl.h>
+#define ZMOD_RW CTLFLAG_RWTUN
+#define ZMOD_RD CTLFLAG_RDTUN
+
 #define ZFS_MODULE_PARAM(scope_prefix, name_prefix, name, type, perm, desc) \
 	SYSCTL_DECL(_vfs_ ## scope_prefix);									\
 	SYSCTL_##type(_vfs_ ## scope_prefix, OID_AUTO, name, perm,	\

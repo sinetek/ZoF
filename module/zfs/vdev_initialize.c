@@ -729,7 +729,6 @@ EXPORT_SYMBOL(vdev_initialize_stop_wait);
 EXPORT_SYMBOL(vdev_initialize_restart);
 
 /* CSTYLED */
-module_param(zfs_initialize_value, ulong, 0644);
-MODULE_PARM_DESC(zfs_initialize_value,
+ZFS_MODULE_PARAM(zfs, zfs_, initialize_value, UQUAD, ZMOD_RW,
 	"Value written during zpool initialize");
 #endif

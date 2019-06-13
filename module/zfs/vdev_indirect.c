@@ -1875,14 +1875,15 @@ ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, indirect_vdevs_enable, UINT, ZMOD_
 
 /* CSTYLED */
 ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, min_mapping_bytes, UQUAD, ZMOD_RW,
-	"Minimum size of vdev mapping to condense");
+    "Don't bother condensing if the mapping uses less than this amount of memory");
 
 /* CSTYLED */
 ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, max_obsolete_bytes, UQUAD, ZMOD_RW,
 	"Minimum size obsolete spacemap to attempt condensing");
 
 ZFS_MODULE_PARAM(zfs_condense, zfs_condense_, indirect_commit_entry_delay_ms, UINT, ZMOD_RW,
-	"Delay while condensing vdev mapping");
+    "Used by tests to ensure certain actions happen in the middle of a"
+    " condense. A maximum value of 1 should be sufficient.");
 
 ZFS_MODULE_PARAM(zfs_reconstruct, zfs_reconstruct_, indirect_combinations_max, UINT, ZMOD_RW,
 	"Maximum number of combinations when reconstructing split segments");

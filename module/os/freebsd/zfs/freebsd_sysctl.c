@@ -68,17 +68,6 @@ extern arc_state_t ARC_mfu;
 extern arc_state_t ARC_mfu_ghost;
 extern arc_state_t ARC_l2c_only;
 
-/* L2ARC Performance Tunables */
-extern unsigned long l2arc_write_max;	/* def max write size */
-extern unsigned long l2arc_write_boost;	/* extra warmup write */
-extern unsigned long l2arc_headroom;		/* # of dev writes */
-extern unsigned long l2arc_headroom_boost;
-extern unsigned long l2arc_feed_secs;	/* interval seconds */
-extern unsigned long l2arc_feed_min_ms;	/* min interval msecs */
-extern int l2arc_noprefetch;			/* don't cache prefetch bufs */
-extern int l2arc_feed_again;			/* turbo warmup */
-extern int l2arc_norw;			/* no reads during writes */
-
 /*
  * minimum lifespan of a prefetch block in clock ticks
  * (initialized in arc_init())
@@ -461,17 +450,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, condense_pct, CTLFLAG_RWTUN,
     &zfs_condense_pct, 0,
     "Condense on-disk spacemap when it is more than this many percents"
     " of in-memory counterpart");
-
-extern uint64_t zfs_condense_indirect_commit_entry_delay_ms;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, condense_indirect_commit_entry_delay_ms,
-    CTLFLAG_RWTUN, &zfs_condense_indirect_commit_entry_delay_ms, 0,
-    "Used by tests to ensure certain actions happen in the middle of a"
-    " condense. A maximum value of 1 should be sufficient.");
-
-extern uint64_t zfs_condense_min_mapping_bytes;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, condense_min_mapping_bytes,
-    CTLFLAG_RWTUN, &zfs_condense_min_mapping_bytes, 0,
-    "Don't bother condensing if the mapping uses less than this amount of memory");
 
 extern int zfs_remove_max_segment;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, remove_max_segment, CTLFLAG_RWTUN,

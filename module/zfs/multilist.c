@@ -407,8 +407,7 @@ multilist_link_active(multilist_node_t *link)
 
 /* BEGIN CSTYLED */
 
-module_param(zfs_multilist_num_sublists, int, 0644);
-MODULE_PARM_DESC(zfs_multilist_num_sublists,
+ZFS_MODULE_PARAM(zfs, zfs_, multilist_num_sublists, UINT, ZMOD_RW,
 	"Number of sublists used in each multilist");
 
 /* END CSTYLED */

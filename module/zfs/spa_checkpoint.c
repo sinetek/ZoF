@@ -630,8 +630,7 @@ EXPORT_SYMBOL(spa_checkpoint_discard_thread);
 EXPORT_SYMBOL(spa_checkpoint_discard_thread_check);
 
 /* BEGIN CSTYLED */
-module_param(zfs_spa_discard_memory_limit, ulong, 0644);
-MODULE_PARM_DESC(zfs_spa_discard_memory_limit,
+ZFS_MODULE_PARAM(zfs_spa, zfs_spa_, discard_memory_limit, UQUAD, ZMOD_RW,
     "Maximum memory for prefetching checkpoint space "
     "map per top-level vdev while discarding checkpoint");
 /* END CSTYLED */

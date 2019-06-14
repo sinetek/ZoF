@@ -229,10 +229,10 @@ dbuf_cache_t dbuf_caches[DB_CACHE_MAX];
 
 /* Size limits for the caches */
 unsigned long dbuf_cache_max_bytes = 0;
-unsigned long dbuf_metadata_cache_max_bytes = 0;
+unsigned long dbuf_cache_metadata_max_bytes = 0;
 /* Set the default sizes of the caches to log2 fraction of arc size */
 int dbuf_cache_shift = 5;
-int dbuf_metadata_cache_shift = 6;
+int dbuf_cache_metadata_shift = 6;
 
 /*
  * The LRU dbuf cache uses a three-stage eviction policy:
@@ -447,7 +447,7 @@ dbuf_include_in_metadata_cache(dmu_buf_impl_t *db)
 		 */
 		if (zfs_refcount_count(
 		    &dbuf_caches[DB_DBUF_METADATA_CACHE].size) >
-		    dbuf_metadata_cache_max_bytes) {
+		    dbuf_cache_metadata_max_bytes) {
 			DBUF_STAT_BUMP(metadata_cache_overflow);
 			return (B_FALSE);
 		}
@@ -841,10 +841,10 @@ retry:
 	    dbuf_cache_max_bytes >= arc_target_bytes()) {
 		dbuf_cache_max_bytes = arc_target_bytes() >> dbuf_cache_shift;
 	}
-	if (dbuf_metadata_cache_max_bytes == 0 ||
-	    dbuf_metadata_cache_max_bytes >= arc_target_bytes()) {
-		dbuf_metadata_cache_max_bytes =
-		    arc_target_bytes() >> dbuf_metadata_cache_shift;
+	if (dbuf_cache_metadata_max_bytes == 0 ||
+	    dbuf_cache_metadata_max_bytes >= arc_target_bytes()) {
+		dbuf_cache_metadata_max_bytes =
+		    arc_target_bytes() >> dbuf_cache_metadata_shift;
 	}
 
 	/*
@@ -4608,30 +4608,24 @@ EXPORT_SYMBOL(dmu_buf_get_user);
 EXPORT_SYMBOL(dmu_buf_get_blkptr);
 
 /* BEGIN CSTYLED */
-module_param(dbuf_cache_max_bytes, ulong, 0644);
-MODULE_PARM_DESC(dbuf_cache_max_bytes,
+ZFS_MODULE_PARAM(zfs_dbuf_cache, dbuf_cache_, max_bytes, UQUAD, ZMOD_RW,
 	"Maximum size in bytes of the dbuf cache.");
 
-module_param(dbuf_cache_hiwater_pct, uint, 0644);
-MODULE_PARM_DESC(dbuf_cache_hiwater_pct,
+ZFS_MODULE_PARAM(zfs_dbuf_cache, dbuf_cache_, hiwater_pct, UINT, ZMOD_RW,
 	"Percentage over dbuf_cache_max_bytes when dbufs must be evicted "
 	"directly.");
 
-module_param(dbuf_cache_lowater_pct, uint, 0644);
-MODULE_PARM_DESC(dbuf_cache_lowater_pct,
+ZFS_MODULE_PARAM(zfs_dbuf_cache, dbuf_cache_, lowater_pct, UINT, ZMOD_RW,
 	"Percentage below dbuf_cache_max_bytes when the evict thread stops "
 	"evicting dbufs.");
 
-module_param(dbuf_metadata_cache_max_bytes, ulong, 0644);
-MODULE_PARM_DESC(dbuf_metadata_cache_max_bytes,
+ZFS_MODULE_PARAM(zfs_dbuf_cache, dbuf_cache_, metadata_max_bytes, UQUAD, ZMOD_RW,
 	"Maximum size in bytes of the dbuf metadata cache.");
 
-module_param(dbuf_cache_shift, int, 0644);
-MODULE_PARM_DESC(dbuf_cache_shift,
+ZFS_MODULE_PARAM(zfs_dbuf_cache, dbuf_cache_, shift, UINT, ZMOD_RW,
 	"Set the size of the dbuf cache to a log2 fraction of arc size.");
 
-module_param(dbuf_metadata_cache_shift, int, 0644);
-MODULE_PARM_DESC(dbuf_cache_shift,
+ZFS_MODULE_PARAM(zfs_dbuf_cache, dbuf_cache_, metadata_shift, UINT, ZMOD_RW,
 	"Set the size of the dbuf metadata cache to a log2 fraction of "
 	"arc size.");
 /* END CSTYLED */

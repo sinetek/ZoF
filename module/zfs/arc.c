@@ -142,7 +142,7 @@
  * ability to store the physical data (b_pabd) associated with the DVA of the
  * arc_buf_hdr_t. Since the b_pabd is a copy of the on-disk physical block,
  * it will match its on-disk compression characteristics. This behavior can be
- * disabled by setting 'zfs_compressed_arc_enabled' to B_FALSE. When the
+ * disabled by setting 'zfs_arc_compression_enabled' to B_FALSE. When the
  * compressed ARC functionality is disabled, the b_pabd will point to an
  * uncompressed version of the on-disk data.
  *
@@ -359,7 +359,7 @@ int arc_p_min_shift = 4;
 int		arc_shrink_shift = 7;
 
 /* percent of pagecache to reclaim arc to */
-#if defined(_KERNEL) && defined(__linux__)
+#if defined(_KERNEL)
 static uint_t		zfs_arc_pc_percent = 0;
 #endif
 
@@ -426,7 +426,7 @@ unsigned long zfs_arc_pool_dirty_percent = 20;	/* each pool's anon allowance */
 /*
  * Enable or disable compressed arc buffers.
  */
-int zfs_compressed_arc_enabled = B_TRUE;
+int zfs_arc_compression_enabled = B_TRUE;
 
 /*
  * ARC will evict meta buffers that exceed arc_meta_limit. This
@@ -1559,7 +1559,7 @@ arc_hdr_set_compress(arc_buf_hdr_t *hdr, enum zio_compress cmp)
 	 * we ignore the compression of the blkptr and set the
 	 * want to uncompress them. Mark them as uncompressed.
 	 */
-	if (!zfs_compressed_arc_enabled || HDR_GET_PSIZE(hdr) == 0) {
+	if (!zfs_arc_compression_enabled || HDR_GET_PSIZE(hdr) == 0) {
 		arc_hdr_clear_flags(hdr, ARC_FLAG_COMPRESSED_ARC);
 		ASSERT(!HDR_COMPRESSION_ENABLED(hdr));
 	} else {
@@ -8819,7 +8819,7 @@ l2arc_write_buffers(spa_t *spa, l2arc_dev_t *dev, uint64_t target_sz)
 			hdr = multilist_sublist_tail(mls);
 
 		headroom = target_sz * l2arc_headroom;
-		if (zfs_compressed_arc_enabled)
+		if (zfs_arc_compression_enabled)
 			headroom = (headroom * l2arc_headroom_boost) / 100;
 
 		for (; hdr; hdr = hdr_prev) {
@@ -9290,55 +9290,46 @@ EXPORT_SYMBOL(arc_add_prune_callback);
 EXPORT_SYMBOL(arc_remove_prune_callback);
 
 /* BEGIN CSTYLED */
-ZFS_MODULE_PARAM(zfs, zfs_, arc_min, UQUAD, ZMOD_RW, "Min arc size");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, min, UQUAD, ZMOD_RW, "Min arc size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_max, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, max, UQUAD, ZMOD_RW,
     "Maximum ARC size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_limit, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, metadata_limit, UQUAD, ZMOD_RW,
 	"Min limit for arc size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_meta_limit_percent, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_limit_percent, UQUAD, ZMOD_RW,
 	"Percent of arc size for arc meta limit");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_metadata_min, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, metadata_min, UQUAD, ZMOD_RW,
 	"Min arc metadata");
 
-module_param(zfs_arc_meta_prune, int, 0644);
-MODULE_PARM_DESC(zfs_arc_meta_prune, "Meta objects to scan for prune");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_prune, UINT, ZMOD_RW, "Meta objects to scan for prune");
 
-module_param(zfs_arc_meta_adjust_restarts, int, 0644);
-MODULE_PARM_DESC(zfs_arc_meta_adjust_restarts,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_adjust_restarts, UINT, ZMOD_RW,
 	"Limit number of restarts in arc_adjust_meta");
 
-module_param(zfs_arc_meta_strategy, int, 0644);
-MODULE_PARM_DESC(zfs_arc_meta_strategy, "Meta reclaim strategy");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_strategy, UINT, ZMOD_RW, "Meta reclaim strategy");
 
-module_param(zfs_arc_grow_retry, int, 0644);
-MODULE_PARM_DESC(zfs_arc_grow_retry, "Seconds before growing arc size");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, grow_retry, UINT, ZMOD_RW, "Seconds before growing arc size");
 
-module_param(zfs_arc_p_dampener_disable, int, 0644);
-MODULE_PARM_DESC(zfs_arc_p_dampener_disable, "disable arc_p adapt dampener");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, p_dampener_disable, UINT, ZMOD_RW, "disable arc_p adapt dampener");
 
-module_param(zfs_arc_shrink_shift, int, 0644);
-MODULE_PARM_DESC(zfs_arc_shrink_shift, "log2(fraction of arc to reclaim)");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, shrink_shift, UINT, ZMOD_RW, "log2(fraction of arc to reclaim)");
 
-module_param(zfs_arc_pc_percent, uint, 0644);
-MODULE_PARM_DESC(zfs_arc_pc_percent,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, pc_percent, UINT, ZMOD_RW,
 	"Percent of pagecache to reclaim arc to");
 
-module_param(zfs_arc_p_min_shift, int, 0644);
-MODULE_PARM_DESC(zfs_arc_p_min_shift, "arc_c shift to calc min/max arc_p");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, p_min_shift, UINT, ZMOD_RW, "arc_c shift to calc min/max arc_p");
 
-module_param(zfs_arc_average_blocksize, int, 0444);
-MODULE_PARM_DESC(zfs_arc_average_blocksize, "Target average block size");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, average_blocksize, UINT, ZMOD_RD, "Target average block size");
 
-ZFS_MODULE_PARAM(zfs, zfs_, compressed_arc_enabled, UINT, ZMOD_RW,"Disable compressed arc buffers");
+ZFS_MODULE_PARAM(zfs, zfs_arc_, compression_enabled, UINT, ZMOD_RW,"Disable compressed arc buffers");
 
 ZFS_MODULE_PARAM(zfs, , arc_min_prefetch_ms, UINT, ZMOD_RW,
 	"Min life of prefetch block in ms");
 
-ZFS_MODULE_PARAM(zfs, , arc_min_prescient_prefetch_ms, UINT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, arc_, min_prescient_prefetch_ms, UINT, ZMOD_RW,
 	"Min life of prescient prefetched block in ms");
 
 ZFS_MODULE_PARAM(zfs, , l2arc_write_max, UQUAD, ZMOD_RW,
@@ -9365,12 +9356,11 @@ ZFS_MODULE_PARAM(zfs, , l2arc_feed_again, UINT, ZMOD_RW, "Turbo L2ARC warmup");
 
 ZFS_MODULE_PARAM(zfs, , l2arc_norw, UINT, ZMOD_RW, "No reads during writes");
 
-module_param(zfs_arc_lotsfree_percent, int, 0644);
-MODULE_PARM_DESC(zfs_arc_lotsfree_percent,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, lotsfree_percent, UINT, ZMOD_RW,
 	"System free memory I/O throttle in bytes");
 
-module_param(zfs_arc_sys_free, ulong, 0644);
-MODULE_PARM_DESC(zfs_arc_sys_free, "System free memory target size in bytes");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, sys_free, UQUAD, ZMOD_RW,
+    "System free memory target size in bytes");
 
 ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit, UQUAD, ZMOD_RW, "Minimum bytes of dnodes in arc");
 

@@ -74,6 +74,7 @@
 
 #define UINT uint
 #define UQUAD ulong
+#define STRING charp
 
 #define ZFS_MODULE_PARAM(name_prefix, name, type, perm, desc) \
 	module_param(name_prefix ## name, type, perm);				\

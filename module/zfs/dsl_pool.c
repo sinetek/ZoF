@@ -1342,46 +1342,36 @@ EXPORT_SYMBOL(dsl_pool_config_exit);
 
 /* BEGIN CSTYLED */
 /* zfs_dirty_data_max_percent only applied at module load in arc_init(). */
-module_param(zfs_dirty_data_max_percent, int, 0444);
-MODULE_PARM_DESC(zfs_dirty_data_max_percent, "percent of ram can be dirty");
+ZFS_MODULE_PARAM(zfs, zfs_, dirty_data_max_percent, UINT, ZMOD_RD, "percent of ram can be dirty");
 
 /* zfs_dirty_data_max_max_percent only applied at module load in arc_init(). */
-module_param(zfs_dirty_data_max_max_percent, int, 0444);
-MODULE_PARM_DESC(zfs_dirty_data_max_max_percent,
+ZFS_MODULE_PARAM(zfs, zfs_, dirty_data_max_max_percent, UINT, ZMOD_RD,
 	"zfs_dirty_data_max upper bound as % of RAM");
 
-module_param(zfs_delay_min_dirty_percent, int, 0644);
-MODULE_PARM_DESC(zfs_delay_min_dirty_percent, "transaction delay threshold");
+ZFS_MODULE_PARAM(zfs, zfs_, delay_min_dirty_percent, UINT, ZMOD_RW, "transaction delay threshold");
 
-module_param(zfs_dirty_data_max, ulong, 0644);
-MODULE_PARM_DESC(zfs_dirty_data_max, "determines the dirty space limit");
+ZFS_MODULE_PARAM(zfs, zfs_, dirty_data_max, UQUAD, ZMOD_RW, "determines the dirty space limit");
 
 /* zfs_dirty_data_max_max only applied at module load in arc_init(). */
-module_param(zfs_dirty_data_max_max, ulong, 0444);
-MODULE_PARM_DESC(zfs_dirty_data_max_max,
+ZFS_MODULE_PARAM(zfs, zfs_, dirty_data_max_max, UQUAD, ZMOD_RD,
 	"zfs_dirty_data_max upper bound in bytes");
 
-module_param(zfs_dirty_data_sync_percent, int, 0644);
-MODULE_PARM_DESC(zfs_dirty_data_sync_percent,
+ZFS_MODULE_PARAM(zfs, zfs_, dirty_data_sync_percent, UINT, ZMOD_RW,
 	"dirty data txg sync threshold as a percentage of zfs_dirty_data_max");
 
-module_param(zfs_delay_scale, ulong, 0644);
-MODULE_PARM_DESC(zfs_delay_scale, "how quickly delay approaches infinity");
+ZFS_MODULE_PARAM(zfs, zfs_, delay_scale, UQUAD, ZMOD_RW,
+    "how quickly delay approaches infinity");
 
-module_param(zfs_sync_taskq_batch_pct, int, 0644);
-MODULE_PARM_DESC(zfs_sync_taskq_batch_pct,
+ZFS_MODULE_PARAM(zfs, zfs_, sync_taskq_batch_pct, UINT, ZMOD_RW,
 	"max percent of CPUs that are used to sync dirty data");
 
-module_param(zfs_zil_clean_taskq_nthr_pct, int, 0644);
-MODULE_PARM_DESC(zfs_zil_clean_taskq_nthr_pct,
+ZFS_MODULE_PARAM(zfs, zfs_, zil_clean_taskq_nthr_pct, UINT, ZMOD_RW,
 	"max percent of CPUs that are used per dp_sync_taskq");
 
-module_param(zfs_zil_clean_taskq_minalloc, int, 0644);
-MODULE_PARM_DESC(zfs_zil_clean_taskq_minalloc,
+ZFS_MODULE_PARAM(zfs, zfs_, zil_clean_taskq_minalloc, UINT, ZMOD_RW,
 	"number of taskq entries that are pre-populated");
 
-module_param(zfs_zil_clean_taskq_maxalloc, int, 0644);
-MODULE_PARM_DESC(zfs_zil_clean_taskq_maxalloc,
+ZFS_MODULE_PARAM(zfs, zfs_, zil_clean_taskq_maxalloc, UINT, ZMOD_RW,
 	"max number of taskq entries that are cached");
 
 /* END CSTYLED */

@@ -166,37 +166,6 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_no_grow_shift, CTLTYPE_U32 | CTLFLAG_RWTUN,
     "log2(fraction of ARC which must be free to allow growing)");
 /* dbuf.c */
 
-extern uint64_t dbuf_cache_max_bytes;
-SYSCTL_QUAD(_vfs_zfs, OID_AUTO, dbuf_cache_max_bytes, CTLFLAG_RWTUN,
-    &dbuf_cache_max_bytes, 0, "dbuf cache size in bytes");
-
-extern uint64_t dbuf_metadata_cache_max_bytes;
-SYSCTL_QUAD(_vfs_zfs, OID_AUTO, dbuf_metadata_cache_max_bytes, CTLFLAG_RWTUN,
-    &dbuf_metadata_cache_max_bytes, 0, "dbuf metadata cache size in bytes");
-
-extern int dbuf_cache_shift;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, dbuf_cache_shift, CTLFLAG_RDTUN,
-    &dbuf_cache_shift, 0, "dbuf cache size as log2 fraction of ARC");
-
-extern int dbuf_metadata_cache_shift;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, dbuf_metadata_cache_shift, CTLFLAG_RDTUN,
-    &dbuf_metadata_cache_shift, 0,
-    "dbuf metadata cache size as log2 fraction of ARC");
-
-extern uint_t dbuf_cache_hiwater_pct;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, dbuf_cache_hiwater_pct, CTLFLAG_RWTUN,
-    &dbuf_cache_hiwater_pct, 0, "max percents above the dbuf cache size");
-
-extern uint_t dbuf_cache_lowater_pct;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, dbuf_cache_lowater_pct, CTLFLAG_RWTUN,
-    &dbuf_cache_lowater_pct, 0, "max percents below the dbuf cache size");
-
-
-/* ddt.c */
-extern int zfs_dedup_prefetch;
-static SYSCTL_NODE(_vfs_zfs, OID_AUTO, dedup, CTLFLAG_RW, 0, "ZFS DEDUP");
-SYSCTL_INT(_vfs_zfs_dedup, OID_AUTO, prefetch, CTLFLAG_RWTUN, &zfs_dedup_prefetch,
-    0, "Enable/disable prefetching of dedup-ed blocks which are going to be freed");
 
 /* dmu.c */
 extern int zfs_nopwrite_enabled;
@@ -228,39 +197,12 @@ SYSCTL_UINT(_vfs_zfs, OID_AUTO, send_holes_without_birth_time, CTLFLAG_RWTUN,
 
 
 /* dmu_zfetch.c */
-/*
- * This tunable disables predictive prefetch.  Note that it leaves "prescient"
- * prefetch (e.g. prefetch for zfs send) intact.  Unlike predictive prefetch,
- * prescient prefetch never issues i/os that end up not being needed,
- * so it can't hurt performance.
- */
-extern boolean_t zfs_prefetch_disable;
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, zfetch, CTLFLAG_RW, 0, "ZFS ZFETCH");
 
-/* max # of streams per zfetch */
-extern uint32_t	zfetch_max_streams;
-/* min time before stream reclaim */
-extern uint32_t	zfetch_min_sec_reap;
-/* max bytes to prefetch per stream (default 8MB) */
-extern uint32_t	zfetch_max_distance;
 /* max bytes to prefetch indirects for per stream (default 64MB) */
 extern uint32_t	zfetch_max_idistance;
-/* max number of bytes in an array_read in which we allow prefetching (1MB) */
-extern uint64_t	zfetch_array_rd_sz;
-
-SYSCTL_INT(_vfs_zfs, OID_AUTO, prefetch_disable, CTLFLAG_RW,
-    &zfs_prefetch_disable, 0, "Disable prefetch");
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, zfetch, CTLFLAG_RW, 0, "ZFS ZFETCH");
-SYSCTL_UINT(_vfs_zfs_zfetch, OID_AUTO, max_streams, CTLFLAG_RWTUN,
-    &zfetch_max_streams, 0, "Max # of streams per zfetch");
-SYSCTL_UINT(_vfs_zfs_zfetch, OID_AUTO, min_sec_reap, CTLFLAG_RWTUN,
-    &zfetch_min_sec_reap, 0, "Min time before stream reclaim");
-SYSCTL_UINT(_vfs_zfs_zfetch, OID_AUTO, max_distance, CTLFLAG_RWTUN,
-    &zfetch_max_distance, 0, "Max bytes to prefetch per stream");
 SYSCTL_UINT(_vfs_zfs_zfetch, OID_AUTO, max_idistance, CTLFLAG_RWTUN,
     &zfetch_max_idistance, 0, "Max bytes to prefetch indirects for per stream");
-SYSCTL_UQUAD(_vfs_zfs_zfetch, OID_AUTO, array_rd_sz, CTLFLAG_RWTUN,
-    &zfetch_array_rd_sz, 0,
-    "Number of bytes in a array_read at which we stop prefetching");
 
 /* dsl_pool.c */
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, dirty_data_max, CTLFLAG_RWTUN,
@@ -378,55 +320,9 @@ extern unsigned int zfs_scan_idle;
 SYSCTL_UINT(_vfs_zfs, OID_AUTO, scan_idle, CTLFLAG_RWTUN,
     &zfs_scan_idle, 0, "Idle scan window in clock ticks");
 
-extern unsigned int zfs_scrub_min_time_ms; /* min millisecs to scrub per txg */
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, scan_min_time_ms, CTLFLAG_RWTUN,
-    &zfs_scrub_min_time_ms, 0, "Min millisecs to scrub per txg");
-
-extern unsigned int zfs_free_min_time_ms; /* min millisecs to free per txg */
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, free_min_time_ms, CTLFLAG_RWTUN,
-    &zfs_free_min_time_ms, 0, "Min millisecs to free per txg");
-
-extern unsigned int zfs_resilver_min_time_ms; /* min millisecs to resilver per txg */
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, resilver_min_time_ms, CTLFLAG_RWTUN,
-    &zfs_resilver_min_time_ms, 0, "Min millisecs to resilver per txg");
-
-extern boolean_t zfs_no_scrub_io; /* set to disable scrub i/o */
-SYSCTL_INT(_vfs_zfs, OID_AUTO, no_scrub_io, CTLFLAG_RWTUN,
-    &zfs_no_scrub_io, 0, "Disable scrub I/O");
-
-extern boolean_t zfs_no_scrub_prefetch; /* set to disable scrub prefetch */
-SYSCTL_INT(_vfs_zfs, OID_AUTO, no_scrub_prefetch, CTLFLAG_RWTUN,
-    &zfs_no_scrub_prefetch, 0, "Disable scrub prefetching");
-
-extern int zfs_scan_legacy;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, zfs_scan_legacy, CTLFLAG_RWTUN,
-    &zfs_scan_legacy, 0, "Scrub using legacy non-sequential method");
-
-extern int zfs_scan_checkpoint_intval; /* in seconds */
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, zfs_scan_checkpoint_interval, CTLFLAG_RWTUN,
-    &zfs_scan_checkpoint_intval, 0, "Scan progress on-disk checkpointing interval");
-
-extern int zfs_scan_suspend_progress;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, zfs_scan_suspend_progress, CTLFLAG_RWTUN,
-    &zfs_scan_suspend_progress, 0, "Set to provent scans from progressing");
-
-/* max number of blocks to free in a single TXG */
-extern uint64_t zfs_async_block_max_blocks;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, free_max_blocks, CTLFLAG_RWTUN,
-    &zfs_async_block_max_blocks, 0, "Maximum number of blocks to free in one TXG");
-
-extern uint64_t zfs_scan_vdev_limit;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, zfs_scan_vdev_limit, CTLFLAG_RWTUN,
-    &zfs_scan_vdev_limit, 0, "Maximum number of parallelly executed bytes per leaf vdev");
-
 /* metaslab.c */
 
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, metaslab, CTLFLAG_RW, 0, "ZFS metaslab");
-
-extern uint64_t metaslab_force_ganging;	/* force gang blocks */
-SYSCTL_QUAD(_vfs_zfs_metaslab, OID_AUTO, force_ganging, CTLFLAG_RWTUN,
-    &metaslab_force_ganging, 0,
-    "Force gang block allocation for blocks larger than or equal to this value");
 
 /*
  * Since we can touch multiple metaslabs (and their respective space maps)
@@ -461,65 +357,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, removal_suspend_progress, CTLFLAG_RWTUN,
     &zfs_removal_suspend_progress, 0, "Ensures certain actions can happen while"
     " in the middle of a removal");
 
-/*
- * The zfs_mg_noalloc_threshold defines which metaslab groups should
- * be eligible for allocation. The value is defined as a percentage of
- * free space. Metaslab groups that have more free space than
- * zfs_mg_noalloc_threshold are always eligible for allocations. Once
- * a metaslab group's free space is less than or equal to the
- * zfs_mg_noalloc_threshold the allocator will avoid allocating to that
- * group unless all groups in the pool have reached zfs_mg_noalloc_threshold.
- * Once all groups in the pool reach zfs_mg_noalloc_threshold then all
- * groups are allowed to accept allocations. Gang blocks are always
- * eligible to allocate on any metaslab group. The default value of 0 means
- * no metaslab group will be excluded based on this criterion.
- */
-extern int zfs_mg_noalloc_threshold;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, mg_noalloc_threshold, CTLFLAG_RWTUN,
-    &zfs_mg_noalloc_threshold, 0,
-    "Percentage of metaslab group size that should be free"
-    " to make it eligible for allocation");
-
-/*
- * Metaslab groups are considered eligible for allocations if their
- * fragmenation metric (measured as a percentage) is less than or equal to
- * zfs_mg_fragmentation_threshold. If a metaslab group exceeds this threshold
- * then it will be skipped unless all metaslab groups within the metaslab
- * class have also crossed this threshold.
- */
-extern int zfs_mg_fragmentation_threshold;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, mg_fragmentation_threshold, CTLFLAG_RWTUN,
-    &zfs_mg_fragmentation_threshold, 0,
-    "Percentage of metaslab group size that should be considered "
-    "eligible for allocations unless all metaslab groups within the metaslab class "
-    "have also crossed this threshold");
-
-/*
- * Allow metaslabs to keep their active state as long as their fragmentation
- * percentage is less than or equal to zfs_metaslab_fragmentation_threshold. An
- * active metaslab that exceeds this threshold will no longer keep its active
- * status allowing better metaslabs to be selected.
- */
-extern int zfs_metaslab_fragmentation_threshold;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, fragmentation_threshold, CTLFLAG_RWTUN,
-    &zfs_metaslab_fragmentation_threshold, 0,
-    "Maximum percentage of metaslab fragmentation level to keep their active state");
-
-/*
- * When set will load all metaslabs when pool is first opened.
- */
-extern int metaslab_debug_load;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, debug_load, CTLFLAG_RWTUN,
-    &metaslab_debug_load, 0,
-    "Load all metaslabs when pool is first opened");
-
-/*
- * When set will prevent metaslabs from being unloaded.
- */
-extern int metaslab_debug_unload;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, debug_unload, CTLFLAG_RWTUN,
-    &metaslab_debug_unload, 0,
-    "Prevent metaslabs from being unloaded");
 
 /*
  * Minimum size which forces the dynamic allocator to change
@@ -570,39 +407,6 @@ SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, preload_limit, CTLFLAG_RWTUN,
     &metaslab_preload_limit, 0,
     "Max number of metaslabs per group to preload");
 
-/*
- * Enable/disable preloading of metaslab.
- */
-extern boolean_t metaslab_preload_enabled;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, preload_enabled, CTLFLAG_RWTUN,
-    &metaslab_preload_enabled, 0,
-    "Max number of metaslabs per group to preload");
-
-/*
- * Enable/disable fragmentation weighting on metaslabs.
- */
-extern boolean_t metaslab_fragmentation_factor_enabled;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, fragmentation_factor_enabled, CTLFLAG_RWTUN,
-    &metaslab_fragmentation_factor_enabled, 0,
-    "Enable fragmentation weighting on metaslabs");
-
-/*
- * Enable/disable lba weighting (i.e. outer tracks are given preference).
- */
-extern boolean_t metaslab_lba_weighting_enabled;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, lba_weighting_enabled, CTLFLAG_RWTUN,
-    &metaslab_lba_weighting_enabled, 0,
-    "Enable LBA weighting (i.e. outer tracks are given preference)");
-
-/*
- * Enable/disable metaslab group biasing.
- */
-extern boolean_t metaslab_bias_enabled;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, bias_enabled, CTLFLAG_RWTUN,
-    &metaslab_bias_enabled, 0,
-    "Enable metaslab group biasing");
-
-
 /* refcount.c */
 extern int reference_tracking_enable;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, reference_tracking_enable, CTLFLAG_RDTUN,
@@ -614,26 +418,6 @@ extern int zfs_ccw_retry_interval;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, ccw_retry_interval, CTLFLAG_RWTUN,
     &zfs_ccw_retry_interval, 0,
     "Configuration cache file write, retry after failure, interval (seconds)");
-
-extern int spa_load_print_vdev_tree;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, spa_load_print_vdev_tree, CTLFLAG_RWTUN,
-    &spa_load_print_vdev_tree, 0,
-    "print out vdev tree during pool import");
-
-extern int spa_load_verify_metadata;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, spa_load_verify_metadata, CTLFLAG_RWTUN,
-    &spa_load_verify_metadata, 0,
-    "Whether to traverse blocks during an \"extereme rewind\"");
-
-extern int spa_load_verify_data;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, spa_load_verify_data, CTLFLAG_RWTUN,
-    &spa_load_verify_data, 0,
-    "Whether to traverse data blocks during an \"extereme rewind\"");
-
-extern uint64_t zfs_max_missing_tvds;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, max_missing_tvds, CTLFLAG_RWTUN,
-    &zfs_max_missing_tvds, 0,
-    "allow importing pools with missing top-level vdevs");
 
 extern uint64_t zfs_max_missing_tvds_cachefile;
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, max_missing_tvds_cachefile, CTLFLAG_RWTUN,
@@ -685,16 +469,6 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, debugflags,
     CTLTYPE_UINT | CTLFLAG_MPSAFE | CTLFLAG_RWTUN, 0, sizeof(int),
     sysctl_vfs_zfs_debug_flags, "IU", "Debug flags for ZFS testing.");
 
-extern uint64_t zfs_deadman_synctime_ms;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, deadman_synctime_ms, CTLFLAG_RWTUN,
-    &zfs_deadman_synctime_ms, 0,
-    "Stalled ZFS I/O expiration time in milliseconds");
-
-extern uint64_t zfs_deadman_checktime_ms;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, deadman_checktime_ms, CTLFLAG_RWTUN,
-    &zfs_deadman_checktime_ms, 0,
-    "Period of checks for stalled ZFS I/O in milliseconds");
-
 extern uint64_t zfs_deadman_ziotime_ms;
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, deadman_ziotime_ms, CTLFLAG_RWTUN,
     &zfs_deadman_ziotime_ms, 0,
@@ -711,14 +485,6 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, deadman_failmode, CTLTYPE_STRING|CTLFLAG_RWTUN,
     0, 0, &zfs_deadman_failmode, "A",
     "Behavior when a \"hung\" I/O value is detected as wait, continue, or panic");
 
-extern int zfs_deadman_enabled;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, deadman_enabled, CTLFLAG_RDTUN,
-    &zfs_deadman_enabled, 0, "Kernel panic on stalled ZFS I/O");
-
-extern int spa_asize_inflation;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, spa_asize_inflation, CTLFLAG_RWTUN,
-    &spa_asize_inflation, 0, "Worst case inflation factor for single sector writes");
-
 extern uint64_t zfs_spa_discard_memory_limit;
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, spa_discard_memory_limit, CTLFLAG_RWTUN,
     &zfs_spa_discard_memory_limit, 0, "Limit for memory used in prefetching the"
@@ -729,12 +495,6 @@ extern int space_map_ibs;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, space_map_ibs, CTLFLAG_RWTUN,
     &space_map_ibs, 0, "Space map indirect block shift");
 
-
-/* txg.c */
-extern int zfs_txg_timeout;	/* max seconds worth of delta per txg */
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, txg, CTLFLAG_RW, 0, "ZFS TXG");
-SYSCTL_INT(_vfs_zfs_txg, OID_AUTO, timeout, CTLFLAG_RWTUN, &zfs_txg_timeout, 0,
-    "Maximum seconds worth of delta per txg");
 
 /* vdev.c */
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, vdev, CTLFLAG_RW, 0, "ZFS VDEV");

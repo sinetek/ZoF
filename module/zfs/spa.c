@@ -8725,30 +8725,24 @@ EXPORT_SYMBOL(spa_event_notify);
 #endif
 
 #if defined(_KERNEL)
-module_param(spa_load_verify_maxinflight, int, 0644);
-MODULE_PARM_DESC(spa_load_verify_maxinflight,
+ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_maxinflight, UINT, ZMOD_RW,
 	"Max concurrent traversal I/Os while verifying pool during import -X");
 
-module_param(spa_load_verify_metadata, int, 0644);
-MODULE_PARM_DESC(spa_load_verify_metadata,
+ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_metadata, UINT, ZMOD_RW,
 	"Set to traverse metadata on pool import");
 
-module_param(spa_load_verify_data, int, 0644);
-MODULE_PARM_DESC(spa_load_verify_data,
+ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_data, UINT, ZMOD_RW,
 	"Set to traverse data on pool import");
 
-module_param(spa_load_print_vdev_tree, int, 0644);
-MODULE_PARM_DESC(spa_load_print_vdev_tree,
+ZFS_MODULE_PARAM(zfs_spa, spa_, load_print_vdev_tree, UINT, ZMOD_RW,
 	"Print vdev tree to zfs_dbgmsg during pool import");
 
 /* CSTYLED */
-module_param(zio_taskq_batch_pct, uint, 0444);
-MODULE_PARM_DESC(zio_taskq_batch_pct,
+ZFS_MODULE_PARAM(zfs_zio, zio_, taskq_batch_pct, UINT, ZMOD_RW,
 	"Percentage of CPUs to run an IO worker thread");
 
 /* BEGIN CSTYLED */
-module_param(zfs_max_missing_tvds, ulong, 0644);
-MODULE_PARM_DESC(zfs_max_missing_tvds,
+ZFS_MODULE_PARAM(zfs, zfs_, max_missing_tvds, UQUAD, ZMOD_RW,
 	"Allow importing pool with up to this number of missing top-level vdevs"
 	" (in read-only mode)");
 /* END CSTYLED */

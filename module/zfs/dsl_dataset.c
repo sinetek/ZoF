@@ -4465,13 +4465,14 @@ dsl_dataset_create_remap_deadlist(dsl_dataset_t *ds, dmu_tx_t *tx)
 
 #if defined(_KERNEL)
 #if defined(_LP64)
-module_param(zfs_max_recordsize, int, 0644);
-MODULE_PARM_DESC(zfs_max_recordsize, "Max allowed record size");
+#define RECORDSIZE_PERM ZMOD_RW
 #else
 /* Limited to 1M on 32-bit platforms due to lack of virtual address space */
-module_param(zfs_max_recordsize, int, 0444);
-MODULE_PARM_DESC(zfs_max_recordsize, "Max allowed record size");
+#define RECORDSIZE_PERM ZMOD_RD
 #endif
+ZFS_MODULE_PARAM(zfs, zfs_, max_recordsize, UINT, RECORDSIZE_PERM, "Max allowed record size");
+
+
 
 EXPORT_SYMBOL(dsl_dataset_hold);
 EXPORT_SYMBOL(dsl_dataset_hold_flags);

@@ -75,6 +75,7 @@ extern arc_state_t ARC_l2c_only;
 
 /* arc.c */
 SYSCTL_DECL(_vfs_zfs);
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, arc, CTLFLAG_RW, 0, "ZFS Adaptive Replacement Cache");
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,
     &ARC_anon.arcs_size.rc_count, 0, "size of anonymous state");

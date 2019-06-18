@@ -178,7 +178,9 @@ kstat_install(kstat_t *ksp)
 
 	ksent = ksp->ks_data;
 	if (ksp->ks_ndata == UINT32_MAX) {
+#ifdef INVARIANTS
 		printf("can't handle raw ops yet!!!\n");
+#endif
 		return;
 	}
 	if (ksent == NULL) {

@@ -188,27 +188,9 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_no_grow_shift, CTLTYPE_U32 | CTLFLAG_RWTUN,
 
 
 /* dmu.c */
-extern int zfs_nopwrite_enabled;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, nopwrite_enabled, CTLFLAG_RDTUN,
-    &zfs_nopwrite_enabled, 0, "Enable nopwrite feature");
-
-/*
- * Tunable to control percentage of dirtied blocks from frees in one TXG.
- * After this threshold is crossed, additional dirty blocks from frees
- * wait until the next TXG.
- * A value of zero will disable this throttle.
- */
-extern uint32_t zfs_per_txg_dirty_frees_percent;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, per_txg_dirty_frees_percent, CTLFLAG_RWTUN,
-	&zfs_per_txg_dirty_frees_percent, 0, "Percentage of dirtied blocks from frees in one txg");
-
 extern int zfs_mdcomp_disable;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, mdcomp_disable, CTLFLAG_RWTUN,
     &zfs_mdcomp_disable, 0, "Disable metadata compression");
-
-extern int zfs_dmu_offset_next_sync;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, dmu_offset_next_sync, CTLFLAG_RWTUN,
-    &zfs_dmu_offset_next_sync, 0, "Enable forcing txg sync to find holes");
 
 /* dmu_traverse.c */
 extern boolean_t send_holes_without_birth_time;
@@ -224,97 +206,6 @@ SYSCTL_UINT(_vfs_zfs_prefetch, OID_AUTO, max_idistance, CTLFLAG_RWTUN,
     &zfetch_max_idistance, 0, "Max bytes to prefetch indirects for per stream");
 
 /* dsl_pool.c */
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, dirty_data_max, CTLFLAG_RWTUN,
-    &zfs_dirty_data_max, 0,
-    "The maximum amount of dirty data in bytes after which new writes are "
-    "halted until space becomes available");
-
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, dirty_data_max_max, CTLFLAG_RDTUN,
-    &zfs_dirty_data_max_max, 0,
-    "The absolute cap on dirty_data_max when auto calculating");
-
-static int sysctl_zfs_dirty_data_max_percent(SYSCTL_HANDLER_ARGS);
-SYSCTL_PROC(_vfs_zfs, OID_AUTO, dirty_data_max_percent,
-    CTLTYPE_INT | CTLFLAG_MPSAFE | CTLFLAG_RWTUN, 0, sizeof(int),
-    sysctl_zfs_dirty_data_max_percent, "I",
-    "The percent of physical memory used to auto calculate dirty_data_max");
-
-SYSCTL_INT(_vfs_zfs, OID_AUTO, dirty_data_sync_percent, CTLFLAG_RWTUN,
-    &zfs_dirty_data_sync_percent, 0,
-    "Force a txg if the percent of dirty buffer bytes exceed this value");
-
-static int sysctl_zfs_delay_min_dirty_percent(SYSCTL_HANDLER_ARGS);
-/* No zfs_delay_min_dirty_percent tunable due to limit requirements */
-SYSCTL_PROC(_vfs_zfs, OID_AUTO, delay_min_dirty_percent,
-    CTLTYPE_INT | CTLFLAG_MPSAFE | CTLFLAG_RW, 0, sizeof(int),
-    sysctl_zfs_delay_min_dirty_percent, "I",
-    "The limit of outstanding dirty data before transactions are delayed");
-
-static int sysctl_zfs_delay_scale(SYSCTL_HANDLER_ARGS);
-/* No zfs_delay_scale tunable due to limit requirements */
-SYSCTL_PROC(_vfs_zfs, OID_AUTO, delay_scale,
-    CTLTYPE_U64 | CTLFLAG_MPSAFE | CTLFLAG_RW, 0, sizeof(uint64_t),
-    sysctl_zfs_delay_scale, "QU",
-    "Controls how quickly the delay approaches infinity");
-
-
-extern int zfs_vdev_async_write_active_min_dirty_percent;
-extern int zfs_vdev_async_write_active_max_dirty_percent;
-
-static int
-sysctl_zfs_dirty_data_max_percent(SYSCTL_HANDLER_ARGS)
-{
-	int val, err;
-
-	val = zfs_dirty_data_max_percent;
-	err = sysctl_handle_int(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-	if (val < 0 || val > 100)
-		return (EINVAL);
-
-	zfs_dirty_data_max_percent = val;
-
-	return (0);
-}
-
-static int
-sysctl_zfs_delay_min_dirty_percent(SYSCTL_HANDLER_ARGS)
-{
-	int val, err;
-
-	val = zfs_delay_min_dirty_percent;
-	err = sysctl_handle_int(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-	if (val < zfs_vdev_async_write_active_max_dirty_percent)
-		return (EINVAL);
-
-	zfs_delay_min_dirty_percent = val;
-
-	return (0);
-}
-
-static int
-sysctl_zfs_delay_scale(SYSCTL_HANDLER_ARGS)
-{
-	uint64_t val;
-	int err;
-
-	val = zfs_delay_scale;
-	err = sysctl_handle_64(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-	if (val > UINT64_MAX / zfs_dirty_data_max)
-		return (EINVAL);
-
-	zfs_delay_scale = val;
-
-	return (0);
-}
 
 /* dnode.c */
 extern int zfs_default_bs;
@@ -598,20 +489,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, validate_skip, CTLFLAG_RDTUN,
 
 
 /* vdev_queue.c */
-static int sysctl_zfs_async_write_active_min_dirty_percent(SYSCTL_HANDLER_ARGS);
-SYSCTL_PROC(_vfs_zfs_vdev, OID_AUTO, async_write_active_min_dirty_percent,
-    CTLTYPE_UINT | CTLFLAG_MPSAFE | CTLFLAG_RWTUN, 0, sizeof(int),
-    sysctl_zfs_async_write_active_min_dirty_percent, "I",
-    "Percentage of async write dirty data below which "
-    "async_write_min_active is used.");
-
-static int sysctl_zfs_async_write_active_max_dirty_percent(SYSCTL_HANDLER_ARGS);
-SYSCTL_PROC(_vfs_zfs_vdev, OID_AUTO, async_write_active_max_dirty_percent,
-    CTLTYPE_UINT | CTLFLAG_MPSAFE | CTLFLAG_RWTUN, 0, sizeof(int),
-    sysctl_zfs_async_write_active_max_dirty_percent, "I",
-    "Percentage of async write dirty data above which "
-    "async_write_max_active is used.");
-
 #define ZFS_VDEV_QUEUE_KNOB_MIN(name)					\
 extern uint32_t zfs_vdev_ ## name ## _min_active;				\
 SYSCTL_UINT(_vfs_zfs_vdev, OID_AUTO, name ## _min_active, CTLFLAG_RWTUN,\
@@ -639,50 +516,6 @@ SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, multihost_history, CTLFLAG_RWTUN,
     &zfs_multihost_history, 0,
     "Historical staticists for the last N multihost updates");*/
 
-static int
-sysctl_zfs_async_write_active_min_dirty_percent(SYSCTL_HANDLER_ARGS)
-{
-	int val, err;
-
-	val = zfs_vdev_async_write_active_min_dirty_percent;
-	err = sysctl_handle_int(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-	
-	if (val < 0 || val > 100 ||
-	    val >= zfs_vdev_async_write_active_max_dirty_percent)
-		return (EINVAL);
-
-	zfs_vdev_async_write_active_min_dirty_percent = val;
-
-	return (0);
-}
-
-static int
-sysctl_zfs_async_write_active_max_dirty_percent(SYSCTL_HANDLER_ARGS)
-{
-	int val, err;
-
-	val = zfs_vdev_async_write_active_max_dirty_percent;
-	err = sysctl_handle_int(oidp, &val, 0, req);
-	if (err != 0 || req->newptr == NULL)
-		return (err);
-
-	if (val < 0 || val > 100 ||
-	    val <= zfs_vdev_async_write_active_min_dirty_percent)
-		return (EINVAL);
-
-	zfs_vdev_async_write_active_max_dirty_percent = val;
-
-	return (0);
-}
-
-#ifdef notyet
-extern boolean_t zfs_trim_enabled;
-SYSCTL_DECL(_vfs_zfs_trim);
-SYSCTL_INT(_vfs_zfs_trim, OID_AUTO, enabled, CTLFLAG_RDTUN, &zfs_trim_enabled, 0,
-    "Enable ZFS TRIM");
-#endif
 #ifdef notyet
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, trim_on_init, CTLFLAG_RW,
     &vdev_trim_on_init, 0, "Enable/disable full vdev trim on initialisation");

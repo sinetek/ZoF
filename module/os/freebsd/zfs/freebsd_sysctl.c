@@ -75,6 +75,8 @@ SYSCTL_NODE(_vfs_zfs, OID_AUTO, condense, CTLFLAG_RW, 0, "ZFS condense");
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, mg, CTLFLAG_RW, 0, "metaslab group");
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, multihost, CTLFLAG_RW, 0, "multihost protection");
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, reconstruct, CTLFLAG_RW, 0, "reconstruct");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, spa, CTLFLAG_RW, 0, "space allocation");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, lua, CTLFLAG_RW, 0, "lua");
 
 
 
@@ -498,12 +500,6 @@ zfs_deadman_failmode(SYSCTL_HANDLER_ARGS)
 SYSCTL_PROC(_vfs_zfs, OID_AUTO, deadman_failmode, CTLTYPE_STRING|CTLFLAG_RWTUN,
     0, 0, &zfs_deadman_failmode, "A",
     "Behavior when a \"hung\" I/O value is detected as wait, continue, or panic");
-
-extern uint64_t zfs_spa_discard_memory_limit;
-SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, spa_discard_memory_limit, CTLFLAG_RWTUN,
-    &zfs_spa_discard_memory_limit, 0, "Limit for memory used in prefetching the"
-    " checkpoint space map done on each vdev while discarding the checkpoint");
-
 /* spacemap.c */
 extern int space_map_ibs;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, space_map_ibs, CTLFLAG_RWTUN,

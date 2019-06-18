@@ -59,6 +59,23 @@
 
 #include <sys/arc_impl.h>
 #include <sys/dsl_pool.h>
+SYSCTL_DECL(_vfs_zfs);
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, arc, CTLFLAG_RW, 0, "ZFS Adaptive Replacement Cache");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, dbuf_cache, CTLFLAG_RW, 0, "ZFS disk buf cache");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, prefetch, CTLFLAG_RW, 0, "ZFS ZFETCH");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, metaslab, CTLFLAG_RW, 0, "ZFS metaslab");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, vdev, CTLFLAG_RW, 0, "ZFS VDEV");
+SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, cache, CTLFLAG_RW, 0, "ZFS VDEV Cache");
+SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, mirror, CTLFLAG_RD, 0,
+    "ZFS VDEV Mirror");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, zio, CTLFLAG_RW, 0, "ZFS ZIO");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, zil, CTLFLAG_RW, 0, "ZFS ZIL");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, trim, CTLFLAG_RW, 0, "ZFS TRIM");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, condense, CTLFLAG_RW, 0, "ZFS condense");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, mg, CTLFLAG_RW, 0, "metaslab group");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, multihost, CTLFLAG_RW, 0, "multihost protection");
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, reconstruct, CTLFLAG_RW, 0, "reconstruct");
+
 
 
 extern arc_state_t ARC_anon;
@@ -74,8 +91,6 @@ extern arc_state_t ARC_l2c_only;
  */
 
 /* arc.c */
-SYSCTL_DECL(_vfs_zfs);
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, arc, CTLFLAG_RW, 0, "ZFS Adaptive Replacement Cache");
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,
     &ARC_anon.arcs_size.rc_count, 0, "size of anonymous state");
@@ -198,11 +213,10 @@ SYSCTL_UINT(_vfs_zfs, OID_AUTO, send_holes_without_birth_time, CTLFLAG_RWTUN,
 
 
 /* dmu_zfetch.c */
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, zfetch, CTLFLAG_RW, 0, "ZFS ZFETCH");
 
 /* max bytes to prefetch indirects for per stream (default 64MB) */
 extern uint32_t	zfetch_max_idistance;
-SYSCTL_UINT(_vfs_zfs_zfetch, OID_AUTO, max_idistance, CTLFLAG_RWTUN,
+SYSCTL_UINT(_vfs_zfs_prefetch, OID_AUTO, max_idistance, CTLFLAG_RWTUN,
     &zfetch_max_idistance, 0, "Max bytes to prefetch indirects for per stream");
 
 /* dsl_pool.c */
@@ -323,7 +337,6 @@ SYSCTL_UINT(_vfs_zfs, OID_AUTO, scan_idle, CTLFLAG_RWTUN,
 
 /* metaslab.c */
 
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, metaslab, CTLFLAG_RW, 0, "ZFS metaslab");
 
 /*
  * Since we can touch multiple metaslabs (and their respective space maps)
@@ -498,7 +511,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, space_map_ibs, CTLFLAG_RWTUN,
 
 
 /* vdev.c */
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, vdev, CTLFLAG_RW, 0, "ZFS VDEV");
 extern uint64_t zfs_max_auto_ashift;
 extern uint64_t zfs_min_auto_ashift;
 
@@ -574,7 +586,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, validate_skip, CTLFLAG_RDTUN,
 
 
 /* vdev_cache.c */
-SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, cache, CTLFLAG_RW, 0, "ZFS VDEV Cache");
 
 /* vdev_mirror.c */
 /*
@@ -587,9 +598,6 @@ SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, cache, CTLFLAG_RW, 0, "ZFS VDEV Cache");
  * likely to have a higher performance.
  */
 
-
-static SYSCTL_NODE(_vfs_zfs_vdev, OID_AUTO, mirror, CTLFLAG_RD, 0,
-    "ZFS VDEV Mirror");
 
 /* vdev_queue.c */
 static int sysctl_zfs_async_write_active_min_dirty_percent(SYSCTL_HANDLER_ARGS);
@@ -684,7 +692,6 @@ SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, trim_on_init, CTLFLAG_RW,
 
 
 /* zio.c */
-SYSCTL_NODE(_vfs_zfs, OID_AUTO, zio, CTLFLAG_RW, 0, "ZFS ZIO");
 #if defined(__LP64__)
 int zio_use_uma = 1;
 #else

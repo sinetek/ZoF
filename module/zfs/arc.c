@@ -9324,37 +9324,37 @@ ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, p_min_shift, UINT, ZMOD_RW, "arc_c shift to 
 
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, average_blocksize, UINT, ZMOD_RD, "Target average block size");
 
-ZFS_MODULE_PARAM(zfs, zfs_arc_, compression_enabled, UINT, ZMOD_RW,"Disable compressed arc buffers");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, compression_enabled, UINT, ZMOD_RW,"Disable compressed arc buffers");
 
-ZFS_MODULE_PARAM(zfs, , arc_min_prefetch_ms, UINT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, arc_, min_prefetch_ms, UINT, ZMOD_RW,
 	"Min life of prefetch block in ms");
 
 ZFS_MODULE_PARAM(zfs_arc, arc_, min_prescient_prefetch_ms, UINT, ZMOD_RW,
 	"Min life of prescient prefetched block in ms");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_write_max, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, write_max, UQUAD, ZMOD_RW,
 	"Max write bytes per interval");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_write_boost, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, write_boost, UQUAD, ZMOD_RW,
 	"Extra write bytes during device warmup");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_headroom, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, headroom, UQUAD, ZMOD_RW,
 	"Number of max device writes to precache");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_headroom_boost, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, headroom_boost, UQUAD, ZMOD_RW,
 	"Compressed l2arc_headroom multiplier");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_feed_secs, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, feed_secs, UQUAD, ZMOD_RW,
     "Seconds between L2ARC writing");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_feed_min_ms, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, feed_min_ms, UQUAD, ZMOD_RW,
     "Min feed interval in milliseconds");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_noprefetch, UINT, ZMOD_RW, "Skip caching prefetched buffers");
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, noprefetch, UINT, ZMOD_RW, "Skip caching prefetched buffers");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_feed_again, UINT, ZMOD_RW, "Turbo L2ARC warmup");
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, feed_again, UINT, ZMOD_RW, "Turbo L2ARC warmup");
 
-ZFS_MODULE_PARAM(zfs, , l2arc_norw, UINT, ZMOD_RW, "No reads during writes");
+ZFS_MODULE_PARAM(zfs_l2arc, l2arc_, norw, UINT, ZMOD_RW, "No reads during writes");
 
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, lotsfree_percent, UINT, ZMOD_RW,
 	"System free memory I/O throttle in bytes");
@@ -9362,12 +9362,12 @@ ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, lotsfree_percent, UINT, ZMOD_RW,
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, sys_free, UQUAD, ZMOD_RW,
     "System free memory target size in bytes");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit, UQUAD, ZMOD_RW, "Minimum bytes of dnodes in arc");
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, dnode_limit, UQUAD, ZMOD_RW, "Minimum bytes of dnodes in arc");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_limit_percent, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, dnode_limit_percent, UQUAD, ZMOD_RW,
 	"Percent of ARC meta buffers for dnodes");
 
-ZFS_MODULE_PARAM(zfs, zfs_, arc_dnode_reduce_percent, UQUAD, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, dnode_reduce_percent, UQUAD, ZMOD_RW,
 	"Percentage of excess dnodes to try to unpin");
 /* END CSTYLED */
 #endif

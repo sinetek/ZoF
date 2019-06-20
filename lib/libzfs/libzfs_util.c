@@ -61,6 +61,9 @@
 #include <sys/module.h>
 #define execvpe exect
 #define ESTRPIPE EPIPE
+#define ZFS_MODULE "openzfs"
+#else
+#define ZFS_MODULE ZFS_DRIVER
 #endif
 
 int
@@ -997,7 +1000,7 @@ libzfs_init(void)
 	libzfs_handle_t *hdl;
 	int error;
 
-	error = libzfs_load_module(ZFS_DRIVER);
+	error = libzfs_load_module(ZFS_MODULE);
 	if (error) {
 		errno = error;
 		return (NULL);

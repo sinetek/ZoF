@@ -67,6 +67,7 @@ dist-hook: gitrev
 	sed -i 's/Release:[[:print:]]*/Release:      $(RELEASE)/' \
 		$(distdir)/META
 
+if BUILD_LINUX
 # For compatibility, create a matching spl-x.y.z directly which contains
 # symlinks to the updated header and object file locations.  These
 # compatibility links will be removed in the next major release.
@@ -82,6 +83,7 @@ install-data-hook:
 	cd $(DESTDIR)$(prefix)/src/zfs-$(VERSION)/$(LINUX_VERSION) && \
 	ln -fs zfs_config.h spl_config.h && \
 	ln -fs zfs.release spl.release
+endif
 endif
 
 codecheck: cstyle shellcheck flake8 mancheck testscheck vcscheck

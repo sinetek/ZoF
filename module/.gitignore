@@ -2,6 +2,8 @@
 *.ko.unsigned
 *.ko.out
 *.ko.out.sig
+*.ko.debug
+*.ko.full
 *.dwo
 .*.cmd
 .*.d

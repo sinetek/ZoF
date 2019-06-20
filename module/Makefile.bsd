@@ -275,6 +275,13 @@ SRCS+=	aggsum.c \
 	zrlock.c \
 	zthr.c
 
+beforeinstall:
+.if ${MK_DEBUG_FILES} != "no"
+	mtree -u \
+	    -f /etc/mtree/BSD.debug.dist \
+	    -p ${DESTDIR}/usr/lib
+.endif
+
 .include <bsd.kmod.mk>
 
 

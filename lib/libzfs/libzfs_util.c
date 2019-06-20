@@ -927,9 +927,8 @@ libzfs_load_module(const char *module)
 
 	if (modfind(module) < 0) {
 		/* Not present in kernel, try loading it. */
-		if (kldload(module) < 0 || modfind(module) < 0) {
-			if (errno != EEXIST)
-				return (errno);
+		if (kldload(module) < 0 && errno != EEXIST) {
+			return (errno);
 		}
 	}
 	return (0);

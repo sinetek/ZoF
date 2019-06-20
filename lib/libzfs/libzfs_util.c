@@ -61,6 +61,9 @@
 #include <sys/module.h>
 #define execvpe exect
 #define ESTRPIPE EPIPE
+#define ZFS_MODULE "openzfs"
+#else
+#define ZFS_MODULE ZFS_DRIVER
 #endif
 
 int
@@ -924,9 +927,8 @@ libzfs_load_module(const char *module)
 
 	if (modfind(module) < 0) {
 		/* Not present in kernel, try loading it. */
-		if (kldload(module) < 0 || modfind(module) < 0) {
-			if (errno != EEXIST)
-				return (errno);
+		if (kldload(module) < 0 && errno != EEXIST) {
+			return (errno);
 		}
 	}
 	return (0);
@@ -997,7 +999,7 @@ libzfs_init(void)
 	libzfs_handle_t *hdl;
 	int error;
 
-	error = libzfs_load_module(ZFS_DRIVER);
+	error = libzfs_load_module(ZFS_MODULE);
 	if (error) {
 		errno = error;
 		return (NULL);

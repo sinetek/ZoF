@@ -1,4 +1,8 @@
 
+.if !defined(WITH_CTF)
+WITH_CTF=1
+.endif
+
 .include <bsd.sys.mk>
 
 SRCDIR= ${.CURDIR}

@@ -925,7 +925,7 @@ libzfs_load_module(const char *module)
 {
 #ifdef __FreeBSD__
 
-	if (modfind(module) < 0) {
+	if (modfind(ZFS_DRIVER) < 0) {
 		/* Not present in kernel, try loading it. */
 		if (kldload(module) < 0 && errno != EEXIST) {
 			return (errno);

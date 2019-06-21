@@ -280,18 +280,19 @@ constrain_path() {
 	# Standard system utilities
 	if [ "$UNAME" = "FreeBSD" ] ; then
 		create_links "/bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin" "$SYSTEM_FILES"
+		create_links "/sbin /usr/bin" "fsck newfs compress uncompress"
 	else
 		create_links "/bin /usr/bin /sbin /usr/sbin" "$SYSTEM_FILES"
+		# Exceptions
+		ln -fs /sbin/fsck.ext4 "$STF_PATH/fsck"
+		ln -fs /sbin/mkfs.ext4 "$STF_PATH/newfs"
+		ln -fs "$STF_PATH/gzip" "$STF_PATH/compress"
+		ln -fs "$STF_PATH/gunzip" "$STF_PATH/uncompress"
+		ln -fs "$STF_PATH/exportfs" "$STF_PATH/share"
+		ln -fs "$STF_PATH/exportfs" "$STF_PATH/unshare"
 	fi
 
-	# Exceptions
 	ln -fs "$STF_PATH/awk" "$STF_PATH/nawk"
-	ln -fs /sbin/fsck.ext4 "$STF_PATH/fsck"
-	ln -fs /sbin/mkfs.ext4 "$STF_PATH/newfs"
-	ln -fs "$STF_PATH/gzip" "$STF_PATH/compress"
-	ln -fs "$STF_PATH/gunzip" "$STF_PATH/uncompress"
-	ln -fs "$STF_PATH/exportfs" "$STF_PATH/share"
-	ln -fs "$STF_PATH/exportfs" "$STF_PATH/unshare"
 
 	if [ -L "$STF_PATH/arc_summary3" ]; then
 		ln -fs "$STF_PATH/arc_summary3" "$STF_PATH/arc_summary"

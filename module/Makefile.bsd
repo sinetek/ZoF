@@ -277,7 +277,7 @@ SRCS+=	aggsum.c \
 
 beforeinstall:
 .if ${MK_DEBUG_FILES} != "no"
-	mtree -u \
+	mtree -eu \
 	    -f /etc/mtree/BSD.debug.dist \
 	    -p ${DESTDIR}/usr/lib
 .endif

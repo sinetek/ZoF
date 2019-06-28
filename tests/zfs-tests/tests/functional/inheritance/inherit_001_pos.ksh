@@ -405,7 +405,7 @@ if is_linux; then
 	prop+=("acltype" "")
 	def_val+=("off")
 	local_val+=("off")
-elif ! is_freebsd; then
+else
 	prop+=("aclmode" "" \
 		"mountpoint" "")
 	def_val+=("discard" \

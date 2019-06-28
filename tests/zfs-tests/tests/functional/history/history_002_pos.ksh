@@ -89,7 +89,6 @@ props=(
 	copies		$((RANDOM%3 + 1))
 )
 elif is_freebsd; then
-	#aclmode 
 #	property	value		property	value
 #
 props=(
@@ -99,8 +98,8 @@ props=(
 	mountpoint	none		sharenfs	on
 	sharenfs	off
 	compression	on		compression	off
-	compression	lzjb		#aclmode		discard
-	#aclmode		groupmask	aclmode		passthrough
+	compression	lzjb		aclmode		discard
+	aclmode		groupmask	aclmode		passthrough
 	atime		on		atime		off
 	devices		on		devices		off
 	exec		on		exec		off

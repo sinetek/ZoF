@@ -96,7 +96,6 @@ elif is_freebsd; then
 # - zoned	- zones are not supported
 # - sharenfs	- sharing requires superuser privileges
 # - share	- sharing requires superuser privileges
-# - aclmode	- Not supported on FreeBSD
 # - xattr	- Not supported on FreeBSD
 #
 set -A perms	create		true		false	\
@@ -120,6 +119,7 @@ set -A perms	create		true		false	\
 		readonly	true		true	\
 		snapdir		true		false	\
 		userprop	true		true	\
+		aclmode		true		false	\
 		aclinherit	true		false	\
 		rollback	true		true	\
 		clone		true		true	\

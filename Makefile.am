@@ -34,12 +34,16 @@ EXTRA_DIST += META AUTHORS COPYRIGHT LICENSE NEWS NOTICE README.md
 EXTRA_DIST += CODE_OF_CONDUCT.md
 
 # Include all the extra licensing information for modules
-EXTRA_DIST += module/icp/algs/skein/THIRDPARTYLICENSE module/icp/algs/skein/THIRDPARTYLICENSE.descrip
-EXTRA_DIST += module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.gladman module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.gladman.descrip
-EXTRA_DIST += module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.openssl module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.openssl.descrip
+EXTRA_DIST += module/icp/algs/skein/THIRDPARTYLICENSE
+EXTRA_DIST += module/icp/algs/skein/THIRDPARTYLICENSE.descrip
+EXTRA_DIST += module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.gladman
+EXTRA_DIST += module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.gladman.descrip
+EXTRA_DIST += module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.openssl
+EXTRA_DIST += module/icp/asm-x86_64/aes/THIRDPARTYLICENSE.openssl.descrip
 EXTRA_DIST += module/os/linux/spl/THIRDPARTYLICENSE.gplv2
 EXTRA_DIST += module/os/linux/spl/THIRDPARTYLICENSE.gplv2.descrip
-EXTRA_DIST += module/zfs/THIRDPARTYLICENSE.cityhash module/zfs/THIRDPARTYLICENSE.cityhash.descrip
+EXTRA_DIST += module/zfs/THIRDPARTYLICENSE.cityhash
+EXTRA_DIST += module/zfs/THIRDPARTYLICENSE.cityhash.descrip
 
 @CODE_COVERAGE_RULES@
 
@@ -67,7 +71,7 @@ all-local:
 
 dist-hook: gitrev
 	cp ${top_srcdir}/include/zfs_gitrev.h $(distdir)/include; \
-	sed -i 's/Release:[[:print:]]*/Release:      $(RELEASE)/' \
+	sed -e 's/Release:[[:print:]]*/Release:      $(RELEASE)/' -i '' \
 		$(distdir)/META
 
 if BUILD_LINUX

@@ -110,7 +110,6 @@ cscopelist-am: $(am__tagged_files)
 	  fi; \
 	done >> $(top_builddir)/cscope.files
 
-distdir:
 modules_install-FreeBSD:
 	@# Install the kernel modules
 	flags="$$(echo $$MAKEFLAGS | tr ' ' '\n' | grep '^-j')"; \

@@ -37,8 +37,12 @@
 #include <sys/zio.h>
 #include <sys/dmu_zfetch.h>
 #include <sys/range_tree.h>
-#include <sys/trace_dnode.h>
 #include <sys/zfs_project.h>
+#include <sys/sdt.h>
+
+#ifdef __linux__
+#include <sys/trace_dnode.h>
+#endif
 
 dnode_stats_t dnode_stats = {
 	{ "dnode_hold_dbuf_hold",		KSTAT_DATA_UINT64 },

@@ -44,7 +44,9 @@
 #include <sys/zfeature.h>
 #include <sys/blkptr.h>
 #include <sys/range_tree.h>
+#ifdef __linux__
 #include <sys/trace_dbuf.h>
+#endif
 #include <sys/callb.h>
 #include <sys/abd.h>
 #include <sys/vdev.h>

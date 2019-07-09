@@ -63,8 +63,8 @@
 #include <sys/sunddi.h>
 #include <sys/ctype.h>
 #include <sys/disp.h>
-#include <sys/trace.h>
 #if defined(__linux__)
+#include <sys/trace.h>
 #include <sys/procfs_list.h>
 #include <linux/dcache_compat.h>
 #include <linux/utsname_compat.h>

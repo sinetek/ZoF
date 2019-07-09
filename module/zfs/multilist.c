@@ -18,7 +18,9 @@
 
 #include <sys/zfs_context.h>
 #include <sys/multilist.h>
+#ifdef __linux__
 #include <sys/trace_multilist.h>
+#endif
 
 /* needed for spa_get_random() */
 #include <sys/spa.h>

@@ -48,8 +48,12 @@
 #include <sys/zfeature.h>
 #include <sys/zil_impl.h>
 #include <sys/dsl_userhold.h>
-#include <sys/trace_txg.h>
+#include <sys/sdt.h>
 #include <sys/mmp.h>
+
+#ifdef __linux__
+#include <sys/trace_txg.h>
+#endif
 
 /*
  * ZFS Write Throttle

@@ -46,7 +46,9 @@
 #include <sys/abd.h>
 #include <sys/vdev_initialize.h>
 #include <sys/vdev_trim.h>
+#ifdef __linux__
 #include <sys/trace_vdev.h>
+#endif
 
 /*
  * This file contains the necessary logic to remove vdevs from a

@@ -49,7 +49,9 @@
 #include <sys/sa.h>
 #include <sys/zfeature.h>
 #include <sys/abd.h>
+#ifdef __linux__
 #include <sys/trace_dmu.h>
+#endif
 #include <sys/zfs_rlock.h>
 #ifdef _KERNEL
 #include <sys/vmsystm.h>

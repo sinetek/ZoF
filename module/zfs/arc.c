@@ -297,6 +297,7 @@
 #include <sys/vmsystm.h>
 #include <sys/zpl.h>
 #include <linux/page_compat.h>
+#include <sys/trace_arc.h>
 #elif defined(__FreeBSD__)
 #include <sys/eventhandler.h>
 #endif
@@ -306,7 +307,6 @@
 #include <sys/zthr.h>
 #include <zfs_fletcher.h>
 #include <sys/arc_impl.h>
-#include <sys/trace_arc.h>
 #include <sys/aggsum.h>
 #include <sys/cityhash.h>
 

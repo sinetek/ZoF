@@ -41,8 +41,11 @@
 #include <sys/dmu_tx.h>
 #include <sys/dsl_pool.h>
 #include <sys/metaslab.h>
-#include <sys/trace_zil.h>
 #include <sys/abd.h>
+
+#ifdef __linux__
+#include <sys/trace_zil.h>
+#endif
 
 /*
  * The ZFS Intent Log (ZIL) saves "transaction records" (itxs) of system

@@ -53,7 +53,7 @@ gitrev:
 
 BUILT_SOURCES = gitrev
 
-distclean-local::
+distclean-local:
 	-$(RM) -R autom4te*.cache
 	-find . \( -name SCCS -o -name BitKeeper -o -name .svn -o -name CVS \
 		-o -name .pc -o -name .hg -o -name .git \) -prune -o \
@@ -71,7 +71,7 @@ all-local:
 
 dist-hook: gitrev
 	cp ${top_srcdir}/include/zfs_gitrev.h $(distdir)/include; \
-	sed -e 's/Release:[[:print:]]*/Release:      $(RELEASE)/' -i '' \
+	sed -i.bak -e 's/Release:[[:print:]]*/Release:      $(RELEASE)/' \
 		$(distdir)/META
 
 if BUILD_LINUX

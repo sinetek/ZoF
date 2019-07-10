@@ -2637,7 +2637,9 @@ zpool_find_vdev(zpool_handle_t *zhp, const char *ipath, boolean_t *avail_spare,
 	ret = vdev_to_nvlist_iter(nvroot, search, avail_spare, l2cache, log);
 	nvlist_free(search);
 	if (ret == NULL && firstpass) {
-		snprintf(buf, sizeof (buf), "/dev/%s", path);
+		if (strlen(path) > 512)
+			return (NULL);
+		sprintf(buf, "/dev/%s", path);
 		path = buf;
 		firstpass = 0;
 		goto retry;

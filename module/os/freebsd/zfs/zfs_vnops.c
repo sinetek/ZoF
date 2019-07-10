@@ -443,7 +443,11 @@ page_hold(vnode_t *vp, int64_t start)
 
 			ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
 			vm_page_lock(pp);
+#if __FreeBSD_version >= 1300035
+			vm_page_wire(pp);
+#else
 			vm_page_hold(pp);
+#endif
 			vm_page_unlock(pp);
 
 		} else
@@ -458,7 +462,11 @@ page_unhold(vm_page_t pp)
 {
 
 	vm_page_lock(pp);
+#if __FreeBSD_version >= 1300035
+	vm_page_unwire(pp, PQ_ACTIVE);
+#else
 	vm_page_unhold(pp);
+#endif
 	vm_page_unlock(pp);
 }
 

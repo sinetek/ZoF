@@ -1,11 +1,8 @@
 SUBDIRS = sys
-# need correct Makefile.in before this will work
 SUBDIRS+= os
 
 if BUILD_LINUX
 SUBDIRS+= linux 
-
-# XXX - add Makefile.in
 SUBDIRS+= spl
 endif
 

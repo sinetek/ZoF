@@ -9306,7 +9306,7 @@ ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, max, UQUAD, ZMOD_RW,
     "Maximum ARC size");
 
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, metadata_limit, UQUAD, ZMOD_RW,
-	"Min limit for arc size");
+	"Metadata limit for arc size");
 
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_limit_percent, UQUAD, ZMOD_RW,
 	"Percent of arc size for arc meta limit");

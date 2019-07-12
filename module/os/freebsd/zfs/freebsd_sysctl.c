@@ -95,6 +95,10 @@ extern arc_state_t ARC_l2c_only;
  */
 
 /* arc.c */
+extern int zfs_arc_compression_enabled;
+SYSCTL_INT(_vfs_zfs, OID_AUTO, compressed_arc_enabled, CTLFLAG_RWTUN,
+    &zfs_arc_compression_enabled, 0, "Enable compressed arc buffers");
+
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,
     &ARC_anon.arcs_size.rc_count, 0, "size of anonymous state");

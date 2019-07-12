@@ -1,5 +1,5 @@
 /*
- * This file is produced automatically.
+ * This file is @generated automatically.
  * Do not modify anything in here by hand.
  *
  * Created from $FreeBSD$
@@ -697,7 +697,7 @@ struct vop_symlink_args {
 	struct vnode **a_vpp;
 	struct componentname *a_cnp;
 	struct vattr *a_vap;
-	char *a_target;
+	const char *a_target;
 };
 
 extern struct vnodeop_desc vop_symlink_desc;
@@ -710,7 +710,7 @@ static __inline int VOP_SYMLINK(
 	struct vnode **vpp,
 	struct componentname *cnp,
 	struct vattr *vap,
-	char *target)
+	const char *target)
 {
 	struct vop_symlink_args a;
 
@@ -987,7 +987,7 @@ struct vop_pathconf_args {
 	struct vop_generic_args a_gen;
 	struct vnode *a_vp;
 	int a_name;
-	register_t *a_retval;
+	long *a_retval;
 };
 
 extern struct vnodeop_desc vop_pathconf_desc;
@@ -998,7 +998,7 @@ int VOP_PATHCONF_APV(struct vop_vector *vop, struct vop_pathconf_args *);
 static __inline int VOP_PATHCONF(
 	struct vnode *vp,
 	int name,
-	register_t *retval)
+	long *retval)
 {
 	struct vop_pathconf_args a;
 
@@ -1778,29 +1778,6 @@ static __inline int VOP_UNSET_TEXT(
 	a.a_gen.a_desc = &vop_unset_text_desc;
 	a.a_vp = vp;
 	return (VOP_UNSET_TEXT_APV(vp->v_op, &a));
-}
-
-struct vop_get_writecount_args {
-	struct vop_generic_args a_gen;
-	struct vnode *a_vp;
-	int *a_writecount;
-};
-
-extern struct vnodeop_desc vop_get_writecount_desc;
-
-int VOP_GET_WRITECOUNT_AP(struct vop_get_writecount_args *);
-int VOP_GET_WRITECOUNT_APV(struct vop_vector *vop, struct vop_get_writecount_args *);
-
-static __inline int VOP_GET_WRITECOUNT(
-	struct vnode *vp,
-	int *writecount)
-{
-	struct vop_get_writecount_args a;
-
-	a.a_gen.a_desc = &vop_get_writecount_desc;
-	a.a_vp = vp;
-	a.a_writecount = writecount;
-	return (VOP_GET_WRITECOUNT_APV(vp->v_op, &a));
 }
 
 struct vop_add_writecount_args {

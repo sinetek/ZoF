@@ -84,6 +84,15 @@
 #include <sys/extattr.h>
 #include <sys/priv.h>
 
+static int
+zfs_u8_validate(const char *u8str, size_t n, char **list, int flag, int *errnum)
+{
+
+	return (u8_validate(__DECONST(char *, u8str), n, list, flag, errnum));
+}
+#define u8_validate zfs_u8_validate
+
+
 /*
  * Programming rules.
  *
@@ -3890,7 +3899,7 @@ out:				/* original two vnodes are locked */
  */
 /*ARGSUSED*/
 static int
-zfs_symlink(vnode_t *dvp, vnode_t **vpp, char *name, vattr_t *vap, char *link,
+zfs_symlink(vnode_t *dvp, vnode_t **vpp, const char *name, vattr_t *vap, const char *link,
     cred_t *cr, kthread_t *td)
 {
 	znode_t		*zp, *dzp = VTOZ(dvp);
@@ -3982,9 +3991,9 @@ zfs_symlink(vnode_t *dvp, vnode_t **vpp, char *name, vattr_t *vap, char *link,
 
 	if (zp->z_is_sa)
 		error = sa_update(zp->z_sa_hdl, SA_ZPL_SYMLINK(zfsvfs),
-		    link, len, tx);
+		    __DECONST(void *, link), len, tx);
 	else
-		zfs_sa_symlink(zp, link, len, tx);
+		zfs_sa_symlink(zp, __DECONST(char*, link), len, tx);
 
 	zp->z_size = len;
 	(void) sa_update(zp->z_sa_hdl, SA_ZPL_SIZE(zfsvfs),
@@ -3994,7 +4003,7 @@ zfs_symlink(vnode_t *dvp, vnode_t **vpp, char *name, vattr_t *vap, char *link,
 	 */
 	(void) zfs_link_create(dzp, name, zp, tx, ZNEW);
 
-	zfs_log_symlink(zilog, tx, txtype, dzp, zp, name, link);
+	zfs_log_symlink(zilog, tx, txtype, dzp, zp, __DECONST(char *, name), __DECONST(char *, link));
 	*vpp = ZTOV(zp);
 
 	zfs_acl_ids_free(&acl_ids);

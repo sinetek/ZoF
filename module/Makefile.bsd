@@ -54,8 +54,10 @@ CFLAGS+= -DBITS_PER_LONG=32
 CFLAGS+= -DBITS_PER_LONG=64
 .endif
 
+SRCS=	vnode_if.h
+
 # avl
-SRCS=	avl.c
+SRCS+=	avl.c
 
 #lua
 SRCS+=	lapi.c \

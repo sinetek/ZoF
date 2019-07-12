@@ -4462,6 +4462,28 @@ zfs_freebsd_getpages(ap)
 	    ap->a_rahead));
 }
 
+/*
+ * Mark this file's access time for update for vfs_mark_atime().  This
+ * is called from execve() and mmap().
+ */
+static int
+zfs_freebsd_markatime(ap)
+	struct vop_markatime_args /* {
+		struct vnode *a_vp;
+	} */ *ap;
+{
+	struct vnode *vp = ap->a_vp;
+	znode_t		*zp = VTOZ(vp);
+	struct timespec ts;
+
+	vfs_timestamp(&ts);
+	zp->z_atime[0] = ts.tv_sec;
+	zp->z_atime[1] = ts.tv_nsec;
+	return (0);
+}
+
+
+
 static int
 zfs_putpages(struct vnode *vp, vm_page_t *ma, size_t len, int flags,
     int *rtvals)
@@ -5854,6 +5876,7 @@ struct vop_vector zfs_vnodeops = {
 	.vop_rmdir =		zfs_freebsd_rmdir,
 	.vop_ioctl =		zfs_freebsd_ioctl,
 	.vop_link =		zfs_freebsd_link,
+	.vop_markatime =	zfs_freebsd_markatime,
 	.vop_symlink =		zfs_freebsd_symlink,
 	.vop_readlink =		zfs_freebsd_readlink,
 	.vop_read =		zfs_freebsd_read,

@@ -12,5 +12,6 @@
 /.tmp_versions
 /Module.markers
 /Module.symvers
+/vnode_if*
 
 !Makefile.in

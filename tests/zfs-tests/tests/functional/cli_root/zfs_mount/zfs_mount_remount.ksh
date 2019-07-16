@@ -115,7 +115,7 @@ log_must mkdir -p $MNTPSNAP
 log_must touch $MNTPFS/file.dat
 checkmount $TESTFS 'rw'
 if is_freebsd; then
-	#Remount not a supported option on FreeBSD
+	# Remount not a supported option on FreeBSD
 	log_must mount -o ro $TESTFS $MNTPFS
 else
 	log_must mount -o remount,ro $TESTFS $MNTPFS

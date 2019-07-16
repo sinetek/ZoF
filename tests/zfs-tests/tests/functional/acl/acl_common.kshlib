@@ -32,7 +32,7 @@
 . $STF_SUITE/include/libtest.shlib
 
 # FreeBSD doesn't support ZFS extended attributes.  It also doesn't support the
-# # same ACL mechanisms Solaris does for testing.
+# same ACL mechanisms Solaris does for testing.
 if [[ $os_name != "FreeBSD" ]]; then
 	export ZFS_XATTR="true"
 	export ZFS_ACL="true"

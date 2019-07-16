@@ -80,7 +80,7 @@ log_must zfs create $TESTPOOL/$TESTFS
 # synchronously to force ZFS to write one out.
 #
 if is_freebsd; then
-	#fdatasync and fsync not supported on FreeBSD
+	# fdatasync and fsync not supported on FreeBSD
 	log_must dd if=/dev/zero of=/$TESTPOOL/$TESTFS/sync bs=1 count=1
 else
 	log_must dd if=/dev/zero of=/$TESTPOOL/$TESTFS/sync \

@@ -53,7 +53,7 @@ fi
 log_must zfs create -o compression=on $TESTPOOL/fs
 mntpt=$(get_prop mountpoint $TESTPOOL/fs)
 if is_freebsd; then
-	#Block size of 0 not supported on FreeBSD. 1024k is default
+	# Block size of 0 not supported on FreeBSD. 1024k is default
 	write_compressible $mntpt 32m 1 1024k "testfile"
 else
 	write_compressible $mntpt 32m 1 0 "testfile"
@@ -63,7 +63,7 @@ log_must zfs umount $TESTPOOL/fs
 log_must zfs mount $TESTPOOL/fs
 log_must zinject -a -t data -e decompress -f 20 $mntpt/testfile.0
 log_mustnot eval "cat $mntpt/testfile.0 > /dev/null"
-#Events are not supported on FreeBSD
+# Events are not supported on FreeBSD
 if ! is_freebsd; then
 	log_must eval "zpool events $TESTPOOL | grep -q 'data'"
 fi

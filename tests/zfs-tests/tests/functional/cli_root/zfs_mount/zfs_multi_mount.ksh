@@ -64,7 +64,7 @@ log_must exec 9<> $FILENAME # open file
 
 # 3. Lazy umount
 if is_freebsd; then
-	#FreeBSD does not support lazy unmount
+	# FreeBSD does not support lazy unmount
 	log_must umount $MNTPFS
 else
 	log_must umount -l $MNTPFS

@@ -77,8 +77,8 @@ if is_linux; then
 		args+=("mand" "nomand")
 	fi
 elif is_freebsd; then
-	#'xattr' and 'devices' are not supported on FreeBSD
-	#Perhaps more options need to be added.
+	# 'xattr' and 'devices' are not supported on FreeBSD
+	# Perhaps more options need to be added.
 	set -A args \
 	"noexec"	"exec"	\
 	"ro"		"rw"	\

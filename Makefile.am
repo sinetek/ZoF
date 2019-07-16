@@ -71,7 +71,7 @@ all-local:
 
 dist-hook: gitrev
 	cp ${top_srcdir}/include/zfs_gitrev.h $(distdir)/include; \
-	sed -i.bak -e 's/Release:[[:print:]]*/Release:      $(RELEASE)/' \
+	sed ${ac_inplace} -e 's/Release:[[:print:]]*/Release:      $(RELEASE)/' \
 		$(distdir)/META
 
 if BUILD_LINUX

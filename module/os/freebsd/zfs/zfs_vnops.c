@@ -236,12 +236,6 @@ zfs_close(vnode_t *vp, int flag, int count, offset_t offset, cred_t *cr,
 	znode_t	*zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 
-	/*
-	 * Clean up any locks held by this process on the vp.
-	 */
-	cleanlocks(vp, ddi_get_pid(), 0);
-	cleanshares(vp, ddi_get_pid());
-
 	ZFS_ENTER(zfsvfs);
 	ZFS_VERIFY_ZP(zp);
 
@@ -702,17 +696,6 @@ zfs_read(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	}
 
 	/*
-	 * Check for mandatory locks
-	 */
-	if (MANDMODE(zp->z_mode)) {
-		if ((error = chklock(vp, FREAD,
-			uio->uio_loffset, uio->uio_resid, uio->uio_fmode, ct))) {
-			ZFS_EXIT(zfsvfs);
-			return (error);
-		}
-	}
-
-	/*
 	 * If we're in FRSYNC mode, sync out this znode before reading it.
 	 */
 	if (zfsvfs->z_log &&
@@ -864,16 +847,6 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	if (woff < 0) {
 		ZFS_EXIT(zfsvfs);
 		return (SET_ERROR(EINVAL));
-	}
-
-	/*
-	 * Check for mandatory locks before calling zfs_range_lock()
-	 * in order to prevent a deadlock with locks set via fcntl().
-	 */
-	if (MANDMODE((mode_t)zp->z_mode) &&
-	    (error = chklock(vp, FWRITE, woff, n, uio->uio_fmode, ct)) != 0) {
-		ZFS_EXIT(zfsvfs);
-		return (error);
 	}
 
 	/*

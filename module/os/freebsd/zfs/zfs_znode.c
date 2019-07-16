@@ -1158,9 +1158,7 @@ again:
 	    doi.doi_bonus_size < sizeof (znode_phys_t)))) {
 		sa_buf_rele(db, NULL);
 		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-#ifdef __FreeBSD__
 		getnewvnode_drop_reserve();
-#endif
 		return (SET_ERROR(EINVAL));
 	}
 
@@ -1175,14 +1173,26 @@ again:
 		 */
 		ASSERT3P(zp, !=, NULL);
 		ASSERT3U(zp->z_id, ==, obj_num);
-		*zpp = zp;
-		vp = ZTOV(zp);
-
-		/* Don't let the vnode disappear after ZFS_OBJ_HOLD_EXIT. */
-		VN_HOLD(vp);
+		if (zp->z_unlinked) {
+			err = SET_ERROR(ENOENT);
+		} else {
+			vp = ZTOV(zp);
+			/*
+			 * Don't let the vnode disappear after
+			 * ZFS_OBJ_HOLD_EXIT.
+			 */
+			VN_HOLD(vp);
+			*zpp = zp;
+			err = 0;
+		}
 
 		sa_buf_rele(db, NULL);
 		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
+
+		if (err) {
+			getnewvnode_drop_reserve();
+			return (err);
+		}
 
 		locked = VOP_ISLOCKED(vp);
 		VI_LOCK(vp);
@@ -1216,7 +1226,7 @@ again:
 		}
 		VI_UNLOCK(vp);
 		getnewvnode_drop_reserve();
-		return (0);
+		return (err);
 	}
 
 	/*

@@ -101,11 +101,7 @@ vn_is_readonly(vnode_t *vp)
 #define	vnevent_rename_dest_dir(vp, ct)		do { } while (0)
 
 #define	specvp(vp, rdev, type, cr)	(VN_HOLD(vp), (vp))
-#define	MANDMODE(mode)		(0)
 #define	MANDLOCK(vp, mode)	(0)
-#define	chklock(vp, op, offset, size, mode, ct)	(0)
-#define	cleanlocks(vp, pid, foo)	do { } while (0)
-#define	cleanshares(vp, pid)		do { } while (0)
 
 /*
  * We will use va_spare is place of Solaris' va_mask.

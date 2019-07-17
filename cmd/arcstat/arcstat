@@ -54,7 +54,7 @@ import copy
 from decimal import Decimal
 from signal import signal, SIGINT, SIGWINCH, SIG_DFL
 
-#Requires py27-sysctl on FreeBSD
+# Requires py27-sysctl on FreeBSD
 if sys.platform.startswith('freebsd'):
     import sysctl
 
@@ -168,7 +168,7 @@ def kstat_update():
                 continue
 
             name, value = s.name, s.value
-            #Trims 'kstat.zfs.misc.arcstats' from the name
+            # Trims 'kstat.zfs.misc.arcstats' from the name
             kstat[name[24:]] = Decimal(value)
 
     else:

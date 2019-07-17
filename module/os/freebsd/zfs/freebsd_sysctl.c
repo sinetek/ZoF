@@ -236,17 +236,30 @@ SYSCTL_UINT(_vfs_zfs, OID_AUTO, scan_idle, CTLFLAG_RWTUN,
 
 /* metaslab.c */
 
+/*
+ * In pools where the log space map feature is not enabled we touch
+ * multiple metaslabs (and their respective space maps) with each
+ * transaction group. Thus, we benefit from having a small space map
+ * block size since it allows us to issue more I/O operations scattered
+ * around the disk. So a sane default for the space map block size
+ * is 8~16K.
+ */
+extern int zfs_metaslab_sm_blksz_no_log;
+SYSCTL_INT(_vfs_zfs, OID_AUTO, metaslab_sm_blksz_no_log, CTLFLAG_RDTUN,
+    &zfs_metaslab_sm_blksz_no_log, 0,
+    "Block size for space map in pools with log space map disabled.  "
+    "Power of 2 and greater than 4096.");
 
 /*
- * Since we can touch multiple metaslabs (and their respective space maps)
- * with each transaction group, we benefit from having a smaller space map
- * block size since it allows us to issue more I/O operations scattered
- * around the disk.
+ * When the log space map feature is enabled, we accumulate a lot of
+ * changes per metaslab that are flushed once in a while so we benefit
+ * from a bigger block size like 128K for the metaslab space maps.
  */
-extern int zfs_metaslab_sm_blksz;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, metaslab_sm_blksz, CTLFLAG_RDTUN,
-    &zfs_metaslab_sm_blksz, 0,
-    "Block size for metaslab DTL space map.  Power of 2 and greater than 4096.");
+extern int zfs_metaslab_sm_blksz_with_log;
+SYSCTL_INT(_vfs_zfs, OID_AUTO, metaslab_sm_blksz_with_log, CTLFLAG_RDTUN,
+    &zfs_metaslab_sm_blksz_with_log, 0,
+    "Block size for space map in pools with log space map enabled.  "
+    "Power of 2 and greater than 4096.");
 
 /*
  * The in-core space map representation is more compact than its on-disk form.
@@ -457,9 +470,9 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, min_auto_ashift,
  * Since the DTL space map of a vdev is not expected to have a lot of
  * entries, we default its block size to 4K.
  */
-extern int vdev_dtl_sm_blksz;
+extern int zfs_vdev_dtl_sm_blksz;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, dtl_sm_blksz, CTLFLAG_RDTUN,
-    &vdev_dtl_sm_blksz, 0,
+    &zfs_vdev_dtl_sm_blksz, 0,
     "Block size for DTL space map.  Power of 2 and greater than 4096.");
 
 /*
@@ -467,9 +480,9 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, dtl_sm_blksz, CTLFLAG_RDTUN,
  * the end of each transaction can benefit from a higher I/O bandwidth
  * (e.g. vdev_obsolete_sm), thus we default their block size to 128K.
  */
-extern int vdev_standard_sm_blksz;
+extern int zfs_vdev_standard_sm_blksz;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, standard_sm_blksz, CTLFLAG_RDTUN,
-    &vdev_standard_sm_blksz, 0,
+    &zfs_vdev_standard_sm_blksz, 0,
     "Block size for standard space map.  Power of 2 and greater than 4096.");
 
 extern int vdev_validate_skip;

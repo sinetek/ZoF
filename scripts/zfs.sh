@@ -1,4 +1,4 @@
-#!/bin/sh -xv
+#!/bin/sh
 #
 # A simple script to load/unload the ZFS module stack.
 #
@@ -254,7 +254,7 @@ if [ "$UNLOAD" = "yes" ]; then
 		FreeBSD)
 	           unload_modules_freebsd
 		   ;;
-		*) 
+		*)
 	           stack_check
 	           unload_modules
 		   ;;
@@ -262,16 +262,16 @@ if [ "$UNLOAD" = "yes" ]; then
 	esac
 else
 	case $UNAME in
-		FreeBSD) 
+		FreeBSD)
 		   load_modules_freebsd
 		   ;;
-		*) 
+		*)
 		   stack_clear
 		   check_modules
 		   load_modules "$@"
 		   udevadm trigger
 		   udevadm settle
-	 	   ;;
+		   ;;
 	esac
 fi
 

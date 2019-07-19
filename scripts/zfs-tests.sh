@@ -31,7 +31,7 @@ fi
 
 PROG=zfs-tests.sh
 VERBOSE="no"
-QUIET=
+QUIET=""
 CLEANUP="yes"
 CLEANUPALL="no"
 LOOPBACK="yes"
@@ -353,7 +353,7 @@ while getopts 'hvqxkfScn:d:s:r:?t:T:u:I:' OPTION; do
 		VERBOSE="yes"
 		;;
 	q)
-		QUIET="-q"
+		QUIET="yes"
 		;;
 	x)
 		CLEANUPALL="yes"
@@ -680,12 +680,12 @@ fi
 #
 # Run all the tests as specified.
 #
-msg "${PYTHON} ${TEST_RUNNER} ${QUIET}" \
+msg "${PYTHON} \"${TEST_RUNNER}\" ${QUIET:+-q}" \
     "-c \"${RUNFILE}\"" \
     "-T \"${TAGS}\"" \
     "-i \"${STF_SUITE}\"" \
     "-I \"${ITERATIONS}\""
-${PYTHON} ${TEST_RUNNER} ${QUIET} \
+${PYTHON} "${TEST_RUNNER}" ${QUIET:+-q} \
     -c "${RUNFILE}" \
     -T "${TAGS}" \
     -i "${STF_SUITE}" \
@@ -696,7 +696,7 @@ ${PYTHON} ${TEST_RUNNER} ${QUIET} \
 # Analyze the results.
 #
 set -o pipefail
-${PYTHON} ${ZTS_REPORT} "$RESULTS_FILE" | tee "$REPORT_FILE"
+${PYTHON} "${ZTS_REPORT}" "$RESULTS_FILE" | tee "$REPORT_FILE"
 RESULT=$?
 set +o pipefail
 

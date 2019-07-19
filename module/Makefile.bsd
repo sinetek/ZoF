@@ -95,7 +95,6 @@ SRCS+=	nvpair.c \
 SRCS+=	acl_common.c \
 	callb.c \
 	list.c \
-	opensolaris.c \
 	opensolaris_acl.c \
 	opensolaris_cmn_err.c \
 	opensolaris_dtrace.c \

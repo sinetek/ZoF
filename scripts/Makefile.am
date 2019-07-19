@@ -61,6 +61,7 @@ all-local:
 		-e '\|^export ZTS_DIR=|s|$$|@abs_top_srcdir@/tests|' \
 		-e '\|^export SCRIPT_DIR=|s|$$|@abs_top_srcdir@/scripts|' \
 		$(abs_top_srcdir)/scripts/common.sh.in >common.sh
+	-echo 'export PYTHON=$${PYTHON:-@PYTHON@}' >>common.sh
 	-echo "$$EXTRA_ENVIRONMENT" >>common.sh
 
 clean-local:
@@ -73,3 +74,5 @@ install-data-hook:
 		-e '\|^export SCRIPT_DIR=|s|$$|@datadir@/@PACKAGE@|' \
 		$(abs_top_srcdir)/scripts/common.sh.in \
 		>$(DESTDIR)$(datadir)/@PACKAGE@/common.sh
+	-echo 'export PYTHON=$${PYTHON:-@PYTHON@}' \
+		>>$(DESTDIR)$(datadir)/@PACKAGE@/common.sh

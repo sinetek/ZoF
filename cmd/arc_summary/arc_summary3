@@ -43,31 +43,77 @@ import subprocess
 import sys
 import time
 
-# Requires py36-sysctl on FreeBSD
 if sys.platform.startswith('freebsd'):
+    # Requires py36-sysctl on FreeBSD
     import sysctl
+
+    def load_kstats(section):
+        base = 'kstat.zfs.misc.{section}.'.format(section=section)
+        # base is removed from the name
+        fmt = lambda kstat: '{name} {value}'.format(name=kstat.name[len(base):],
+                                                    value=kstat.value)
+        return [fmt(kstat) for kstat in sysctl.filter(base)]
+
+    def get_params(base):
+        return {ctl.name[8:]: str(ctl.value) for ctl in sysctl.filter(base)}
+
+    def get_tunable_params():
+        return get_params('vfs.zfs')
+
+    def get_vdev_params():
+        return get_params('vfs.zfs.vdev')
+
+else:
+    KSTAT_PATH = '/proc/spl/kstat/zfs'
+    SPL_PATH = '/sys/module/spl/parameters'
+    TUNABLES_PATH = '/sys/module/zfs/parameters'
+
+    def load_kstats(section):
+        path = '{basepath}/{section}'.format(basepath=KSTAT_PATH,
+                                             section=section)
+        with open(path) as f:
+            return list(f)[2:] # Get rid of header
+
+    def get_params(basepath):
+        """Collect information on the Solaris Porting Layer (SPL) or the
+        tunables, depending on the PATH given. Does not check if PATH is
+        legal.
+        """
+        result = {}
+        for name in os.listdir(basepath):
+            path = '{basepath}/{name}'.format(basepath=basepath, name=name)
+            with open(path) as f:
+                value = para_file.read()
+                result[name] = value.strip()
+        return result
+
+    def get_spl_params():
+        return get_params(SPL_PATH)
+
+    def get_tunable_params():
+        return get_params(TUNABLES_PATH)
+
+    def get_vdev_params():
+        return get_params(TUNABLES_PATH)
+
 
 DECRIPTION = 'Print ARC and other statistics for ZFS on Linux'
 INDENT = ' '*8
 LINE_LENGTH = 72
-PROC_PATH = '/proc/spl/kstat/zfs/'
-SPL_PATH = '/sys/module/spl/parameters/'
-TUNABLES_PATH = '/sys/module/zfs/parameters/'
 DATE_FORMAT = '%a %b %d %H:%M:%S %Y'
 TITLE = 'ZFS Subsystem Report'
 
-SECTIONS = 'arc archits dmu l2arc spl tunables vdev zil'.split()
-SECTION_HELP = 'print info from one section ('+' '.join(SECTIONS)+')'
-
 # Tunables and SPL are handled separately because they come from
 # different sources
-SECTION_PATHS = {'arc': 'arcstats',
-                 'dmu': 'dmu_tx',
-                 'l2arc': 'arcstats',  # L2ARC stuff lives in arcstats
-                 'vdev': 'vdev_cache_stats',
-                 'xuio': 'xuio_stats',
-                 'zfetch': 'zfetchstats',
-                 'zil': 'zil'}
+SECTIONS = {'arc': 'arcstats',
+            'dmu': 'dmu_tx',
+            'l2arc': 'arcstats',  # L2ARC stuff lives in arcstats
+            'vdev': 'vdev_cache_stats',
+            'xuio': 'xuio_stats',
+            'zfetch': 'zfetchstats',
+            'zil': 'zil'}
+SECTION_NAMES = sorted(SECTIONS.keys())
+SECTION_HELP = 'print info from one section (%s)' % ' '.join(SECTIONS_NAMES)
 
 parser = argparse.ArgumentParser(description=DECRIPTION)
 parser.add_argument('-a', '--alternate', action='store_true', default=False,
@@ -255,59 +301,17 @@ def format_raw_line(name, value):
 
 
 def get_kstats():
-    """Collect information on the ZFS subsystem from the /proc Linux virtual
-    file system. The step does not perform any further processing, giving us
-    the option to only work on what is actually needed. The name "kstat" is a
-    holdover from the Solaris utility of the same name.
+    """Collect information on the ZFS subsystem. The step does not perform any
+    further processing, giving us the option to only work on what is actually
+    needed. The name "kstat" is a holdover from the Solaris utility of the same
+    name.
     """
 
     result = {}
-    secs = SECTION_PATHS.values()
 
-    for section in secs:
-
-        if sys.platform.startswith('freebsd'):
-            kstats = sysctl.filter('kstat.zfs.misc.'+section+'.')
-            lines = []
-            for kstat in kstats:
-                # Removes kstat.zfs.misc.+section+'.' from the name
-                lines.append(kstat.name[15+len(section)+1:] + ' ' + str(kstat.value))
-            result[section] = lines
-        else:
-            with open(PROC_PATH+section, 'r') as proc_location:
-                lines = [line for line in proc_location]
-
-            del lines[0:2]  # Get rid of header
-            result[section] = lines
-
-    return result
-
-
-def get_spl_tunables(PATH):
-    """Collect information on the Solaris Porting Layer (SPL) or the
-    tunables, depending on the PATH given. Does not check if PATH is
-    legal.
-    """
-
-    result = {}
-    if sys.platform.startswith('freebsd'):
-        if PATH == "VDEV":
-            ctls = sysctl.filter('vfs.zfs.vdev')
-        elif PATH == "SPL": # No SPL support in FreeBSD
-            pass
-        else:
-            ctls = sysctl.filter('vfs.zfs.')
-        for ctl in ctls:
-            # Removes 'vfs.zfs.' from the name
-            result[ctl.name[8:]] = ctl.value 
-    else:
-        parameters = os.listdir(PATH)
-
-        for name in parameters:
-
-            with open(PATH+name, 'r') as para_file:
-                value = para_file.read()
-                result[name] = value.strip()
+    for section in SECTIONS.values():
+        if section not in result:
+            result.update(load_kstats(section))
 
     return result
 
@@ -740,27 +744,27 @@ def section_spl(*_):
     and/or decriptions. This does not use kstats.
     """
 
-    if sys.platform.startswith('freebsd'): # No SPL support in FreeBSD
-        #spls = get_spl_tunables("SPL")
-        pass
-    else:
-        spls = get_spl_tunables(SPL_PATH)
-        keylist = sorted(spls.keys())
-        print('Solaris Porting Layer (SPL):')
+    if sys.platform.startswith('freebsd'):
+        # No SPL support in FreeBSD
+        return
+
+    spls = get_spl_params()
+    keylist = sorted(spls.keys())
+    print('Solaris Porting Layer (SPL):')
+
+    if ARGS.desc:
+        descriptions = get_descriptions('spl')
+
+    for key in keylist:
+        value = spls[key]
 
         if ARGS.desc:
-            descriptions = get_descriptions('spl')
+            try:
+                print(INDENT+'#', descriptions[key])
+            except KeyError:
+                print(INDENT+'# (No decription found)')  # paranoid
 
-        for key in keylist:
-            value = spls[key]
-
-            if ARGS.desc:
-                try:
-                    print(INDENT+'#', descriptions[key])
-                except KeyError:
-                    print(INDENT+'# (No decription found)')  # paranoid
-
-            print(format_raw_line(key, value))
+        print(format_raw_line(key, value))
 
     print()
 
@@ -770,10 +774,7 @@ def section_tunables(*_):
     decriptions. This does not use kstasts.
     """
 
-    if sys.platform.startswith('freebsd'):
-        tunables = get_spl_tunables("ALL")
-    else:
-        tunables = get_spl_tunables(TUNABLES_PATH)
+    tunables = get_tunable_params()
     keylist = sorted(tunables.keys())
     print('Tunables:')
 
@@ -801,13 +802,10 @@ def section_vdev(kstats_dict):
     # harmful. When this is the case, we just skip the whole entry. See
     # https://github.com/zfsonlinux/zfs/blob/master/module/zfs/vdev_cache.c
     # for details
-    if sys.platform.startswith('freebsd'):
-        tunables = get_spl_tunables("VDEV")
-        if tunables['vdev.cache.size'] == '0':
+    tunables = get_vdev_params()
+    if tunables['vdev.cache.size'] == '0':
             print('VDEV cache disabled, skipping section\n')
             return
-    else:
-        tunables = get_spl_tunables(TUNABLES_PATH)
 
     vdev_stats = isolate_section('vdev_cache_stats', kstats_dict)
 

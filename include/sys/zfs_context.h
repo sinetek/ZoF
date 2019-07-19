@@ -197,7 +197,9 @@ extern int spa_import_rootpool(const char *name);
 #include <sys/types.h>
 #include <sys/cred.h>
 #include <sys/sysmacros.h>
+#ifdef __linux__
 #include <sys/bitmap.h>
+#endif
 #include <sys/resource.h>
 #include <sys/byteorder.h>
 #include <sys/list.h>

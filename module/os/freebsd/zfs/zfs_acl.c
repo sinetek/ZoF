@@ -2169,7 +2169,7 @@ zfs_zaccess_aces_check(znode_t *zp, uint32_t *working_mode,
 
 				newid = zfs_fuid_map_id(zfsvfs, who, cr,
 				    ZFS_ACE_USER);
-				if (newid != IDMAP_WK_CREATOR_OWNER_UID &&
+				if (newid !=  UID_NOBODY &&
 				    uid == newid)
 					checkit = B_TRUE;
 				break;

@@ -29,7 +29,7 @@
 #ifndef _OPENSOLARIS_SYS_KIDMAP_H_
 #define	_OPENSOLARIS_SYS_KIDMAP_H_
 
-#include <sys/idmap.h>
+
 
 typedef int32_t	idmap_stat;
 typedef void	idmap_get_handle_t;

@@ -42,7 +42,9 @@
 #include <sys/stat.h>
 #include <sys/efi_partition.h>
 #include <sys/systeminfo.h>
+#ifndef __FreeBSD__
 #include <sys/vtoc.h>
+#endif
 #include <sys/zfs_ioctl.h>
 #include <sys/vdev_disk.h>
 #include <dlfcn.h>

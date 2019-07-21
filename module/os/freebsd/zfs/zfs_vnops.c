@@ -1093,7 +1093,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 		else
 			(void) sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 
-		zfs_log_write(zilog, tx, TX_WRITE, zp, woff, tx_bytes, ioflag);
+		zfs_log_write(zilog, tx, TX_WRITE, zp, woff, tx_bytes, ioflag, NULL, NULL);
 		dmu_tx_commit(tx);
 
 		if (error != 0)
@@ -4584,7 +4584,11 @@ zfs_putpages(struct vnode *vp, vm_page_t *ma, size_t len, int flags,
 		zfs_tstamp_update_setup(zp, CONTENT_MODIFIED, mtime, ctime);
 		err = sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 		ASSERT0(err);
-		zfs_log_write(zfsvfs->z_log, tx, TX_WRITE, zp, off, len, 0);
+		/*
+		 * XXX we should be passing a callback to undirty
+		 * but that would make the locking messier
+		 */
+		zfs_log_write(zfsvfs->z_log, tx, TX_WRITE, zp, off, len, 0, NULL, NULL);
 
 		zfs_vmobject_wlock(object);
 		for (i = 0; i < ncount; i++) {

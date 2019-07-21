@@ -125,6 +125,8 @@ extern "C" {
 #define	MODULE_PARM_DESC(a, b)
 #ifdef _KERNEL
 #include <linux/types.h>
+#define ATTR_UID AT_UID
+#define ATTR_GID AT_GID
 
 #define	vmem_free zfs_kmem_free
 /* XXX */

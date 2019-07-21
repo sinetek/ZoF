@@ -91,7 +91,6 @@
 #include <sys/zfs_context.h>
 #include <sys/zfs_znode.h>
 
-
 typedef struct abd_stats {
 	kstat_named_t abdstat_struct_size;
 	kstat_named_t abdstat_scatter_cnt;
@@ -273,7 +272,7 @@ abd_free_struct(abd_t *abd)
 abd_t *
 abd_alloc(size_t size, boolean_t is_metadata)
 {
-	if (!zfs_abd_scatter_enabled || size < zfs_abd_chunk_size)
+	if (!zfs_abd_scatter_enabled || size <= zfs_abd_chunk_size)
 		return (abd_alloc_linear(size, is_metadata));
 
 	VERIFY3U(size, <=, SPA_MAXBLOCKSIZE);
@@ -472,7 +471,10 @@ abd_get_offset_impl(abd_t *sabd, size_t off, size_t size)
 		    chunkcnt * sizeof (void *));
 	}
 
-	abd->abd_size = size;
+	if (size == 0)
+		abd->abd_size = sabd->abd_size - off;
+	else
+		abd->abd_size = size;
 	abd->abd_parent = sabd;
 	zfs_refcount_create(&abd->abd_children);
 	(void) zfs_refcount_add_many(&sabd->abd_children, abd->abd_size, abd);
@@ -483,11 +485,8 @@ abd_get_offset_impl(abd_t *sabd, size_t off, size_t size)
 abd_t *
 abd_get_offset(abd_t *sabd, size_t off)
 {
-	size_t size = sabd->abd_size > off ? sabd->abd_size - off : 0;
 
-	VERIFY3U(size, >, 0);
-
-	return (abd_get_offset_impl(sabd, off, size));
+	return (abd_get_offset_impl(sabd, off, 0));
 }
 
 abd_t *

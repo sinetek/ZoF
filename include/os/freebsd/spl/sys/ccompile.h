@@ -127,7 +127,7 @@ extern "C" {
 #include <linux/types.h>
 #define ATTR_UID AT_UID
 #define ATTR_GID AT_GID
-
+#define	ATTR_XVATTR	AT_XVATTR
 #define	vmem_free zfs_kmem_free
 /* XXX */
 #define	vmem_zalloc(size, flags) zfs_kmem_alloc(size, flags | M_ZERO)

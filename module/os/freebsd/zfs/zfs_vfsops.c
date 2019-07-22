@@ -1497,7 +1497,13 @@ zfs_domount(vfs_t *vfsp, char *osname)
 	vfsp->mnt_kern_flag |= MNTK_LOOKUP_SHARED;
 	vfsp->mnt_kern_flag |= MNTK_SHARED_WRITES;
 	vfsp->mnt_kern_flag |= MNTK_EXTENDED_SHARED;
+#ifdef notyet
+	/*
+	 * This can cause a loss of coherence between ARC and page cache
+	 * on ZoF - unclear if the problem is in FreeBSD or ZoF
+	 */
 	vfsp->mnt_kern_flag |= MNTK_NO_IOPF;	/* vn_io_fault can be used */
+#endif
 
 	/*
 	 * The fsid is 64 bits, composed of an 8-bit fs type, which

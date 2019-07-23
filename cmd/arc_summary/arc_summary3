@@ -47,6 +47,8 @@ if sys.platform.startswith('freebsd'):
     # Requires py36-sysctl on FreeBSD
     import sysctl
 
+    VDEV_CACHE_SIZE = 'vdev.cache_size'
+
     def load_kstats(section):
         base = 'kstat.zfs.misc.{section}.'.format(section=section)
         # base is removed from the name
@@ -75,6 +77,7 @@ else:
     KSTAT_PATH = '/proc/spl/kstat/zfs'
     SPL_PATH = '/sys/module/spl/parameters'
     TUNABLES_PATH = '/sys/module/zfs/parameters'
+    VDEV_CACHE_SIZE = 'zfs_vdev_cache_size'
 
     def load_kstats(section):
         path = '{basepath}/{section}'.format(basepath=KSTAT_PATH,
@@ -814,7 +817,7 @@ def section_vdev(kstats_dict):
     # https://github.com/zfsonlinux/zfs/blob/master/module/zfs/vdev_cache.c
     # for details
     tunables = get_vdev_params()
-    if tunables['vdev.cache.size'] == '0':
+    if tunables[VDEV_CACHE_SIZE] == '0':
             print('VDEV cache disabled, skipping section\n')
             return
 

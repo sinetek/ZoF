@@ -400,15 +400,35 @@ SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, deadman_ziotime_ms, CTLFLAG_RWTUN,
     &zfs_deadman_ziotime_ms, 0,
     "Time until an individual I/O is considered to be \"hung\" in milliseconds");
 
+extern char *zfs_deadman_failmode;
+extern int param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp);
+
 static int 
-zfs_deadman_failmode(SYSCTL_HANDLER_ARGS)
+zfs_deadman_failmode_sysctl(SYSCTL_HANDLER_ARGS)
 {
 	char buf[16];
-	return sysctl_handle_string(oidp, buf, sizeof (buf), req);
+	int rc;
+
+	if (req->newptr == NULL)
+		strlcpy(buf, zfs_deadman_failmode, sizeof (buf));
+
+	rc = sysctl_handle_string(oidp, buf, sizeof (buf), req);
+	if (rc || req->newptr == NULL)
+		return (rc);
+	if (strcmp(buf, zfs_deadman_failmode) == 0)
+		return (0);
+	if (!strcmp(buf,  "wait"))
+		zfs_deadman_failmode = "wait";
+	if (!strcmp(buf,  "continue"))
+		zfs_deadman_failmode = "continue";
+	if (!strcmp(buf,  "panic"))
+		zfs_deadman_failmode = "panic";
+
+	return (-param_set_deadman_failmode(buf, NULL));
 }
 
 SYSCTL_PROC(_vfs_zfs, OID_AUTO, deadman_failmode, CTLTYPE_STRING|CTLFLAG_RWTUN,
-    0, 0, &zfs_deadman_failmode, "A",
+    0, 0, &zfs_deadman_failmode_sysctl, "A",
     "Behavior when a \"hung\" I/O value is detected as wait, continue, or panic");
 /* spacemap.c */
 extern int space_map_ibs;

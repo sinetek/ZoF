@@ -121,10 +121,13 @@ extern "C" {
 
 #define	EXPORT_SYMBOL(x)
 #define	module_param(a, b, c)
+#define	module_param_call(a, b, c, d, e)
 #define	module_param_named(a, b, c, d)
 #define	MODULE_PARM_DESC(a, b)
 #ifdef _KERNEL
 #include <linux/types.h>
+typedef	void zfs_kernel_param_t;
+#define	param_set_charp(a, b) (0)
 #define ATTR_UID AT_UID
 #define ATTR_GID AT_GID
 #define	ATTR_XVATTR	AT_XVATTR

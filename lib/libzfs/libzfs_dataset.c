@@ -4672,7 +4672,7 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 	(void) strlcpy(zc.zc_value, target, sizeof (zc.zc_value));
 
 	zc.zc_cookie = !!flags.recursive;
-	zc.zc_cookie = (!!flags.nounmount) << 1;
+	zc.zc_cookie |= (!!flags.nounmount) << 1;
 
 	if ((ret = zfs_ioctl(zhp->zfs_hdl, ZFS_IOC_RENAME, &zc)) != 0) {
 		/*

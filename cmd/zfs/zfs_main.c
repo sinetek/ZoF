@@ -3602,6 +3602,7 @@ zfs_do_rename(int argc, char **argv)
 			break;
 		case 'u':
 			flags.nounmount = B_TRUE;
+			break;
 		case 'f':
 			flags.forceunmount = B_TRUE;
 			break;

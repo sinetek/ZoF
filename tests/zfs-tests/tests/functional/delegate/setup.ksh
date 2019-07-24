@@ -46,7 +46,7 @@ fi
 
 if is_freebsd; then
 	# To pass user mount tests
-	log_must /sbin/sysctl vfs.usermount=1
+	log_must sysctl vfs.usermount=1
 fi
 
 cleanup_user_group

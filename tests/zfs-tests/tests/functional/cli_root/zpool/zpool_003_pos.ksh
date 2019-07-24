@@ -67,7 +67,7 @@ if is_linux; then
 	export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 elif is_freebsd; then
 	ulimit -c unlimited
-	log_must /sbin/sysctl kern.corefile=$corepath/core.zpoool
+	log_must sysctl kern.corefile=$corepath/core.zpool
 	export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 fi
 

@@ -3140,7 +3140,7 @@ function is_mp
 	if is_linux; then
 		(($(nproc) > 1))
 	elif is_freebsd; then
-		/sbin/sysctl -n kern.smp.cpus
+		sysctl -n kern.smp.cpus
 	else
 		(($(psrinfo | wc -l) > 1))
 	fi

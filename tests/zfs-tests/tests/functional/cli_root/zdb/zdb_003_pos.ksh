@@ -38,7 +38,7 @@ function cleanup
 
 if is_freebsd ; then
 	# FreeBSD won't allow writing to an in-use device without this set
-	log_must /sbin/sysctl kern.geom.debugflags=16
+	log_must sysctl kern.geom.debugflags=16
 fi
 
 verify_runnable "global"

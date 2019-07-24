@@ -817,9 +817,10 @@ def section_vdev(kstats_dict):
     # https://github.com/zfsonlinux/zfs/blob/master/module/zfs/vdev_cache.c
     # for details
     tunables = get_vdev_params()
+
     if tunables[VDEV_CACHE_SIZE] == '0':
-            print('VDEV cache disabled, skipping section\n')
-            return
+        print('VDEV cache disabled, skipping section\n')
+        return
 
     vdev_stats = isolate_section('vdev_cache_stats', kstats_dict)
 

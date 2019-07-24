@@ -3646,7 +3646,7 @@ function set_tunable_impl
 		return $?
 		;;
 	FreeBSD)
-		/sbin/sysctl $tunable=$value
+		sysctl vfs.zfs.$tunable=$value
 		return "$?"
 		;;
 	SunOS)
@@ -3682,8 +3682,8 @@ function get_tunable_impl
 		return $?
 		;;
 	FreeBSD)
-		/sbin/sysctl -n $tunable
-                ;;
+		sysctl -n vfs.zfs.$tunable
+		;;
 	SunOS)
 		[[ "$module" -eq "zfs" ]] || return 1
 		;;

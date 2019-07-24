@@ -59,11 +59,7 @@ function custom_cleanup
 	[[ -n ZFS_TXG_TIMEOUT ]] &&
 	    log_must set_zfs_txg_timeout $ZFS_TXG_TIMEOUT
 
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.zfs_scan_suspend_progress 0
-	else
-		log_must set_tunable32 zfs_scan_suspend_progress 0
-	fi
+	log_must set_tunable32 zfs_scan_suspend_progress 0
 	cleanup
 }
 
@@ -91,11 +87,7 @@ function test_replacing_vdevs
 	log_must zpool export $TESTPOOL1
 	log_must cp $CPATHBKP $CPATH
 	log_must zpool import -c $CPATH -o cachefile=$CPATH $TESTPOOL1
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.zfs_scan_suspend_progress 1
-	else
-		log_must set_tunable32 zfs_scan_suspend_progress 1
-	fi
+	log_must set_tunable32 zfs_scan_suspend_progress 1
 	log_must zpool replace $TESTPOOL1 $replacevdev $replaceby
 
 	# Cachefile: pool in resilvering state
@@ -104,11 +96,7 @@ function test_replacing_vdevs
 	# Confirm pool is still replacing
 	log_must pool_is_replacing $TESTPOOL1
 	log_must zpool export $TESTPOOL1
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.zfs_scan_suspend_progress 0
-	else
-		log_must set_tunable32 zfs_scan_suspend_progress 0
-	fi
+	log_must set_tunable32 zfs_scan_suspend_progress 0
 
 	( $earlyremove ) && log_must rm $replacevdev
 

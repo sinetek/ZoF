@@ -1,5 +1,3 @@
-#!/bin/ksh
-
 #
 # This file and its contents are supplied under the terms of the
 # Common Development and Distribution License ("CDDL"), version 1.0.
@@ -309,56 +307,32 @@ function pool_is_replacing
 
 function set_vdev_validate_skip
 {
-	if is_freebsd; then
-		set_tunable32 "vfs.zfs.vdev_validate_skip" "$1"
-	else
-		set_tunable32 "vdev_validate_skip" "$1"
-	fi
+	set_tunable32 "vdev_validate_skip" "$1"
 }
 
 function get_zfs_txg_timeout
 {
-	if is_freebsd; then
-		get_tunable "vfs.zfs.txg.zfs_txg_timeout"
-	else
-		get_tunable "zfs_txg_timeout"
-	fi
+	get_tunable "zfs_txg_timeout"
 }
 
 function set_zfs_txg_timeout
 {
-	if is_freebsd; then
-		set_tunable32 "vfs.zfs.txg.zfs_txg_timeout" "$1"
-	else
-		set_tunable32 "zfs_txg_timeout" "$1"
-	fi
+	set_tunable32 "zfs_txg_timeout" "$1"
 }
 
 function set_spa_load_verify_metadata
 {
-	if is_freebsd; then
-		set_tunable32 "vfs.zfs.spa_load_verify_metadata" "$1"
-	else
-		set_tunable32 "spa_load_verify_metadata" "$1"
-	fi
+	set_tunable32 "spa_load_verify_metadata" "$1"
 }
 
 function set_spa_load_verify_data
 {
-	if is_freebsd; then
-		set_tunable32 "vfs.zfs.spa_load_verify_data" "$1"
-	else
-		set_tunable32 "spa_load_verify_data" "$1"
-	fi
+	set_tunable32 "spa_load_verify_data" "$1"
 }
 
 function set_zfs_max_missing_tvds
 {
-	if is_freebsd; then
-		set_tunable32 "vfs.zfs.zfs_max_missing_tvds" "$1"
-	else
-		set_tunable32 "zfs_max_missing_tvds" "$1"
-	fi
+	set_tunable32 "zfs_max_missing_tvds" "$1"
 }
 
 #

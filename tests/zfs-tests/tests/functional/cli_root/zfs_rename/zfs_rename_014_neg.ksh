@@ -81,11 +81,7 @@ function nesting_cleanup
 	# before resetting it, it will be left at the modified
 	# value for the remaining tests. That's the reason
 	# we reset it again here just in case.
-	if is_freebsd; then
-		log_must set_tunable_impl vfs.zfs.zfs_max_dataset_nesting 50 Z zcommon
-	else
-		log_must set_tunable_impl zfs_max_dataset_nesting 50 Z zcommon
-	fi
+	log_must set_tunable_impl zfs_max_dataset_nesting 50 Z zcommon
 }
 
 log_onexit nesting_cleanup
@@ -97,21 +93,13 @@ log_must zfs create -p $TESTPOOL/$dsC16
 log_mustnot zfs rename $TESTPOOL/$dsA02 $TESTPOOL/$dsB15A
 
 # extend limit
-if is_freebsd; then
-	log_must set_tunable_impl vfs.zfs.zfs_max_dataset_nesting 64 Z zcommon
-else
-	log_must set_tunable_impl zfs_max_dataset_nesting 64 Z zcommon
-fi
+log_must set_tunable_impl zfs_max_dataset_nesting 64 Z zcommon
 
 log_mustnot zfs rename $TESTPOOL/$dsA02 $TESTPOOL/$dsB16A
 log_must zfs rename $TESTPOOL/$dsA02 $TESTPOOL/$dsB15A
 
 # bring back old limit
-if is_freebsd; then
-	log_must set_tunable_impl vfs.zfs.zfs_max_dataset_nesting 50 Z zcommon
-else
-	log_must set_tunable_impl zfs_max_dataset_nesting 50 Z zcommon
-fi
+log_must set_tunable_impl zfs_max_dataset_nesting 50 Z zcommon
 
 log_mustnot zfs rename $TESTPOOL/$dsC01 $TESTPOOL/$dsB15A47C
 log_must zfs rename $TESTPOOL/$dsB15A47A $TESTPOOL/$dsB15A47B

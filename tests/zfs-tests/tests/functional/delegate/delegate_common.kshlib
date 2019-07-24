@@ -688,7 +688,7 @@ function verify_fs_destroy
 
 # Verify that given the correct delegation, a regular user can:
 #	Take a snapshot of an unmounted dataset
-# 	Take a snapshot of an mounted dataset
+# 	Take a snapshot of a mounted dataset
 #	Create a snapshot by making a directory in the .zfs/snapshot directory
 function verify_fs_snapshot
 {

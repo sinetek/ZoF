@@ -39,6 +39,10 @@
 . $STF_SUITE/include/libtest.shlib
 . $STF_SUITE/tests/functional/deadman/deadman.cfg
 
+if is_freebsd; then
+	log_unsupported "Events not supported in FreeBSD"
+fi
+
 verify_runnable "both"
 
 function cleanup
@@ -46,33 +50,17 @@ function cleanup
 	log_must zinject -c all
 	default_cleanup_noexit
 
-	if ! is_freebsd; then
-		log_must set_tunable64 zfs_deadman_synctime_ms $SYNCTIME_DEFAULT
-		log_must set_tunable64 zfs_deadman_checktime_ms $CHECKTIME_DEFAULT
-		log_must set_tunable64 zfs_deadman_failmode $FAILMODE_DEFAULT
-	else
-		log_must set_tunable64 vfs.zfs.deadman_synctime_ms $SYNCTIME_DEFAULT
-		log_must set_tunable64 vfs.zfs.deadman_checktime_ms $CHECKTIME_DEFAULT
-		log_must set_tunable64 vfs.zfs.deadman_failmode $FAILMODE_DEFAULT
-	fi
+	log_must set_tunable64 zfs_deadman_synctime_ms $SYNCTIME_DEFAULT
+	log_must set_tunable64 zfs_deadman_checktime_ms $CHECKTIME_DEFAULT
+	log_must set_tunable64 zfs_deadman_failmode $FAILMODE_DEFAULT
 }
-
-if is_freebsd; then
-	log_unsupported "Events not supported in FreeBSD"
-fi
 
 log_assert "Verify spa deadman detects a hung txg"
 log_onexit cleanup
 
-if ! is_freebsd; then
-	log_must set_tunable64 zfs_deadman_synctime_ms 5000
-	log_must set_tunable64 zfs_deadman_checktime_ms 1000
-	log_must set_tunable64 zfs_deadman_failmode "wait"
-else
-	log_must set_tunable64 vfs.zfs.deadman_synctime_ms 5000
-	log_must set_tunable64 vfs.zfs.deadman_checktime_ms 1000
-	log_must set_tunable64 vfs.zfs.deadman_failmode "wait"
-fi
+log_must set_tunable64 zfs_deadman_synctime_ms 5000
+log_must set_tunable64 zfs_deadman_checktime_ms 1000
+log_must set_tunable64 zfs_deadman_failmode "wait"
 
 # Create a new pool in order to use the updated deadman settings.
 default_setup_noexit $DISK1

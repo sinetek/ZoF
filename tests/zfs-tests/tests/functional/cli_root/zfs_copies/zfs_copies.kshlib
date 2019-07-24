@@ -131,15 +131,15 @@ function do_vol_test
 
 	post_used=$(get_prop used $vol)
 	((retries = 0))
-	while ((post_used < target_size && retries++ < 10)); do
-		sleep 2
+	while ((post_used < target_size && retries++ < 32)); do
+		sleep 1
 		post_used=$(get_prop used $vol)
 	done
 
 	((used = post_used - pre_used))
 	if ((used < nfilesize)); then
 		log_fail "The space is not changed correctly while setting" \
-		    "copies as $copy ($used < $nfilesize)" \
+		    "copies as $copies ($used < $nfilesize)" \
 		    "pre=${pre_used} post=${post_used}"
 	fi
 

@@ -7003,8 +7003,6 @@ unshare_unmount_path(int op, char *path, int flags, boolean_t is_manual)
 	const char *cmdname = (op == OP_SHARE) ? "unshare" : "unmount";
 	ino_t path_inode;
 
-
-
 	/* Reopen MNTTAB to prevent reading stale data from open file */
 	if (freopen(MNTTAB, "r", mnttab_file) == NULL)
 		return (ENOENT);

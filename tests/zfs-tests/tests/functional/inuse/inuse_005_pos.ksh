@@ -69,7 +69,7 @@ function verify_assertion #slices
 				"unexpected return code of 0"
 		else
 			echo "y" | newfs -v $t > /dev/null 2>&1
-			(( $? !=0 )) || \
+			(( $? != 0 )) || \
 				log_fail "newfs over active pool " \
 				"unexpected return code of 0"
 		fi

@@ -67,12 +67,12 @@ function verify_assertion #slices
 
 	for t in $targets; do
 		if is_freebsd; then
-			/sbin/newfs $t
-			(( $? !=0 )) && \
+			newfs $t
+			(( $? != 0 )) && \
 				log_fail "newfs over exported pool " \
 		else
 			echo "y" | newfs -v $t > /dev/null 2>&1
-			(( $? !=0 )) && \
+			(( $? != 0 )) && \
 				log_fail "newfs over exported pool " \
 					"failes unexpected."
 		fi

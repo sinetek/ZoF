@@ -64,7 +64,6 @@ spool=smallpool.$$; sfs=smallfs.$$
 log_must zpool create $spool $VDEV0
 log_must zfs create $spool/$sfs
 
-
 typeset -i orig_count=$(zpool history $spool | wc -l)
 if ! is_freebsd; then
 	typeset orig_md5=$(zpool history $spool | head -2 | md5sum | \

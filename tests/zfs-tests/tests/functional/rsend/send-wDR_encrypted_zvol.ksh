@@ -66,7 +66,7 @@ block_device_wait
 
 if is_freebsd; then
 	# ext4 not supported on FreeBSD
-	log_must eval "echo 'y' | /sbin/newfs $zdev"
+	log_must newfs $zdev
 else
 	log_must eval "echo 'y' | newfs -t ext4 -v $zdev"
 fi

@@ -71,7 +71,7 @@ NUM_WRITES=40
 log_must zfs set volsize=128m $TESTPOOL/$TESTVOL
 
 if is_freebsd; then
-	log_must /sbin/newfs ${ZVOL_RDEVDIR}/$TESTPOOL/$TESTVOL
+	log_must newfs ${ZVOL_RDEVDIR}/$TESTPOOL/$TESTVOL
 else
 	echo "y" | newfs -v ${ZVOL_RDEVDIR}/$TESTPOOL/$TESTVOL >/dev/null 2>&1
 	(( $? != 0 )) && log_fail "Unable to newfs(1M) $TESTPOOL/$TESTVOL"

@@ -42,10 +42,6 @@
 # 7. Verify we can't remount its filesystem read-write
 #
 
-if is_freebsd; then
-	log_unsupported "Remount not supported on FreeBSD"
-fi
-
 verify_runnable "both"
 
 function cleanup
@@ -115,15 +111,14 @@ log_must mkdir -p $MNTPSNAP
 log_must touch $MNTPFS/file.dat
 checkmount $TESTFS 'rw'
 if is_freebsd; then
-	# Remount not a supported option on FreeBSD
-	log_must mount -o ro $TESTFS $MNTPFS
+	log_must mount -ur $TESTFS $MNTPFS
 else
 	log_must mount -o remount,ro $TESTFS $MNTPFS
 fi
 readonlyfs $MNTPFS
 checkmount $TESTFS 'ro'
 if is_freebsd; then
-	log_must mount -o rw $TESTFS $MNTPFS
+	log_must mount -uw $TESTFS $MNTPFS
 else
 	log_must mount -o remount,rw $TESTFS $MNTPFS
 fi
@@ -135,7 +130,7 @@ log_must mount -t zfs $TESTSNAP $MNTPSNAP
 readonlyfs $MNTPSNAP
 checkmount $TESTSNAP 'ro'
 if is_freebsd; then
-	log_must mount -o ro $TESTSNAP $MNTPSNAP
+	log_must mount -ur $TESTSNAP $MNTPSNAP
 else
 	log_must mount -o remount,ro $TESTSNAP $MNTPSNAP
 fi
@@ -150,7 +145,7 @@ log_must mount -t zfs -o rw $TESTSNAP $MNTPSNAP
 readonlyfs $MNTPSNAP
 checkmount $TESTSNAP 'ro'
 if is_freebsd; then
-	log_mustnot mount -o rw $TESTSNAP $MNTPSNAP
+	log_mustnot mount -uw $TESTSNAP $MNTPSNAP
 else
 	log_mustnot mount -o remount,rw $TESTSNAP $MNTPSNAP
 fi
@@ -165,7 +160,7 @@ log_must eval "echo 'password' | zfs create -o sync=disabled \
 CRYPT_MNTPFS="$(get_prop mountpoint $TESTFS/crypt)"
 log_must touch $CRYPT_MNTPFS/file.dat
 if is_freebsd; then
-	log_must mount -o ro $TESTFS/crypt $CRYPT_MNTPFS
+	log_must mount -ur $TESTFS/crypt $CRYPT_MNTPFS
 else
 	log_must mount -o remount,ro $TESTFS/crypt $CRYPT_MNTPFS
 fi
@@ -180,7 +175,7 @@ log_must zpool import -o readonly=on $TESTPOOL
 readonlyfs $MNTPFS
 checkmount $TESTFS 'ro'
 if is_freebsd; then
-	log_mustnot mount -o rw $MNTPFS
+	log_mustnot mount -uw $MNTPFS
 else
 	log_mustnot mount -o remount,rw $MNTPFS
 fi

@@ -66,18 +66,19 @@ fi
 log_assert "Verify zio deadman detects a hung zio"
 log_onexit cleanup
 
-if ! is_freebsd; then
+if is_freebsd; then
+	# 1. Reduce the zfs_deadman_ziotime_ms to 5s.
+	log_must set_tunable64 vfs.zfs.deadman_ziotime_ms 5000
+	# 2. Reduce the zfs_deadman_checktime_ms to 1s.
+	log_must set_tunable64 vfs.zfs.deadman_checktime_ms 1000
+	log_must set_tunable64 vfs.zfs.deadman_failmode "wait"
+else
 	# 1. Reduce the zfs_deadman_ziotime_ms to 5s.
 	log_must set_tunable64 zfs_deadman_ziotime_ms 5000
 	# 2. Reduce the zfs_deadman_checktime_ms to 1s.
 	log_must set_tunable64 zfs_deadman_checktime_ms 1000
 	log_must set_tunable64 zfs_deadman_failmode "wait"
-else
-	log_must set_tunable64 vfs.zfs.deadman_ziotime_ms 5000
-	log_must set_tunable64 vfs.zfs.deadman_checktime_ms 1000
-	log_must set_tunable64 vfs.zfs.deadman_failmode "wait"
 fi
-	
 
 # Create a new pool in order to use the updated deadman settings.
 default_setup_noexit $DISK1

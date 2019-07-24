@@ -76,9 +76,9 @@ log_must zfs create -o keyformat=passphrase -o keylocation=file://$keyfile \
 log_must mkfile 1M /$TESTPOOL/ds/$TESTFILE0
 log_must cp /$TESTPOOL/ds/$TESTFILE0 /$TESTPOOL/crypt/$TESTFILE0
 if is_freebsd; then
-	typeset cksum=$(md5 /$TESTPOOL/ds/$TESTFILE0 | awk '{  print $1 }')
+	typeset cksum=$(md5 /$TESTPOOL/ds/$TESTFILE0 | awk '{ print $1 }')
 else
-	typeset cksum=$(md5sum /$TESTPOOL/ds/$TESTFILE0 | awk '{  print $1 }')
+	typeset cksum=$(md5sum /$TESTPOOL/ds/$TESTFILE0 | awk '{ print $1 }')
 fi
 
 log_must zfs snap -r $snap

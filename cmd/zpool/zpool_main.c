@@ -1149,7 +1149,7 @@ zpool_do_labelclear(int argc, char **argv)
 		    "cache for %s: %s\n"), vdev, strerror(errno));
 #endif
 
-	if (zpool_read_label(fd, &config, NULL) != 0 || config == NULL) {
+	if (zpool_read_label(fd, &config, NULL) != 0) {
 		(void) fprintf(stderr,
 		    gettext("failed to read label from %s\n"), vdev);
 		ret = 1;

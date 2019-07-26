@@ -52,8 +52,8 @@ if sys.platform.startswith('freebsd'):
     def load_kstats(section):
         base = 'kstat.zfs.misc.{section}.'.format(section=section)
         # base is removed from the name
-        fmt = lambda kstat: '{name} {value}'.format(name=kstat.name[len(base):],
-                                                    value=kstat.value)
+        fmt = lambda kstat: '{name} : {value}'.format(name=kstat.name[len(base):],
+                                                      value=kstat.value)
         return [fmt(kstat) for kstat in sysctl.filter(base)]
 
     def get_params(base):
@@ -138,15 +138,15 @@ TITLE = 'ZFS Subsystem Report'
 
 # Tunables and SPL are handled separately because they come from
 # different sources
-SECTIONS = {'arc': 'arcstats',
-            'dmu': 'dmu_tx',
-            'l2arc': 'arcstats',  # L2ARC stuff lives in arcstats
-            'vdev': 'vdev_cache_stats',
-            'xuio': 'xuio_stats',
-            'zfetch': 'zfetchstats',
-            'zil': 'zil'}
-SECTION_NAMES = sorted(SECTIONS.keys())
-SECTION_HELP = 'print info from one section (%s)' % ' '.join(SECTION_NAMES)
+SECTION_PATHS = {'arc': 'arcstats',
+                 'dmu': 'dmu_tx',
+                 'l2arc': 'arcstats',  # L2ARC stuff lives in arcstats
+                 'vdev': 'vdev_cache_stats',
+                 'xuio': 'xuio_stats',
+                 'zfetch': 'zfetchstats',
+                 'zil': 'zil'}
+SECTIONS = sorted(SECTION_PATHS.keys())
+SECTION_HELP = 'print info from one section (%s)' % ' '.join(SECTIONS)
 
 parser = argparse.ArgumentParser(description=DECRIPTION)
 parser.add_argument('-a', '--alternate', action='store_true', default=False,
@@ -172,10 +172,7 @@ def cleanup_line(single_line):
     middle '4'. For example "arc_no_grow    4    0" returns the tuple
     ("arc_no_grow", "0").
     """
-    if sys.platform.startswith('freebsd'):
-        name, value = single_line.split()
-    else:
-        name, _, value = single_line.split()
+    name, _, value = single_line.split()
 
     return name, value
 
@@ -324,10 +321,7 @@ def format_raw_line(name, value):
     if ARGS.alt:
         result = '{0}{1}={2}'.format(INDENT, name, value)
     else:
-        if sys.platform.startswith('freebsd'):
-            spc = LINE_LENGTH-(len(INDENT)+len(str(value)))
-        else:
-            spc = LINE_LENGTH-(len(INDENT)+len(value))
+        spc = LINE_LENGTH-(len(INDENT)+len(value))
         result = '{0}{1:<{spc}}{2}'.format(INDENT, name, value, spc=spc)
 
     return result
@@ -342,7 +336,7 @@ def get_kstats():
 
     result = {}
 
-    for section in SECTIONS.values():
+    for section in SECTION_PATHS.values():
         if section not in result:
             result[section] = load_kstats(section)
 

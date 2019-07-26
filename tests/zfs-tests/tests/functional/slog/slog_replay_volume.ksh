@@ -61,10 +61,11 @@ verify_runnable "global"
 
 VOLUME=$ZVOL_DEVDIR/$TESTPOOL/$TESTVOL
 MNTPNT=$TESTDIR/$TESTVOL
+FSTYPE=none
 
 function cleanup_volume
 {
-	if ismounted $MNTPNT $NEWFS_DEFAULT_FS; then
+	if ismounted $MNTPNT $FSTYPE; then
 		log_must umount $MNTPNT
 		rmdir $MNTPNT
 	fi
@@ -92,10 +93,12 @@ if is_freebsd; then
 	log_must newfs $VOLUME
 	log_must mkdir -p $MNTPNT
 	log_must mount $VOLUME $MNTPNT
+	FSTYPE=ufs
 else
 	log_must eval "echo y | newfs -t ext4 -v $VOLUME"
 	log_must mkdir -p $MNTPNT
 	log_must mount -o discard $VOLUME $MNTPNT
+	FSTYPE=ext4
 	log_must rmdir $MNTPNT/lost+found
 fi
 log_must zpool sync

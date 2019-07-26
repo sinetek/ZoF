@@ -86,7 +86,7 @@ log_must zfs create -V 128M $TESTPOOL/$TESTVOL
 log_must zfs set compression=on $TESTPOOL/$TESTVOL
 log_must zfs set sync=always $TESTPOOL/$TESTVOL
 log_must mkdir -p $TESTDIR
-log_must block_device_wait
+block_device_wait
 if is_freebsd; then
 	log_must newfs $VOLUME
 	log_must mkdir -p $MNTPNT

@@ -93,7 +93,7 @@ if is_freebsd; then
 	log_must newfs $VOLUME
 	log_must mkdir -p $MNTPNT
 	log_must mount $VOLUME $MNTPNT
-	FSTYPE=ufs
+	FSTYPE=$NEWFS_DEFAULT_FS
 else
 	log_must eval "echo y | newfs -t ext4 -v $VOLUME"
 	log_must mkdir -p $MNTPNT

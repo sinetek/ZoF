@@ -1184,7 +1184,7 @@ zfs_share_proto(zfs_handle_t *zhp, zfs_share_proto_t *proto)
 			continue;
 
 #ifndef __FreeBSD__
-		share = NULL; sa_find_share(hdl->libzfs_sharehdl, mountpoint);
+		share = sa_find_share(hdl->libzfs_sharehdl, mountpoint);
 		if (share == NULL) {
 			/*
 			 * This may be a new file system that was just

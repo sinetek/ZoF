@@ -321,6 +321,12 @@ zfs_znode_hold_exit(zfsvfs_t *zfsvfs, znode_hold_t *zh)
 		kmem_cache_free(znode_hold_cache, zh);
 }
 
+dev_t
+zfs_cmpldev(uint64_t dev)
+{
+	return (makedev((dev >> NBITSMINOR64), (dev & MAXMIN64)));
+}
+
 static void
 zfs_znode_sa_init(zfsvfs_t *zfsvfs, znode_t *zp,
     dmu_buf_t *db, dmu_object_type_t obj_type, sa_handle_t *sa_hdl)

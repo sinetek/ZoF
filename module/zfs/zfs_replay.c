@@ -49,6 +49,14 @@
 #include <sys/cred.h>
 #include <sys/zpl.h>
 
+#ifdef __FreeBSD__
+#define	iput(ip)	VN_RELE(ip)
+#else
+#define vn_lock(a, b)
+#define VOP_UNLOCK(a, b)
+#endif
+
+
 /*
  * Functions to replay ZFS intent log (ZIL) records
  * The functions are called through a function vector (zfs_replay_vector)
@@ -65,7 +73,7 @@ zfs_init_vattr(vattr_t *vap, uint64_t mask, uint64_t mode,
 	vap->va_mode = mode;
 	vap->va_uid = (uid_t)(IS_EPHEMERAL(uid)) ? -1 : uid;
 	vap->va_gid = (gid_t)(IS_EPHEMERAL(gid)) ? -1 : gid;
-	vap->va_rdev = rdev;
+	vap->va_rdev = zfs_cmpldev(rdev);
 	vap->va_nodeid = nodeid;
 }
 
@@ -282,7 +290,11 @@ zfs_replay_create_acl(void *arg1, void *arg2, boolean_t byteswap)
 	char *name = NULL;		/* location determined later */
 	lr_create_t *lr = (lr_create_t *)lracl;
 	znode_t *dzp;
+#ifdef __linux__
 	struct inode *ip = NULL;
+#else
+	vnode_t *ip = NULL;
+#endif
 	xvattr_t xva;
 	int vflg = 0;
 	vsecattr_t vsec = { 0 };
@@ -431,7 +443,11 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 	char *name = NULL;		/* location determined later */
 	char *link;			/* symlink content follows name */
 	znode_t *dzp;
+#ifdef __linux__
 	struct inode *ip = NULL;
+#else
+	vnode_t *ip = NULL;
+#endif
 	xvattr_t xva;
 	int vflg = 0;
 	size_t lrsize = sizeof (lr_create_t);
@@ -495,6 +511,7 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 		    lr->lr_uid, lr->lr_gid);
 	}
 
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	switch (txtype) {
 	case TX_CREATE_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -544,6 +561,7 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 	default:
 		error = SET_ERROR(ENOTSUP);
 	}
+	VOP_UNLOCK(ZTOV(dzp), 0);
 
 out:
 	if (error == 0 && ip != NULL)
@@ -576,6 +594,7 @@ zfs_replay_remove(void *arg1, void *arg2, boolean_t byteswap)
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
 
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	switch ((int)lr->lr_common.lrc_txtype) {
 	case TX_REMOVE:
 		error = zfs_remove(ZTOI(dzp), name, kcred, vflg);
@@ -587,6 +606,7 @@ zfs_replay_remove(void *arg1, void *arg2, boolean_t byteswap)
 		error = SET_ERROR(ENOTSUP);
 	}
 
+	VOP_UNLOCK(ZTOV(dzp), 0);
 	iput(ZTOI(dzp));
 
 	return (error);
@@ -616,8 +636,11 @@ zfs_replay_link(void *arg1, void *arg2, boolean_t byteswap)
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
 
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(ZTOV(zp), LK_EXCLUSIVE | LK_RETRY);
 	error = zfs_link(ZTOI(dzp), ZTOI(zp), name, kcred, vflg);
-
+	VOP_UNLOCK(ZTOV(zp), 0);
+	VOP_UNLOCK(ZTOV(dzp), 0);
 	iput(ZTOI(zp));
 	iput(ZTOI(dzp));
 

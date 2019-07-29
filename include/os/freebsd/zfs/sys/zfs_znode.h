@@ -283,7 +283,7 @@ VTOZ(vnode_t *vp)
 #define	VTOZ(VP)	((znode_t *)(VP)->v_data)
 #define	ITOZ(VP)	((znode_t *)(VP)->v_data)
 #define	igrab(vp)	vhold(vp)
-#define	iput(vp)	vput(vp)
+#define	iput(vp)	VN_RELE(vp)
 #endif
 
 #define	ZTOZSB(zp) ((zp)->z_zfsvfs)

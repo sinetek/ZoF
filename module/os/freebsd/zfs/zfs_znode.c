@@ -491,7 +491,7 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	znode_t *zp;
 	int error;
 
-	vattr.va_mask = AT_MODE|AT_UID|AT_GID|AT_TYPE;
+	vattr.va_mask = AT_MODE|AT_UID|AT_GID;
 	vattr.va_type = VDIR;
 	vattr.va_mode = S_IFDIR|0555;
 	vattr.va_uid = crgetuid(kcred);
@@ -789,7 +789,7 @@ zfs_mknode(znode_t *dzp, vattr_t *vap, dmu_tx_t *tx, cred_t *cr,
 	int		cnt = 0;
 	zfs_acl_locator_cb_t locate = { 0 };
 
-	ASSERT(vap && (vap->va_mask & (AT_TYPE|AT_MODE)) == (AT_TYPE|AT_MODE));
+	ASSERT(vap && ((vap->va_mask & AT_MODE) == AT_MODE));
 
 	if (zfsvfs->z_replay) {
 		obj = vap->va_nodeid;
@@ -1903,7 +1903,7 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 	 * to allow zfs_mknode to work.
 	 */
 	VATTR_NULL(&vattr);
-	vattr.va_mask = AT_MODE|AT_UID|AT_GID|AT_TYPE;
+	vattr.va_mask = AT_MODE|AT_UID|AT_GID;
 	vattr.va_type = VDIR;
 	vattr.va_mode = S_IFDIR|0755;
 	vattr.va_uid = crgetuid(cr);

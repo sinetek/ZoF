@@ -39,6 +39,7 @@
 
 typedef	struct uio	uio_t;
 typedef	struct iovec	iovec_t;
+typedef	enum uio_seg	uio_seg_t;
 
 typedef enum xuio_type {
 	UIOTYPE_ASYNCIO,

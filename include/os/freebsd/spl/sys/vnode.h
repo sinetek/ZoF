@@ -35,6 +35,7 @@ struct vnode;
 struct vattr;
 struct xucred;
 
+typedef struct flock	flock64_t;
 typedef	struct vnode	vnode_t;
 typedef	struct vattr	vattr_t;
 typedef enum vtype vtype_t;
@@ -46,6 +47,7 @@ typedef enum vtype vtype_t;
 enum symfollow { NO_FOLLOW = NOFOLLOW };
 
 #define	       NOCRED  ((struct ucred *)0)     /* no credential available */
+#define	F_FREESP	11 	/* Free file space */
 
 #include <sys/proc.h>
 #include <sys/vnode_impl.h>
@@ -130,7 +132,6 @@ vn_is_readonly(vnode_t *vp)
 /*
  * Attributes of interest to the caller of setattr or getattr.
  */
-#define	AT_TYPE		0x00001
 #define	AT_MODE		0x00002
 #define	AT_UID		0x00004
 #define	AT_GID		0x00008
@@ -154,16 +155,16 @@ vn_is_readonly(vnode_t *vp)
  */
 #define	AT_XVATTR	0x10000
 
-#define	AT_ALL		(AT_TYPE|AT_MODE|AT_UID|AT_GID|AT_FSID|AT_NODEID|\
+#define	AT_ALL		(AT_MODE|AT_UID|AT_GID|AT_FSID|AT_NODEID|\
 			AT_NLINK|AT_SIZE|AT_ATIME|AT_MTIME|AT_CTIME|\
 			AT_RDEV|AT_BLKSIZE|AT_NBLOCKS|AT_SEQ)
 
 #define	AT_STAT		(AT_MODE|AT_UID|AT_GID|AT_FSID|AT_NODEID|AT_NLINK|\
-			AT_SIZE|AT_ATIME|AT_MTIME|AT_CTIME|AT_RDEV|AT_TYPE)
+			AT_SIZE|AT_ATIME|AT_MTIME|AT_CTIME|AT_RDEV)
 
 #define	AT_TIMES	(AT_ATIME|AT_MTIME|AT_CTIME)
 
-#define	AT_NOSET	(AT_NLINK|AT_RDEV|AT_FSID|AT_NODEID|AT_TYPE|\
+#define	AT_NOSET	(AT_NLINK|AT_RDEV|AT_FSID|AT_NODEID|\
 			AT_BLKSIZE|AT_NBLOCKS|AT_SEQ)
 
 static __inline void
@@ -172,8 +173,6 @@ vattr_init_mask(vattr_t *vap)
 
 	vap->va_mask = 0;
 
-	if (vap->va_type != VNON)
-		vap->va_mask |= AT_TYPE;
 	if (vap->va_uid != (uid_t)VNOVAL)
 		vap->va_mask |= AT_UID;
 	if (vap->va_gid != (gid_t)VNOVAL)

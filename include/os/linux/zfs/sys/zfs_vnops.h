@@ -49,16 +49,10 @@ extern int zfs_create(struct inode *dip, char *name, vattr_t *vap, int excl,
     int mode, struct inode **ipp, cred_t *cr, int flag, vsecattr_t *vsecp);
 extern int zfs_tmpfile(struct inode *dip, vattr_t *vap, int excl,
     int mode, struct inode **ipp, cred_t *cr, int flag, vsecattr_t *vsecp);
-extern int zfs_remove(struct inode *dip, char *name, cred_t *cr, int flags);
-extern int zfs_mkdir(struct inode *dip, char *dirname, vattr_t *vap,
-    struct inode **ipp, cred_t *cr, int flags, vsecattr_t *vsecp);
-extern int zfs_rmdir(struct inode *dip, char *name, struct inode *cwd,
-    cred_t *cr, int flags);
 extern int zfs_readdir(struct inode *ip, zpl_dir_context_t *ctx, cred_t *cr);
 extern int zfs_fsync(struct inode *ip, int syncflag, cred_t *cr);
 extern int zfs_getattr(struct inode *ip, vattr_t *vap, int flag, cred_t *cr);
 extern int zfs_getattr_fast(struct inode *ip, struct kstat *sp);
-extern int zfs_setattr(struct inode *ip, vattr_t *vap, int flag, cred_t *cr);
 extern int zfs_rename(struct inode *sdip, char *snm, struct inode *tdip,
     char *tnm, cred_t *cr, int flags);
 extern int zfs_symlink(struct inode *dip, char *name, vattr_t *vap,

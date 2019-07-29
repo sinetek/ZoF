@@ -324,7 +324,7 @@ zfs_znode_hold_exit(zfsvfs_t *zfsvfs, znode_hold_t *zh)
 dev_t
 zfs_cmpldev(uint64_t dev)
 {
-	return (makedev((dev >> NBITSMINOR64), (dev & MAXMIN64)));
+	return (dev);
 }
 
 static void

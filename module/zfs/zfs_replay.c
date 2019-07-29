@@ -47,15 +47,17 @@
 #include <sys/acl.h>
 #include <sys/atomic.h>
 #include <sys/cred.h>
+#ifdef __linux__
 #include <sys/zpl.h>
+#endif
 
-#ifdef __FreeBSD__
-#define	iput(ip)	VN_RELE(ip)
-#else
+#ifndef __FreeBSD__
 #define vn_lock(a, b)
 #define VOP_UNLOCK(a, b)
 #endif
 
+#define LOG_ENTER printf("enter %s\n", __func__)
+#define LOG_EXIT printf("exit %s\n", __func__)
 
 /*
  * Functions to replay ZFS intent log (ZIL) records
@@ -334,7 +336,7 @@ zfs_replay_create_acl(void *arg1, void *arg2, boolean_t byteswap)
 	dnodesize = LR_FOID_GET_SLOTS(lr->lr_foid) << DNODE_SHIFT;
 
 	xva_init(&xva);
-	zfs_init_vattr(&xva.xva_vattr, ATTR_MODE | ATTR_UID | ATTR_GID,
+	zfs_init_vattr(&xva.xva_vattr, AT_MODE | ATTR_UID | ATTR_GID,
 	    lr->lr_mode, lr->lr_uid, lr->lr_gid, lr->lr_rdev, objid);
 
 	/*
@@ -459,6 +461,7 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 	uint64_t dnodesize;
 	int error;
 
+	LOG_ENTER;
 	txtype = (lr->lr_common.lrc_txtype & ~TX_CI);
 	if (byteswap) {
 		byteswap_uint64_array(lr, sizeof (*lr));
@@ -474,7 +477,7 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 	dnodesize = LR_FOID_GET_SLOTS(lr->lr_foid) << DNODE_SHIFT;
 
 	xva_init(&xva);
-	zfs_init_vattr(&xva.xva_vattr, ATTR_MODE | ATTR_UID | ATTR_GID,
+	zfs_init_vattr(&xva.xva_vattr, AT_MODE | ATTR_UID | ATTR_GID,
 	    lr->lr_mode, lr->lr_uid, lr->lr_gid, lr->lr_rdev, objid);
 
 	/*
@@ -572,6 +575,7 @@ out:
 	if (zfsvfs->z_fuid_replay)
 		zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;
+	LOG_EXIT;
 	return (error);
 }
 
@@ -658,6 +662,8 @@ zfs_replay_rename(void *arg1, void *arg2, boolean_t byteswap)
 	int error;
 	int vflg = 0;
 
+	LOG_ENTER;
+
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 
@@ -676,7 +682,7 @@ zfs_replay_rename(void *arg1, void *arg2, boolean_t byteswap)
 
 	iput(ZTOI(tdzp));
 	iput(ZTOI(sdzp));
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -690,6 +696,7 @@ zfs_replay_write(void *arg1, void *arg2, boolean_t byteswap)
 	int error, written;
 	uint64_t eod, offset, length;
 
+	LOG_ENTER;
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 
@@ -742,6 +749,7 @@ zfs_replay_write(void *arg1, void *arg2, boolean_t byteswap)
 	iput(ZTOI(zp));
 	zfsvfs->z_replay_eof = 0;	/* safety */
 
+	LOG_EXIT;
 	return (error);
 }
 
@@ -857,7 +865,7 @@ zfs_replay_setattr(void *arg1, void *arg2, boolean_t byteswap)
 	ZFS_TIME_DECODE(&vap->va_atime, lr->lr_atime);
 	ZFS_TIME_DECODE(&vap->va_mtime, lr->lr_mtime);
 	gethrestime(&vap->va_ctime);
-	vap->va_mask |= ATTR_CTIME;
+	vap->va_mask |= AT_CTIME;
 
 	/*
 	 * Fill in xvattr_t portions if necessary.

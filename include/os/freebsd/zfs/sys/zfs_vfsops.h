@@ -164,6 +164,7 @@ extern int zfsvfs_create(const char *name, boolean_t readonly, zfsvfs_t **zfvp);
 extern int zfsvfs_create_impl(zfsvfs_t **zfvp, zfsvfs_t *zfsvfs, objset_t *os);
 extern void zfsvfs_free(zfsvfs_t *zfsvfs);
 extern int zfs_check_global_label(const char *dsname, const char *hexsl);
+extern boolean_t zfs_is_readonly(zfsvfs_t *zfsvfs);
 
 #ifdef _KERNEL
 extern void zfsvfs_update_fromname(const char *oldname, const char *newname);

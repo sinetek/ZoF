@@ -669,7 +669,6 @@ typedef struct vsecattr {
 	size_t		vsa_aclentsz;	/* ACE size in bytes of vsa_aclentp */
 } vsecattr_t;
 
-#define	AT_TYPE		0x00001
 #define	AT_MODE		0x00002
 #define	AT_UID		0x00004
 #define	AT_GID		0x00008

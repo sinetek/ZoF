@@ -3764,3 +3764,21 @@ function mdb_ctf_set_int
 
 	return 0
 }
+
+#
+# Compute SHA256 digest for given file or stdin if no file given.
+# Note: file path must not contain spaces
+#
+function sha256digest
+{
+	typeset file=$1
+
+	case "$(uname)" in
+	FreeBSD)
+		sha256 -q $file
+		;;
+	*)
+		sha256sum $file | awk '{ print $1 }'
+		;;
+	esac
+}

@@ -815,7 +815,6 @@ function recursive_cksum
 		    \; | sort | sha256 -q
 		;;
 	*)
-		;;
 		find $1 -type f -exec sh -c 'sha256sum {}; getfattr \
 		    --absolute-names --only-values -d {} | sha256sum' \; | \
 		    sort -k 2 | awk '{ print $1 }' | sha256sum | \

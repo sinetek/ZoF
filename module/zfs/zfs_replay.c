@@ -51,13 +51,17 @@
 #include <sys/zpl.h>
 #endif
 
-#ifndef __FreeBSD__
+#ifdef __FreeBSD__
+#define LOG_ENTER printf("enter %s\n", __func__)
+#define LOG_EXIT printf("exit %s\n", __func__)
+#else
+#define LOG_ENTER 
+#define LOG_EXIT
 #define vn_lock(a, b)
 #define VOP_UNLOCK(a, b)
 #endif
 
-#define LOG_ENTER printf("enter %s\n", __func__)
-#define LOG_EXIT printf("exit %s\n", __func__)
+
 
 /*
  * Functions to replay ZFS intent log (ZIL) records
@@ -96,6 +100,7 @@ zfs_replay_xvattr(lr_attr_t *lrattr, xvattr_t *xvap)
 	void *scanstamp;
 	int i;
 
+	LOG_ENTER;
 	xvap->xva_vattr.va_mask |= ATTR_XVATTR;
 	if ((xoap = xva_getxoptattr(xvap)) == NULL) {
 		xvap->xva_vattr.va_mask &= ~ATTR_XVATTR; /* shouldn't happen */
@@ -156,6 +161,7 @@ zfs_replay_xvattr(lr_attr_t *lrattr, xvattr_t *xvap)
 		xoap->xoa_sparse = ((*attrs & XAT0_SPARSE) != 0);
 	if (XVA_ISSET_REQ(xvap, XAT_PROJINHERIT))
 		xoap->xoa_projinherit = ((*attrs & XAT0_PROJINHERIT) != 0);
+	LOG_ENTER;
 }
 
 static int
@@ -309,6 +315,7 @@ zfs_replay_create_acl(void *arg1, void *arg2, boolean_t byteswap)
 	uint64_t dnodesize;
 	int error;
 
+	LOG_ENTER;
 	txtype = (lr->lr_common.lrc_txtype & ~TX_CI);
 	if (byteswap) {
 		byteswap_uint64_array(lracl, sizeof (*lracl));
@@ -433,7 +440,7 @@ bail:
 	if (zfsvfs->z_fuid_replay)
 		zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -589,6 +596,7 @@ zfs_replay_remove(void *arg1, void *arg2, boolean_t byteswap)
 	int error;
 	int vflg = 0;
 
+	LOG_ENTER;
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 
@@ -613,6 +621,7 @@ zfs_replay_remove(void *arg1, void *arg2, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(dzp), 0);
 	iput(ZTOI(dzp));
 
+	LOG_EXIT;
 	return (error);
 }
 
@@ -626,6 +635,7 @@ zfs_replay_link(void *arg1, void *arg2, boolean_t byteswap)
 	int error;
 	int vflg = 0;
 
+	LOG_ENTER;
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 
@@ -647,7 +657,7 @@ zfs_replay_link(void *arg1, void *arg2, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(dzp), 0);
 	iput(ZTOI(zp));
 	iput(ZTOI(dzp));
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -693,7 +703,7 @@ zfs_replay_write(void *arg1, void *arg2, boolean_t byteswap)
 	lr_write_t *lr = arg2;
 	char *data = (char *)(lr + 1);	/* data follows lr_write_t */
 	znode_t	*zp;
-	int error, written;
+	int error;
 	uint64_t eod, offset, length;
 
 	LOG_ENTER;
@@ -738,14 +748,18 @@ zfs_replay_write(void *arg1, void *arg2, boolean_t byteswap)
 		if (zp->z_size < eod)
 			zfsvfs->z_replay_eof = eod;
 	}
-
-	written = zpl_write_common(ZTOI(zp), data, length, &offset,
+#ifdef __FreeBSD__
+	ssize_t resid;
+	error = vn_rdwr(UIO_WRITE, ZTOV(zp), data, length, offset,
+	    UIO_SYSSPACE, 0, RLIM64_INFINITY, kcred, &resid);
+#else
+	int written = zpl_write_common(ZTOI(zp), data, length, &offset,
 	    UIO_SYSSPACE, 0, kcred);
 	if (written < 0)
 		error = -written;
 	else if (written < length)
 		error = SET_ERROR(EIO); /* short write */
-
+#endif
 	iput(ZTOI(zp));
 	zfsvfs->z_replay_eof = 0;	/* safety */
 
@@ -768,6 +782,7 @@ zfs_replay_write2(void *arg1, void *arg2, boolean_t byteswap)
 	int error;
 	uint64_t end;
 
+	LOG_ENTER;
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 
@@ -802,7 +817,7 @@ top:
 	}
 
 	iput(ZTOI(zp));
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -815,6 +830,7 @@ zfs_replay_truncate(void *arg1, void *arg2, boolean_t byteswap)
 	flock64_t fl;
 	int error;
 
+	LOG_ENTER;
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 
@@ -831,7 +847,7 @@ zfs_replay_truncate(void *arg1, void *arg2, boolean_t byteswap)
 	    lr->lr_offset, kcred);
 
 	iput(ZTOI(zp));
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -846,6 +862,7 @@ zfs_replay_setattr(void *arg1, void *arg2, boolean_t byteswap)
 	int error;
 	void *start;
 
+	LOG_ENTER;
 	xva_init(&xva);
 	if (byteswap) {
 		byteswap_uint64_array(lr, sizeof (*lr));
@@ -887,7 +904,7 @@ zfs_replay_setattr(void *arg1, void *arg2, boolean_t byteswap)
 	zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;
 	iput(ZTOI(zp));
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -901,6 +918,7 @@ zfs_replay_acl_v0(void *arg1, void *arg2, boolean_t byteswap)
 	znode_t *zp;
 	int error;
 
+	LOG_ENTER;
 	if (byteswap) {
 		byteswap_uint64_array(lr, sizeof (*lr));
 		zfs_oldace_byteswap(ace, lr->lr_aclcnt);
@@ -919,7 +937,7 @@ zfs_replay_acl_v0(void *arg1, void *arg2, boolean_t byteswap)
 	error = zfs_setsecattr(ZTOI(zp), &vsa, 0, kcred);
 
 	iput(ZTOI(zp));
-
+	LOG_EXIT;
 	return (error);
 }
 
@@ -947,6 +965,7 @@ zfs_replay_acl(void *arg1, void *arg2, boolean_t byteswap)
 	znode_t *zp;
 	int error;
 
+	LOG_ENTER;
 	if (byteswap) {
 		byteswap_uint64_array(lr, sizeof (*lr));
 		zfs_ace_byteswap(ace, lr->lr_acl_bytes, B_FALSE);
@@ -983,7 +1002,7 @@ zfs_replay_acl(void *arg1, void *arg2, boolean_t byteswap)
 
 	zfsvfs->z_fuid_replay = NULL;
 	iput(ZTOI(zp));
-
+	LOG_EXIT;
 	return (error);
 }
 

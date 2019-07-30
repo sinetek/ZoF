@@ -141,11 +141,7 @@ fi
 #
 # 4. Generate checksums for all ext4 files.
 #
-if is_freebsd; then
-	log_must eval "sha256 $MNTPNT/* >$TESTDIR/checksum"
-else
-	log_must eval "sha256sum -b $MNTPNT/* >$TESTDIR/checksum"
-fi
+typeset checksum=$(cat $MNTPNT/* | sha256digest)
 
 #
 # 5. Unmount filesystem and export the pool
@@ -177,10 +173,8 @@ log_note "Verify current block usage:"
 log_must zdb -bcv $TESTPOOL
 
 log_note "Verify checksums"
-if is_freebsd; then
-	log_must sha256 -c $TESTDIR/checksum
-else
-	log_must sha256sum -c $TESTDIR/checksum
-fi
+typeset checksum1=$(cat $MNTPNT/* | sha256digest)
+[[ "$checksum1" == "$checksum" ]] || \
+    log_fail "checksum mismatch ($checksum1 != $checksum)"
 
 log_pass "Replay of intent log succeeds."

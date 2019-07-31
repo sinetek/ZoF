@@ -52,13 +52,13 @@
 #endif
 
 #ifdef __FreeBSD__
-#define LOG_ENTER printf("enter %s\n", __func__)
-#define LOG_EXIT printf("exit %s\n", __func__)
+#define	LOG_ENTER printf("enter %s\n", __func__)
+#define	LOG_EXIT printf("exit %s\n", __func__)
 #else
-#define LOG_ENTER 
+#define LOG_ENTER
 #define LOG_EXIT
-#define vn_lock(a, b)
-#define VOP_UNLOCK(a, b)
+#define	vn_lock(a, b)
+#define	VOP_UNLOCK(a, b)
 #endif
 
 

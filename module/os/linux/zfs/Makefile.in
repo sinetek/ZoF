@@ -28,4 +28,3 @@ $(MODULE)-objs += ../os/linux/zfs/zpl_file.o
 $(MODULE)-objs += ../os/linux/zfs/zpl_inode.o
 $(MODULE)-objs += ../os/linux/zfs/zpl_super.o
 $(MODULE)-objs += ../os/linux/zfs/zpl_xattr.o
-$(MODULE)-objs += ../os/linux/zfs/zvol.o

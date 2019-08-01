@@ -54,13 +54,14 @@
 #ifdef __FreeBSD__
 #define	LOG_ENTER(name) printf("enter %s %s\n", __func__, name)
 #define LOG_EXIT
+#define SHARED 1
 #else
 #define LOG_ENTER
 #define LOG_EXIT
 #define	vn_lock(a, b)
 #define	VOP_UNLOCK(a, b)
+#define SHARED 0
 #endif
-
 
 
 /*
@@ -395,7 +396,7 @@ zfs_replay_create_acl(void *arg1, void *arg2, boolean_t byteswap)
 		}
 
 		error = zfs_create(ZTOI(dzp), name, &xva.xva_vattr,
-		    0, 0, &ip, kcred, vflg, &vsec);
+		    SHARED, 0, &ip, kcred, vflg, &vsec);
 		break;
 	case TX_MKDIR_ACL:
 		aclstart = (caddr_t)(lracl + 1);
@@ -539,7 +540,7 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 			name = (char *)start;
 
 		error = zfs_create(ZTOI(dzp), name, &xva.xva_vattr,
-		    0, 0, &ip, kcred, vflg, NULL);
+		    SHARED, 0, &ip, kcred, vflg, NULL);
 		break;
 	case TX_MKDIR_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -574,11 +575,13 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(dzp), 0);
 	LOG_ENTER((name == NULL ? " " : name));
 out:
+#ifdef __FreeBSD__
 	if (error == 0 && ip != NULL)
-		iput(ip);
-
-	iput(ZTOI(dzp));
-
+		vput(ip);
+#else
+	if (error == 0 && ip != NULL)
+		iput(ZTOI(dzp));
+#endif
 	if (zfsvfs->z_fuid_replay)
 		zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;

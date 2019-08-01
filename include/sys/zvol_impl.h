@@ -60,10 +60,6 @@ typedef struct zvol_state {
 
 
 extern list_t zvol_state_list;
-
-extern list_t zvol_state_list;
-extern taskq_t *zvol_taskq;
->>>>>>> split Linux specific parts of zvol in to zvol_os.c
 extern krwlock_t zvol_state_lock;
 #define	ZVOL_HT_SIZE	1024
 extern struct hlist_head *zvol_htable;

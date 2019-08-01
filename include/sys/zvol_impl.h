@@ -16,8 +16,6 @@ struct gendisk {
  */
 #define	ZVOL_WRITTEN_TO	0x2
 
-
-
 /*
  * The in-core state of each volume.
  */
@@ -57,21 +55,30 @@ extern zil_replay_func_t *zvol_replay_vector[TX_MAX_TYPE];
 extern unsigned int zvol_volmode;
 extern unsigned int zvol_inhibit_dev;
 
-uint64_t zvol_name_hash(const char *name);
+/*
+ * platform independent functions exported to platform code
+ */
+
 zvol_state_t *zvol_find_by_name_hash(const char *name, uint64_t hash, int mode);
-void zvol_rename_minor(zvol_state_t *zv, const char *newname);
-int zvol_setup_zv(zvol_state_t *zv);
-void zvol_free(void *arg);
-int zvol_create_minor_impl(const char *name);
+int zvol_first_open(zvol_state_t *zv, boolean_t readonly);
+uint64_t zvol_name_hash(const char *name);
 void zvol_remove_minors_impl(const char *name);
 void zvol_last_close(zvol_state_t *zv);
-int zvol_first_open(zvol_state_t *zv, boolean_t readonly);
 zvol_state_t *zvol_find_by_dev(dev_t dev);
 void zvol_insert(zvol_state_t *zv);
-int zvol_get_data(void *arg, lr_write_t *lr, char *buf, struct lwb *lwb, zio_t *zio);
 void zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off, uint64_t len,
     boolean_t sync);
 void zvol_log_write(zvol_state_t *zv, dmu_tx_t *tx, uint64_t offset,
     uint64_t size, int sync);
+int zvol_get_data(void *arg, lr_write_t *lr, char *buf, struct lwb *lwb, zio_t *zio);
+
+/*
+ * platform dependent functions exported to platform independent code
+ */
+
+void zvol_rename_minor(zvol_state_t *zv, const char *newname);
+int zvol_setup_zv(zvol_state_t *zv);
+void zvol_free(void *arg);
+int zvol_create_minor_impl(const char *name);
 
 #endif

@@ -83,6 +83,7 @@
 #include <sys/zio.h>
 #include <sys/zfs_rlock.h>
 #include <sys/spa_impl.h>
+#include <sys/zvol_impl.h>
 #include <sys/zvol.h>
 
 #include <sys/zvol_impl.h>
@@ -315,6 +316,7 @@ zvol_set_volsize(const char *name, uint64_t volsize)
 	uint64_t readonly;
 	int error;
 	boolean_t owned = B_FALSE;
+	struct gendisk *disk = NULL;
 
 	error = dsl_prop_get_integer(name,
 	    zfs_prop_to_name(ZFS_PROP_READONLY), &readonly, NULL);

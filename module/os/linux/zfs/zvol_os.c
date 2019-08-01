@@ -957,16 +957,6 @@ zvol_create_minor(const char *name)
 	/* This flag was introduced in kernel version 4.12. */
 #ifdef QUEUE_FLAG_SCSI_PASSTHROUGH
 	blk_queue_flag_set(QUEUE_FLAG_SCSI_PASSTHROUGH, zv->zv_zso->zvo_queue);
-#endif
-
-	if (spa_writeable(dmu_objset_spa(os))) {
-		if (zil_replay_disable)
-			zil_destroy(dmu_objset_zil(os), B_FALSE);
-		else
-			zil_replay(os, zv, zvol_replay_vector);
-	}
-	ASSERT3P(zv->zv_zso->zvo_kstat.dk_kstats, ==, NULL);
-	dataset_kstats_create(&zv->zv_zso->zvo_kstat, zv->zv_objset);
 
 	/*
 	 * When udev detects the addition of the device it will immediately

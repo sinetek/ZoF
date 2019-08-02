@@ -56,7 +56,7 @@
 #define LOG_EXIT
 #define SHARED 1
 #else
-#define LOG_ENTER
+#define LOG_ENTER(x)
 #define LOG_EXIT
 #define	vn_lock(a, b)
 #define	VOP_UNLOCK(a, b)
@@ -676,7 +676,9 @@ zfs_replay_rename(void *arg1, void *arg2, boolean_t byteswap)
 	int vflg = 0;
 
 	//LOG_ENTER(name);
-	printf("enter %s %s -> %s\n", __func__, sname, tname)
+#ifdef __FreeBSD__
+	printf("enter %s %s -> %s\n", __func__, sname, tname);
+#endif
 	if (byteswap)
 		byteswap_uint64_array(lr, sizeof (*lr));
 

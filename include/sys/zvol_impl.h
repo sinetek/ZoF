@@ -58,7 +58,6 @@ typedef struct zvol_state {
 	struct zvol_state_os	*zv_zso;	/* private platform state */
 } zvol_state_t;
 
-
 extern list_t zvol_state_list;
 extern krwlock_t zvol_state_lock;
 #define	ZVOL_HT_SIZE	1024

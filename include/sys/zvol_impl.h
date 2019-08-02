@@ -30,18 +30,23 @@ typedef struct zvol_state {
 	zilog_t			*zv_zilog;	/* ZIL handle */
 	rangelock_t		zv_rangelock;	/* for range locking */
 	dnode_t			*zv_dn;		/* dnode hold */
-	dev_t			zv_dev;		/* device id */
 	struct gendisk		*zv_disk;	/* generic disk */
-#ifdef __linux__
-	struct request_queue	*zv_queue;	/* request queue */
-	dataset_kstats_t	zv_kstat;	/* zvol kstats */
-#endif
 	list_node_t		zv_next;	/* next zvol_state_t linkage */
 	uint64_t		zv_hash;	/* name hash */
 	struct hlist_node	zv_hlink;	/* hash link */
 	kmutex_t		zv_state_lock;	/* protects zvol_state_t */
 	atomic_t		zv_suspend_ref;	/* refcount for suspend */
 	krwlock_t		zv_suspend_lock;	/* suspend lock */
+#ifdef __linux__
+	struct request_queue	*zv_queue;	/* request queue */
+	dataset_kstats_t	zv_kstat;	/* zvol kstats */
+	dev_t			zv_dev;		/* device id */
+#endif
+#ifdef __FreeBSD__
+	struct cdev	*zv_dev;	/* non-GEOM device */
+	struct g_provider *zv_provider;	/* GEOM provider */
+	struct bio_queue_head zv_queue;
+#endif
 } zvol_state_t;
 
 extern list_t zvol_state_list;

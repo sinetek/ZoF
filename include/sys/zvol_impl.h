@@ -16,6 +16,10 @@ struct gendisk {
  */
 #define	ZVOL_WRITTEN_TO	0x2
 
+#define	ZVOL_DUMPIFIED	0x4
+
+#define	ZVOL_EXCL	0x8
+
 /*
  * The in-core state of each volume.
  */

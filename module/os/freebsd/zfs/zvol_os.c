@@ -97,6 +97,8 @@
 #include <sys/filio.h>
 
 #include <geom/geom.h>
+#include <sys/zvol.h>
+#include <sys/zvol_impl.h>
 
 #include "zfs_namecheck.h"
 
@@ -111,8 +113,6 @@ extern volatile int geom_inhibited;
  * e.g., an open doesn't get a spurious EBUSY.
  */
 
-static krwlock_t zvol_state_lock;
-
 struct g_class zfs_zvol_class = {
 	.name = "ZFS::ZVOL",
 	.version = G_VERSION,
@@ -120,15 +120,12 @@ struct g_class zfs_zvol_class = {
 
 DECLARE_GEOM_CLASS(zfs_zvol_class, zfs_zvol);
 
-static char *zvol_ftag = "zvol_tag";
-
 #define	ZVOL_DUMPSIZE		"dumpsize"
 
 static uint32_t zvol_minors;
 
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, vol, CTLFLAG_RW, 0, "ZFS VOLUME");
-static int	zvol_volmode = ZFS_VOLMODE_GEOM;
 SYSCTL_INT(_vfs_zfs_vol, OID_AUTO, mode, CTLFLAG_RWTUN, &zvol_volmode, 0,
     "Expose as GEOM providers (1), device files (2) or neither");
 static boolean_t zpool_on_zvol = B_FALSE;
@@ -540,13 +537,12 @@ zvol_geom_destroy(zvol_state_t *zv)
 
 	g_topology_assert();
 
-	mtx_lock(&zv->zv_queue_mtx);
+	mutex_enter(&zv->zv_state_lock);
 	zv->zv_state = 1;
 	wakeup_one(&zv->zv_queue);
 	while (zv->zv_state != 2)
-		msleep(&zv->zv_state, &zv->zv_queue_mtx, 0, "zvol:w", 0);
-	mtx_unlock(&zv->zv_queue_mtx);
-	mtx_destroy(&zv->zv_queue_mtx);
+		msleep(&zv->zv_state, &zv->zv_state_lock, 0, "zvol:w", 0);
+	mutex_exit(&zv->zv_state_lock);
 	pp = zv->zv_provider;
 	zv->zv_provider = NULL;
 	pp->private = NULL;
@@ -664,10 +660,10 @@ zvol_geom_start(struct bio *bp)
 	return;
 
 enqueue:
-	mtx_lock(&zv->zv_queue_mtx);
+	mutex_enter(&zv->zv_state_lock);
 	first = (bioq_first(&zv->zv_queue) == NULL);
 	bioq_insert_tail(&zv->zv_queue, bp);
-	mtx_unlock(&zv->zv_queue_mtx);
+	mutex_exit(&zv->zv_state_lock);
 	if (first)
 		wakeup_one(&zv->zv_queue);
 }
@@ -684,20 +680,20 @@ zvol_geom_worker(void *arg)
 
 	zv = arg;
 	for (;;) {
-		mtx_lock(&zv->zv_queue_mtx);
+		mutex_enter(&zv->zv_state_lock);
 		bp = bioq_takefirst(&zv->zv_queue);
 		if (bp == NULL) {
 			if (zv->zv_state == 1) {
 				zv->zv_state = 2;
 				wakeup(&zv->zv_state);
-				mtx_unlock(&zv->zv_queue_mtx);
+				mutex_exit(&zv->zv_state_lock);
 				kthread_exit();
 			}
-			msleep(&zv->zv_queue, &zv->zv_queue_mtx, PRIBIO | PDROP,
+			msleep(&zv->zv_queue, &zv->zv_state_lock, PRIBIO | PDROP,
 			    "zvol:io", 0);
 			continue;
 		}
-		mtx_unlock(&zv->zv_queue_mtx);
+		mutex_exit(&zv->zv_state_lock);
 		switch (bp->bio_cmd) {
 		case BIO_FLUSH:
 			zil_commit(zv->zv_zilog, ZVOL_OBJ);
@@ -1043,7 +1039,6 @@ zvol_free(void *arg)
 	mutex_destroy(&zv->zv_state_lock);
 	kmem_free(zv, sizeof (zvol_state_t));
 	zvol_minors--;
-	return (0);
 }
 
 /*
@@ -1062,7 +1057,7 @@ zvol_create_minor_impl(const char *name)
 	ZFS_LOG(1, "Creating ZVOL %s...", name);
 
 
-	if ((zv = zvol_find_by_name(name, RW_NONE)) != NULL) {
+	if ((zv = zvol_find_by_name_hash(name, zvol_name_hash(name), RW_NONE)) != NULL) {
 		mutex_exit(&zv->zv_state_lock);
 		return (SET_ERROR(EEXIST));
 	}
@@ -1096,7 +1091,6 @@ zvol_create_minor_impl(const char *name)
 
 		zv->zv_provider = pp;
 		bioq_init(&zv->zv_queue);
-		mtx_init(&zv->zv_queue_mtx, "zvol", NULL, MTX_DEF);
 	} else if (zv->zv_volmode == ZFS_VOLMODE_DEV) {
 		struct make_dev_args args;
 
@@ -1120,13 +1114,10 @@ zvol_create_minor_impl(const char *name)
 	}
 
 	(void) strlcpy(zv->zv_name, name, MAXPATHLEN);
-	zv->zv_min_bs = DEV_BSHIFT;
 	zv->zv_objset = os;
 	if (dmu_objset_is_snapshot(os) || !spa_writeable(dmu_objset_spa(os)))
 		zv->zv_flags |= ZVOL_RDONLY;
 	zfs_rangelock_init(&zv->zv_rangelock, NULL, NULL);
-	list_create(&zv->zv_extents, sizeof (zvol_extent_t),
-	    offsetof(zvol_extent_t, ze_node));
 	if (spa_writeable(dmu_objset_spa(os))) {
 		if (zil_replay_disable)
 			zil_destroy(dmu_objset_zil(os), B_FALSE);
@@ -1143,7 +1134,7 @@ zvol_create_minor_impl(const char *name)
 	}
 
 	rw_enter(&zvol_state_lock, RW_WRITER);
-	LIST_INSERT_HEAD(&all_zvols, zv, zv_links);
+	zvol_insert(zv);
 	zvol_minors++;
 	rw_exit(&zvol_state_lock);
 	PICKUP_GIANT();

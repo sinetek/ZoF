@@ -83,7 +83,6 @@
 #include <sys/zio.h>
 #include <sys/zfs_rlock.h>
 #include <sys/spa_impl.h>
-#include <sys/zvol_impl.h>
 #include <sys/zvol.h>
 
 #include <sys/zvol_impl.h>
@@ -1011,7 +1010,7 @@ zvol_create_snap_minor_cb(const char *dsname, void *arg)
 		    "%s is not a snapshot name\n", dsname);
 	} else {
 		minors_job_t *job;
-		char *n = strdup(dsname);
+		char *n = spl_strdup(dsname);
 		if (n == NULL)
 			return (0);
 
@@ -1053,7 +1052,7 @@ zvol_create_minors_cb(const char *dsname, void *arg)
 	 */
 	if (strchr(dsname, '@') == 0) {
 		minors_job_t *job;
-		char *n = strdup(dsname);
+		char *n = spl_strdup(dsname);
 		if (n == NULL)
 			return (0);
 

@@ -38,7 +38,7 @@
 /*
  * The in-core state of each volume.
  */
-typedef struct zvol_state {
+struct zvol_state {
 	char			zv_name[MAXNAMELEN];	/* name */
 	uint64_t		zv_volsize;		/* advertised space */
 	uint64_t		zv_volblocksize;	/* volume block size */

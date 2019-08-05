@@ -7,6 +7,85 @@
 struct gendisk {
 	void *private_data;
 };
+
+struct hlist_head {
+        struct hlist_node *first;
+};
+
+struct hlist_node {
+        struct hlist_node *next, **pprev;
+};
+
+typedef struct {
+        volatile int counter;
+} atomic_t;
+
+#include <sys/bio.h>
+
+typedef struct cdev *platform_dev_t;
+
+#define hlist_for_each(p, head)                                         \
+        for (p = (head)->first; p; p = (p)->next)
+
+#define hlist_entry(ptr, type, field)   container_of(ptr, type, field)
+
+#define container_of(ptr, type, member)                         \
+({                                                              \
+        const __typeof(((type *)0)->member) *__p = (ptr);       \
+        (type *)((uintptr_t)__p - offsetof(type, member));      \
+})
+
+static inline void
+hlist_add_head(struct hlist_node *n, struct hlist_head *h)
+{
+
+        n->next = h->first;
+        if (h->first != NULL)
+                h->first->pprev = &n->next;
+        WRITE_ONCE(h->first, n);
+        n->pprev = &h->first;
+}
+
+static inline void
+hlist_del(struct hlist_node *n)
+{
+
+        WRITE_ONCE(*(n->pprev), n->next);
+        if (n->next != NULL)
+                n->next->pprev = n->pprev;
+}
+
+
+#define	READ_ONCE(x) ({			\
+	__typeof(x) __var = ({		\
+		barrier();		\
+		ACCESS_ONCE(x);		\
+	});				\
+	barrier();			\
+	__var;				\
+})
+
+static inline int
+atomic_read(const atomic_t *v)
+{
+	return READ_ONCE(v->counter);
+}
+
+static inline int
+atomic_inc(atomic_t *v)
+{
+	return atomic_fetchadd_int(&v->counter, 1) + 1;
+}
+
+static inline int
+atomic_dec(atomic_t *v)
+{
+	return atomic_fetchadd_int(&v->counter, -1) - 1;
+}
+
+#else
+typedef dev_t platform_dev_t;
+
 #endif
 
 #define	ZVOL_RDONLY	0x1
@@ -23,7 +102,7 @@ struct gendisk {
 /*
  * The in-core state of each volume.
  */
-typedef struct zvol_state {
+struct zvol_state {
 	char			zv_name[MAXNAMELEN];	/* name */
 	uint64_t		zv_volsize;		/* advertised space */
 	uint64_t		zv_volblocksize;	/* volume block size */
@@ -41,17 +120,21 @@ typedef struct zvol_state {
 	kmutex_t		zv_state_lock;	/* protects zvol_state_t */
 	atomic_t		zv_suspend_ref;	/* refcount for suspend */
 	krwlock_t		zv_suspend_lock;	/* suspend lock */
+	platform_dev_t			zv_dev;		/* device id */
+
 #ifdef __linux__
 	struct request_queue	*zv_queue;	/* request queue */
 	dataset_kstats_t	zv_kstat;	/* zvol kstats */
-	dev_t			zv_dev;		/* device id */
 #endif
 #ifdef __FreeBSD__
-	struct cdev	*zv_dev;	/* non-GEOM device */
 	struct g_provider *zv_provider;	/* GEOM provider */
 	struct bio_queue_head zv_queue;
+	int zv_state;
+	int zv_sync_cnt;
+	uint64_t zv_volmode;
 #endif
-} zvol_state_t;
+};
+
 
 extern list_t zvol_state_list;
 extern taskq_t *zvol_taskq;
@@ -73,7 +156,7 @@ int zvol_first_open(zvol_state_t *zv, boolean_t readonly);
 uint64_t zvol_name_hash(const char *name);
 void zvol_remove_minors_impl(const char *name);
 void zvol_last_close(zvol_state_t *zv);
-zvol_state_t *zvol_find_by_dev(dev_t dev);
+zvol_state_t *zvol_find_by_dev(platform_dev_t dev);
 void zvol_insert(zvol_state_t *zv);
 void zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off, uint64_t len,
     boolean_t sync);

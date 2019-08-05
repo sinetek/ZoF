@@ -87,8 +87,10 @@
 #include <sys/zio.h>
 #include <sys/zfs_rlock.h>
 #include <sys/spa_impl.h>
-#include <sys/zvol_impl.h>
 #include <sys/zvol.h>
+
+#include <sys/zvol_impl.h>
+
 
 unsigned int zvol_inhibit_dev = 0;
 unsigned int zvol_volmode = ZFS_VOLMODE_GEOM;
@@ -125,7 +127,7 @@ zvol_name_hash(const char *name)
 {
 	int i;
 	uint64_t crc = -1ULL;
-	uint8_t *p = (uint8_t *)name;
+	const uint8_t *p = (const uint8_t *)name;
 	ASSERT(zfs_crc64_table[128] == ZFS_CRC64_POLY);
 	for (i = 0; i < MAXNAMELEN - 1 && *p; i++, p++) {
 		crc = (crc >> 8) ^ zfs_crc64_table[(crc ^ (*p)) & 0xFF];
@@ -134,13 +136,13 @@ zvol_name_hash(const char *name)
 }
 
 /*
- * Find a zvol_state_t given the full major+minor dev_t. If found,
+ * Find a zvol_state_t given the full major+minor platform_dev_t. If found,
  * return with zv_state_lock taken, otherwise, return (NULL) without
  * taking zv_state_lock.
  */
 
 zvol_state_t *
-zvol_find_by_dev(dev_t dev)
+zvol_find_by_dev(platform_dev_t dev)
 {
 	zvol_state_t *zv;
 
@@ -405,8 +407,10 @@ out:
 	if (zv != NULL)
 		mutex_exit(&zv->zv_state_lock);
 
+#ifdef __linux__
 	if (disk != NULL)
 		revalidate_disk(disk);
+#endif
 
 	return (SET_ERROR(error));
 }
@@ -770,7 +774,9 @@ void
 zvol_insert(zvol_state_t *zv)
 {
 	ASSERT(RW_WRITE_HELD(&zvol_state_lock));
+#ifdef __linux__
 	ASSERT3U(MINOR(zv->zv_dev) & ZVOL_MINOR_MASK, ==, 0);
+#endif
 	list_insert_head(&zvol_state_list, zv);
 	hlist_add_head(&zv->zv_hlink, ZVOL_HT_HEAD(zv->zv_hash));
 }
@@ -919,8 +925,13 @@ zvol_first_open(zvol_state_t *zv, boolean_t readonly)
 	 */
 	if (!mutex_owned(&spa_namespace_lock)) {
 		locked = mutex_tryenter(&spa_namespace_lock);
+#ifdef __linux__
 		if (!locked)
 			return (-SET_ERROR(ERESTARTSYS));
+#else
+		if (!locked)
+			return (SET_ERROR(EINTR));
+#endif
 	}
 
 	ro = (readonly || (strchr(zv->zv_name, '@') != NULL));
@@ -940,7 +951,11 @@ zvol_first_open(zvol_state_t *zv, boolean_t readonly)
 out_mutex:
 	if (locked)
 		mutex_exit(&spa_namespace_lock);
+#ifdef __linux__
 	return (SET_ERROR(-error));
+#else
+	return (SET_ERROR(error));
+#endif
 }
 
 void
@@ -1005,7 +1020,7 @@ zvol_create_snap_minor_cb(const char *dsname, void *arg)
 		    "%s is not a shapshot name\n", dsname);
 	} else {
 		minors_job_t *job;
-		char *n = strdup(dsname);
+		char *n = spl_strdup(dsname);
 		if (n == NULL)
 			return (0);
 
@@ -1047,7 +1062,7 @@ zvol_create_minors_cb(const char *dsname, void *arg)
 	 */
 	if (strchr(dsname, '@') == 0) {
 		minors_job_t *job;
-		char *n = strdup(dsname);
+		char *n = spl_strdup(dsname);
 		if (n == NULL)
 			return (0);
 
@@ -1065,7 +1080,7 @@ zvol_create_minors_cb(const char *dsname, void *arg)
 			 * traverse snapshots only, do not traverse children,
 			 * and skip the 'dsname'
 			 */
-			error = dmu_objset_find((char *)dsname,
+			error = dmu_objset_find(dsname,
 			    zvol_create_snap_minor_cb, (void *)job,
 			    DS_FIND_SNAPSHOTS);
 		}

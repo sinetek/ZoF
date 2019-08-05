@@ -41,7 +41,9 @@ extern void zvol_rename_minors(spa_t *spa, const char *oldname,
     const char *newname, boolean_t async);
 
 #ifdef _KERNEL
+#ifndef	_SYS_ZVOL_IMPL_H
 typedef struct zvol_state zvol_state_t;
+#endif
 
 extern int zvol_check_volsize(uint64_t volsize, uint64_t blocksize);
 extern int zvol_check_volblocksize(const char *name, uint64_t volblocksize);

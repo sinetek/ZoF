@@ -42,7 +42,6 @@ unsigned int zvol_major = ZVOL_MAJOR;
 unsigned int zvol_request_sync = 0;
 unsigned int zvol_prefetch_bytes = (128 * 1024);
 unsigned long zvol_max_discard_blocks = 16384;
-unsigned int zvol_threads = 32;
 
 struct zvol_state_os {
 	struct gendisk		*zvo_disk;	/* generic disk */

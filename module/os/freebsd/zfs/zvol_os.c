@@ -1180,6 +1180,56 @@ zvol_create_minor_impl(const char *name)
 	return (0);
 }
 
+static void
+zvol_size_changed(zvol_state_t *zv, uint64_t volsize)
+{
+	zv->zv_volsize = volsize;
+	if (zv->zv_volmode == ZFS_VOLMODE_GEOM) {
+		struct g_provider *pp;
+
+		pp = zv->zv_provider;
+		if (pp == NULL)
+			return;
+		g_topology_lock();
+
+		/*
+		 * Do not invoke resize event when initial size was zero.
+		 * ZVOL initializes the size on first open, this is not
+		 * real resizing.
+		 */
+		if (pp->mediasize == 0)
+			pp->mediasize = zv->zv_volsize;
+		else
+			g_resize_provider(pp, zv->zv_volsize);
+		g_topology_unlock();
+	}
+}
+
+
+void
+zvol_os_clear_private(zvol_state_t *zv)
+{
+	struct g_provider *pp;
+
+	ASSERT(RW_LOCK_HELD(&zvol_state_lock));
+
+	if (zv->zv_provider) {
+		g_topology_lock();
+		mutex_enter(&zv->zv_state_lock);
+		pp = zv->zv_provider;
+		pp->private = NULL;
+		g_wither_geom(pp->geom, ENXIO);
+		mutex_exit(&zv->zv_state_lock);
+		g_topology_unlock();
+	}
+}
+
+int
+zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize)
+{
+	zvol_size_changed(zv, volsize);
+	return (0);
+}
 int
 zvol_busy(void)
 {
@@ -1187,13 +1237,13 @@ zvol_busy(void)
 }
 
 int
-zvol_init_os(void)
+zvol_os_init(void)
 {
 	return (0);
 }
 
 void
-zvol_fini_os(void)
+zvol_os_fini(void)
 {
 
 }

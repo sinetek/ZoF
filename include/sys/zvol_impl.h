@@ -4,10 +4,6 @@
 #include <sys/zfs_context.h>
 
 #ifndef __linux__
-struct gendisk {
-	void *private_data;
-};
-
 struct hlist_head {
         struct hlist_node *first;
 };
@@ -54,7 +50,6 @@ hlist_del(struct hlist_node *n)
         if (n->next != NULL)
                 n->next->pprev = n->pprev;
 }
-
 
 #define	READ_ONCE(x) ({			\
 	__typeof(x) __var = ({		\
@@ -110,6 +105,33 @@ typedef dev_t platform_dev_t;
 
 #define	ZVOL_EXCL	0x8
 
+#ifdef __linux__
+struct zvol_state_os {
+	struct gendisk		*zvo_disk;	/* generic disk */
+	struct request_queue	*zvo_queue;	/* request queue */
+	dataset_kstats_t	zvo_kstat;	/* zvol kstats */
+};
+#define zv_disk zv_zso.zvo_disk
+#define zv_queue zv_zso.zvo_queue
+#define zv_kstat zv_zso.zvo_kstat
+
+#endif
+#ifdef __FreeBSD__
+struct zvol_state_os {
+	struct g_provider *zvo_provider;	/* GEOM provider */
+	struct bio_queue_head zvo_queue;
+	int zvo_state;
+	int zvo_sync_cnt;
+	uint64_t zvo_volmode;
+
+};
+#define zv_provider zv_zso.zvo_provider
+#define zv_queue zv_zso.zvo_queue
+#define zv_state zv_zso.zvo_state
+#define zv_sync_cnt zv_zso.zvo_sync_cnt
+#define zv_volmode zv_zso.zvo_volmode
+#endif
+
 /*
  * The in-core state of each volume.
  */
@@ -124,7 +146,6 @@ struct zvol_state {
 	zilog_t			*zv_zilog;	/* ZIL handle */
 	rangelock_t		zv_rangelock;	/* for range locking */
 	dnode_t			*zv_dn;		/* dnode hold */
-	struct gendisk		*zv_disk;	/* generic disk */
 	list_node_t		zv_next;	/* next zvol_state_t linkage */
 	uint64_t		zv_hash;	/* name hash */
 	struct hlist_node	zv_hlink;	/* hash link */
@@ -132,18 +153,7 @@ struct zvol_state {
 	atomic_t		zv_suspend_ref;	/* refcount for suspend */
 	krwlock_t		zv_suspend_lock;	/* suspend lock */
 	platform_dev_t			zv_dev;		/* device id */
-
-#ifdef __linux__
-	struct request_queue	*zv_queue;	/* request queue */
-	dataset_kstats_t	zv_kstat;	/* zvol kstats */
-#endif
-#ifdef __FreeBSD__
-	struct g_provider *zv_provider;	/* GEOM provider */
-	struct bio_queue_head zv_queue;
-	int zv_state;
-	int zv_sync_cnt;
-	uint64_t zv_volmode;
-#endif
+	struct zvol_state_os zv_zso;
 };
 
 
@@ -184,7 +194,9 @@ int zvol_setup_zv(zvol_state_t *zv);
 void zvol_free(void *arg);
 int zvol_create_minor_impl(const char *name);
 
-extern int zvol_init_os(void);
-extern void zvol_fini_os(void);
+extern int zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize);
+extern void zvol_os_clear_private(zvol_state_t *zv);
+extern int zvol_os_init(void);
+extern void zvol_os_fini(void);
 
 #endif

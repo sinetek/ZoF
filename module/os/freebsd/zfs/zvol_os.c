@@ -124,6 +124,8 @@ DECLARE_GEOM_CLASS(zfs_zvol_class, zfs_zvol);
 
 static uint32_t zvol_minors;
 
+#define ZVOL_RW_READER RW_READER
+
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, vol, CTLFLAG_RW, 0, "ZFS VOLUME");
 SYSCTL_INT(_vfs_zfs_vol, OID_AUTO, mode, CTLFLAG_RWTUN, &zvol_volmode, 0,
@@ -199,7 +201,7 @@ zvol_open(struct g_provider *pp, int flag, int count)
 		return (SET_ERROR(EOPNOTSUPP));
 	}
 
-	rw_enter(&zvol_state_lock, RW_READER);
+	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	zv = pp->private;
 	if (zv == NULL) {
 		rw_exit(&zvol_state_lock);
@@ -214,9 +216,9 @@ zvol_open(struct g_provider *pp, int flag, int count)
 	 * ordering - zv_suspend_lock before zv_state_lock
 	 */
 	if (zv->zv_open_count == 0) {
-		if (!rw_tryenter(&zv->zv_suspend_lock, RW_READER)) {
+		if (!rw_tryenter(&zv->zv_suspend_lock, ZVOL_RW_READER)) {
 			mutex_exit(&zv->zv_state_lock);
-			rw_enter(&zv->zv_suspend_lock, RW_READER);
+			rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
 			mutex_enter(&zv->zv_state_lock);
 			/* check to see if zv_suspend_lock is needed */
 			if (zv->zv_open_count != 0) {
@@ -284,7 +286,7 @@ zvol_close(struct g_provider *pp, int flag, int count)
 	boolean_t drop_suspend = B_TRUE;
 
 	ASSERT(!RW_LOCK_HELD(&zvol_state_lock));
-	rw_enter(&zvol_state_lock, RW_READER);
+	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	zv = pp->private;
 	if (zv == NULL) {
 		rw_exit(&zvol_state_lock);
@@ -309,9 +311,9 @@ zvol_close(struct g_provider *pp, int flag, int count)
 	 * ordering - zv_suspend_lock before zv_state_lock
 	 */
 	if (zv->zv_open_count == 1) {
-		if (!rw_tryenter(&zv->zv_suspend_lock, RW_READER)) {
+		if (!rw_tryenter(&zv->zv_suspend_lock, ZVOL_RW_READER)) {
 			mutex_exit(&zv->zv_state_lock);
-			rw_enter(&zv->zv_suspend_lock, RW_READER);
+			rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
 			mutex_enter(&zv->zv_state_lock);
 			/* check to see if zv_suspend_lock is needed */
 			if (zv->zv_open_count != 1) {
@@ -336,11 +338,12 @@ zvol_close(struct g_provider *pp, int flag, int count)
 		zvol_last_close(zv);
 
 	mutex_exit(&zv->zv_state_lock);
+
+	if (drop_suspend)
+		rw_exit(&zv->zv_suspend_lock);
 	return (error);
 }
-/* END */
 
-/* START */
 void
 zvol_strategy(struct bio *bp)
 {
@@ -553,8 +556,7 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 	return (error);
 }
-/* END */
-/* START */
+
 static void
 zvol_geom_run(zvol_state_t *zv)
 {
@@ -575,10 +577,7 @@ zvol_geom_destroy(zvol_state_t *zv)
 	g_topology_assert();
 
 	mutex_enter(&zv->zv_state_lock);
-	zv->zv_state = 1;
-	wakeup_one(&zv->zv_queue);
-	while (zv->zv_state != 2)
-		msleep(&zv->zv_state, &zv->zv_state_lock, 0, "zvol:w", 0);
+	VERIFY(zv->zv_state == 2);
 	mutex_exit(&zv->zv_state_lock);
 	pp = zv->zv_provider;
 	zv->zv_provider = NULL;
@@ -717,11 +716,13 @@ zvol_geom_worker(void *arg)
 
 	zv = arg;
 	for (;;) {
+		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 		mutex_enter(&zv->zv_state_lock);
 		bp = bioq_takefirst(&zv->zv_queue);
 		if (bp == NULL) {
 			if (zv->zv_state == 1) {
 				zv->zv_state = 2;
+				ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 				wakeup(&zv->zv_state);
 				mutex_exit(&zv->zv_state_lock);
 				kthread_exit();
@@ -731,6 +732,34 @@ zvol_geom_worker(void *arg)
 			continue;
 		}
 		mutex_exit(&zv->zv_state_lock);
+		/*
+		 * To be released in the I/O function. See the comment on
+		 * rangelock_enter() below.
+		 */
+		rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+		switch (bp->bio_cmd) {
+		case BIO_FLUSH:
+		case BIO_WRITE:
+		case BIO_DELETE:
+		/*
+		 * Open a ZIL if this is the first time we have written to this
+		 * zvol. We protect zv->zv_zilog with zv_suspend_lock rather
+		 * than zv_state_lock so that we don't need to acquire an
+		 * additional lock in this path.
+		 */
+		if (zv->zv_zilog == NULL) {
+			rw_exit(&zv->zv_suspend_lock);
+			rw_enter(&zv->zv_suspend_lock, RW_WRITER);
+			if (zv->zv_zilog == NULL) {
+				zv->zv_zilog = zil_open(zv->zv_objset,
+				    zvol_get_data);
+				zv->zv_flags |= ZVOL_WRITTEN_TO;
+			}
+			rw_downgrade(&zv->zv_suspend_lock);
+		}
+		default:
+			;
+		}
 		switch (bp->bio_cmd) {
 		case BIO_FLUSH:
 			zil_commit(zv->zv_zilog, ZVOL_OBJ);
@@ -745,17 +774,18 @@ zvol_geom_worker(void *arg)
 			g_io_deliver(bp, EOPNOTSUPP);
 			break;
 		}
+		rw_exit(&zv->zv_suspend_lock);
+		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
 }
-/* END */
-/* START */
+
 static int
 zvol_d_open(struct cdev *dev, int flags, int fmt, struct thread *td)
 {
 	zvol_state_t *zv = dev->si_drv2;
 	int err = 0;
 
-	rw_enter(&zvol_state_lock, RW_READER);
+	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	mutex_enter(&zv->zv_state_lock);
 	rw_exit(&zvol_state_lock);
 
@@ -807,7 +837,7 @@ zvol_d_close(struct cdev *dev, int flags, int fmt, struct thread *td)
 {
 	zvol_state_t *zv = dev->si_drv2;
 
-	rw_enter(&zvol_state_lock, RW_READER);
+	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	mutex_enter(&zv->zv_state_lock);
 	rw_exit(&zvol_state_lock);
 	if (zv->zv_flags & ZVOL_EXCL) {
@@ -1021,7 +1051,10 @@ zvol_setup_zv(zvol_state_t *zv)
 	objset_t *os = zv->zv_objset;
 
 	ASSERT(MUTEX_HELD(&zv->zv_state_lock));
-	//	ASSERT(RW_LOCK_HELD(&zv->zv_suspend_lock));
+	ASSERT(RW_LOCK_HELD(&zv->zv_suspend_lock));
+
+	zv->zv_zilog = NULL;
+	zv->zv_flags &= ~ZVOL_WRITTEN_TO;
 
 	error = dsl_prop_get_integer(zv->zv_name, "readonly", &ro, NULL);
 	if (error)
@@ -1037,7 +1070,6 @@ zvol_setup_zv(zvol_state_t *zv)
 
 	//set_capacity(zv->zv_disk, volsize >> 9);
 	zv->zv_volsize = volsize;
-	zv->zv_zilog = zil_open(os, zvol_get_data);
 
 	if (ro || dmu_objset_is_snapshot(os) ||
 	    !spa_writeable(dmu_objset_spa(os))) {
@@ -1212,15 +1244,17 @@ zvol_os_clear_private(zvol_state_t *zv)
 	struct g_provider *pp;
 
 	ASSERT(RW_LOCK_HELD(&zvol_state_lock));
-
+	printf("%s %p \n", __func__, zv->zv_provider);
 	if (zv->zv_provider) {
-		g_topology_lock();
-		mutex_enter(&zv->zv_state_lock);
+		zv->zv_state = 1;
 		pp = zv->zv_provider;
 		pp->private = NULL;
-		g_wither_geom(pp->geom, ENXIO);
-		mutex_exit(&zv->zv_state_lock);
-		g_topology_unlock();
+		wakeup_one(&zv->zv_queue);
+		printf("signalling GEOM thread to exit\n");
+		while (zv->zv_state != 2)
+			msleep(&zv->zv_state, &zv->zv_state_lock, 0, "zvol:w", 0);
+		printf("asserting lock not held\n");
+		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
 }
 

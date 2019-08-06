@@ -94,6 +94,7 @@
 
 unsigned int zvol_inhibit_dev = 0;
 unsigned int zvol_volmode = ZFS_VOLMODE_GEOM;
+unsigned int zvol_threads = 32;
 
 
 #define	ZVOL_HT_SIZE	1024
@@ -1701,3 +1702,58 @@ zvol_rename_minors(spa_t *spa, const char *name1, const char *name2,
 		taskq_wait_id(spa->spa_zvol_taskq, id);
 }
 
+int
+zvol_init(void)
+{
+	int threads = MIN(MAX(zvol_threads, 1), 1024);
+	int i, error;
+
+	list_create(&zvol_state_list, sizeof (zvol_state_t),
+	    offsetof(zvol_state_t, zv_next));
+	rw_init(&zvol_state_lock, NULL, RW_DEFAULT, NULL);
+
+	zvol_taskq = taskq_create(ZVOL_DRIVER, threads, maxclsyspri,
+	    threads * 2, INT_MAX, TASKQ_PREPOPULATE | TASKQ_DYNAMIC);
+	if (zvol_taskq == NULL) {
+		//printk(KERN_INFO "ZFS: taskq_create() failed\n");
+		error = -ENOMEM;
+		goto out;
+	}
+
+	zvol_htable = kmem_alloc(ZVOL_HT_SIZE * sizeof (struct hlist_head),
+	    KM_SLEEP);
+	if (!zvol_htable) {
+		error = -ENOMEM;
+		goto out_taskq;
+	}
+	for (i = 0; i < ZVOL_HT_SIZE; i++)
+		INIT_HLIST_HEAD(&zvol_htable[i]);
+
+	if ((error = zvol_init_os()))
+		goto out_free;
+
+	return (0);
+
+out_free:
+	kmem_free(zvol_htable, ZVOL_HT_SIZE * sizeof (struct hlist_head));
+out_taskq:
+	taskq_destroy(zvol_taskq);
+out:
+	rw_destroy(&zvol_state_lock);
+	list_destroy(&zvol_state_list);
+
+	return (SET_ERROR(error));
+}
+
+void
+zvol_fini(void)
+{
+	zvol_remove_minors_impl(NULL);
+
+	kmem_free(zvol_htable, ZVOL_HT_SIZE * sizeof (struct hlist_head));
+
+	taskq_destroy(zvol_taskq);
+	list_destroy(&zvol_state_list);
+	rw_destroy(&zvol_state_lock);
+	zvol_fini_os();
+}

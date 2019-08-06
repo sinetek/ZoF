@@ -1065,68 +1065,30 @@ zvol_rename_minor(zvol_state_t *zv, const char *newname)
 }
 
 int
-zvol_init(void)
+zvol_init_os(void)
 {
-	int threads = MIN(MAX(zvol_threads, 1), 1024);
-	int i, error;
-
-	list_create(&zvol_state_list, sizeof (zvol_state_t),
-	    offsetof(zvol_state_t, zv_next));
-	rw_init(&zvol_state_lock, NULL, RW_DEFAULT, NULL);
-	ida_init(&zvol_ida);
-
-	zvol_taskq = taskq_create(ZVOL_DRIVER, threads, maxclsyspri,
-	    threads * 2, INT_MAX, TASKQ_PREPOPULATE | TASKQ_DYNAMIC);
-	if (zvol_taskq == NULL) {
-		printk(KERN_INFO "ZFS: taskq_create() failed\n");
-		error = -ENOMEM;
-		goto out;
-	}
-
-	zvol_htable = kmem_alloc(ZVOL_HT_SIZE * sizeof (struct hlist_head),
-	    KM_SLEEP);
-	if (!zvol_htable) {
-		error = -ENOMEM;
-		goto out_taskq;
-	}
-	for (i = 0; i < ZVOL_HT_SIZE; i++)
-		INIT_HLIST_HEAD(&zvol_htable[i]);
+	int error;
 
 	error = register_blkdev(zvol_major, ZVOL_DRIVER);
 	if (error) {
 		printk(KERN_INFO "ZFS: register_blkdev() failed %d\n", error);
-		goto out_free;
+		return (error);
 	}
 
 	blk_register_region(MKDEV(zvol_major, 0), 1UL << MINORBITS,
 	    THIS_MODULE, zvol_probe, NULL, NULL);
 
+	ida_init(&zvol_ida);
+
 	return (0);
-
-out_free:
-	kmem_free(zvol_htable, ZVOL_HT_SIZE * sizeof (struct hlist_head));
-out_taskq:
-	taskq_destroy(zvol_taskq);
-out:
-	ida_destroy(&zvol_ida);
-	rw_destroy(&zvol_state_lock);
-	list_destroy(&zvol_state_list);
-
-	return (SET_ERROR(error));
 }
 
 void
-zvol_fini(void)
+zvol_fini_os(void)
 {
-	zvol_remove_minors_impl(NULL);
 
 	blk_unregister_region(MKDEV(zvol_major, 0), 1UL << MINORBITS);
 	unregister_blkdev(zvol_major, ZVOL_DRIVER);
-	kmem_free(zvol_htable, ZVOL_HT_SIZE * sizeof (struct hlist_head));
-
-	taskq_destroy(zvol_taskq);
-	list_destroy(&zvol_state_list);
-	rw_destroy(&zvol_state_lock);
 
 	ida_destroy(&zvol_ida);
 }

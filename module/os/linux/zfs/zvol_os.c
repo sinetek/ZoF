@@ -685,6 +685,24 @@ static int zvol_revalidate_disk(struct gendisk *disk)
 	return (0);
 }
 
+int
+zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize __unused)
+{
+
+	revalidate_disk(zv->zv_disk);
+	return (0);
+}
+
+void
+zvol_os_clear_private(zvol_state_t *zv)
+{
+	/*
+	 * Cleared while holding zvol_state_lock as a writer
+	 * which will prevent zvol_open() from opening it.
+	 */
+	zv->zv_disk->private_data = NULL;
+}
+
 /*
  * Provide a simple virtual geometry for legacy compatibility.  For devices
  * smaller than 1 MiB a small head and sector count is used to allow very
@@ -1064,7 +1082,7 @@ zvol_rename_minor(zvol_state_t *zv, const char *newname)
 }
 
 int
-zvol_init_os(void)
+zvol_os_init(void)
 {
 	int error;
 
@@ -1083,7 +1101,7 @@ zvol_init_os(void)
 }
 
 void
-zvol_fini_os(void)
+zvol_os_fini(void)
 {
 
 	blk_unregister_region(MKDEV(zvol_major, 0), 1UL << MINORBITS);

@@ -352,7 +352,6 @@ zvol_set_volsize(const char *name, uint64_t volsize)
 	uint64_t readonly;
 	int error;
 	boolean_t owned = B_FALSE;
-	struct gendisk *disk = NULL;
 
 	error = dsl_prop_get_integer(name,
 	    zfs_prop_to_name(ZFS_PROP_READONLY), &readonly, NULL);
@@ -392,7 +391,6 @@ zvol_set_volsize(const char *name, uint64_t volsize)
 	if (error == 0 && zv != NULL) {
 		zv->zv_volsize = volsize;
 		zv->zv_changed = 1;
-		disk = zv->zv_disk;
 	}
 out:
 	kmem_free(doi, sizeof (dmu_object_info_t));
@@ -408,10 +406,8 @@ out:
 	if (zv != NULL)
 		mutex_exit(&zv->zv_state_lock);
 
-#ifdef __linux__
-	if (disk != NULL)
-		revalidate_disk(disk);
-#endif
+	if (error == 0 && zv != NULL)
+		zvol_os_update_volsize(zv, volsize);
 
 	return (SET_ERROR(error));
 }
@@ -1215,11 +1211,7 @@ zvol_remove_minors_impl(const char *name)
 
 			zvol_remove(zv);
 
-			/*
-			 * Cleared while holding zvol_state_lock as a writer
-			 * which will prevent zvol_open() from opening it.
-			 */
-			zv->zv_disk->private_data = NULL;
+			zvol_os_clear_private(zv);
 
 			/* Drop zv_state_lock before zvol_free() */
 			mutex_exit(&zv->zv_state_lock);
@@ -1276,12 +1268,7 @@ zvol_remove_minor_impl(const char *name)
 			}
 			zvol_remove(zv);
 
-			/*
-			 * Cleared while holding zvol_state_lock as a writer
-			 * which will prevent zvol_open() from opening it.
-			 */
-			zv->zv_disk->private_data = NULL;
-
+			zvol_os_clear_private(zv);
 			mutex_exit(&zv->zv_state_lock);
 			break;
 		} else {
@@ -1729,7 +1716,7 @@ zvol_init(void)
 	for (i = 0; i < ZVOL_HT_SIZE; i++)
 		INIT_HLIST_HEAD(&zvol_htable[i]);
 
-	if ((error = zvol_init_os()))
+	if ((error = zvol_os_init()))
 		goto out_free;
 
 	return (0);
@@ -1755,5 +1742,5 @@ zvol_fini(void)
 	taskq_destroy(zvol_taskq);
 	list_destroy(&zvol_state_list);
 	rw_destroy(&zvol_state_lock);
-	zvol_fini_os();
+	zvol_os_fini();
 }

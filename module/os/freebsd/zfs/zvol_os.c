@@ -185,6 +185,7 @@ zvol_open(struct g_provider *pp, int flag, int count)
 {
 	zvol_state_t *zv;
 	int err = 0;
+	boolean_t drop_suspend = B_TRUE;
 
 	if (!zpool_on_zvol && tsd_get(zfs_geom_probe_vdev_key) != NULL) {
 		/*
@@ -206,13 +207,27 @@ zvol_open(struct g_provider *pp, int flag, int count)
 	}
 
 	mutex_enter(&zv->zv_state_lock);
-	rw_exit(&zvol_state_lock);
+
 	/*
-	 * XXX
 	 * make sure zvol is not suspended during first open
 	 * (hold zv_suspend_lock) and respect proper lock acquisition
 	 * ordering - zv_suspend_lock before zv_state_lock
 	 */
+	if (zv->zv_open_count == 0) {
+		if (!rw_tryenter(&zv->zv_suspend_lock, RW_READER)) {
+			mutex_exit(&zv->zv_state_lock);
+			rw_enter(&zv->zv_suspend_lock, RW_READER);
+			mutex_enter(&zv->zv_state_lock);
+			/* check to see if zv_suspend_lock is needed */
+			if (zv->zv_open_count != 0) {
+				rw_exit(&zv->zv_suspend_lock);
+				drop_suspend = B_FALSE;
+			}
+		}
+	} else {
+		drop_suspend = B_FALSE;
+	}
+	rw_exit(&zvol_state_lock);
 	if (zv->zv_open_count == 0) {
 		err = zvol_first_open(zv, !(flag & FWRITE));
 		if (err)
@@ -247,14 +262,16 @@ zvol_open(struct g_provider *pp, int flag, int count)
 
 	zv->zv_open_count += count;
 	mutex_exit(&zv->zv_state_lock);
-
+	if (drop_suspend)
+		rw_exit(&zv->zv_suspend_lock);
 	return (0);
  out_open_count:
 	if (zv->zv_open_count == 0)
 		zvol_last_close(zv);
  out_mutex:
 	mutex_exit(&zv->zv_state_lock);
-
+	if (drop_suspend)
+		rw_exit(&zv->zv_suspend_lock);
 	return (SET_ERROR(err));
 }
 
@@ -264,6 +281,7 @@ zvol_close(struct g_provider *pp, int flag, int count)
 {
 	zvol_state_t *zv;
 	int error = 0;
+	boolean_t drop_suspend = B_TRUE;
 
 	ASSERT(!RW_LOCK_HELD(&zvol_state_lock));
 	rw_enter(&zvol_state_lock, RW_READER);
@@ -285,6 +303,25 @@ zvol_close(struct g_provider *pp, int flag, int count)
 	 * That indicates a bug in the kernel / DDI framework.
 	 */
 	ASSERT(zv->zv_open_count > 0);
+	/*
+	 * make sure zvol is not suspended during last close
+	 * (hold zv_suspend_lock) and respect proper lock acquisition
+	 * ordering - zv_suspend_lock before zv_state_lock
+	 */
+	if (zv->zv_open_count == 1) {
+		if (!rw_tryenter(&zv->zv_suspend_lock, RW_READER)) {
+			mutex_exit(&zv->zv_state_lock);
+			rw_enter(&zv->zv_suspend_lock, RW_READER);
+			mutex_enter(&zv->zv_state_lock);
+			/* check to see if zv_suspend_lock is needed */
+			if (zv->zv_open_count != 1) {
+				rw_exit(&zv->zv_suspend_lock);
+				drop_suspend = B_FALSE;
+			}
+		}
+	} else {
+		drop_suspend = B_FALSE;
+	}
 	rw_exit(&zvol_state_lock);
 
 	ASSERT(MUTEX_HELD(&zv->zv_state_lock));
@@ -1117,6 +1154,7 @@ zvol_create_minor_impl(const char *name)
 	zv->zv_objset = os;
 	if (dmu_objset_is_snapshot(os) || !spa_writeable(dmu_objset_spa(os)))
 		zv->zv_flags |= ZVOL_RDONLY;
+	rw_init(&zv->zv_suspend_lock, NULL, RW_DEFAULT, NULL);
 	zfs_rangelock_init(&zv->zv_rangelock, NULL, NULL);
 	if (spa_writeable(dmu_objset_spa(os))) {
 		if (zil_replay_disable)

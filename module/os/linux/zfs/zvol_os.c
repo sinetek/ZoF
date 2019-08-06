@@ -87,8 +87,8 @@
 #include <sys/zio.h>
 #include <sys/zfs_rlock.h>
 #include <sys/spa_impl.h>
-#include <sys/zvol_impl.h>
 #include <sys/zvol.h>
+#include <sys/zvol_impl.h>
 
 #include <linux/blkdev_compat.h>
 #include <linux/task_io_accounting_ops.h>
@@ -97,7 +97,6 @@ unsigned int zvol_major = ZVOL_MAJOR;
 unsigned int zvol_request_sync = 0;
 unsigned int zvol_prefetch_bytes = (128 * 1024);
 unsigned long zvol_max_discard_blocks = 16384;
-unsigned int zvol_threads = 32;
 
 
 static struct ida zvol_ida;

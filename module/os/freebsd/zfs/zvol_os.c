@@ -1141,3 +1141,21 @@ zvol_create_minor_impl(const char *name)
 	ZFS_LOG(1, "ZVOL %s created.", name);
 	return (0);
 }
+
+int
+zvol_busy(void)
+{
+	return (zvol_minors != 0);
+}
+
+int
+zvol_init_os(void)
+{
+	return (0);
+}
+
+void
+zvol_fini_os(void)
+{
+
+}

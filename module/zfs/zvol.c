@@ -90,6 +90,7 @@
 
 unsigned int zvol_inhibit_dev = 0;
 unsigned int zvol_volmode = ZFS_VOLMODE_GEOM;
+unsigned int zvol_threads = 32;
 
 struct hlist_head *zvol_htable;
 list_t zvol_state_list;

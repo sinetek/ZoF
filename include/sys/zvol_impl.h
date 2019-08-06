@@ -67,7 +67,7 @@ extern zil_replay_func_t *zvol_replay_vector[TX_MAX_TYPE];
 
 extern unsigned int zvol_volmode;
 extern unsigned int zvol_inhibit_dev;
-
+extern unsigned int zvol_threads;
 /*
  * platform independent functions exported to platform code
  */
@@ -102,5 +102,8 @@ typedef struct zvol_platform_ops {
 } zvol_platform_ops_t;
 
 void zvol_register_ops(const zvol_platform_ops_t *ops);
+
+extern int zvol_init_os(void);
+extern void zvol_fini_os(void);
 
 #endif

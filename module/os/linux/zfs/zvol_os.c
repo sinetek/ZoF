@@ -1075,9 +1075,8 @@ zvol_init(void)
 }
 
 void
-zvol_fini(void)
+zvol_fini_os(void)
 {
-	zvol_remove_minors_impl(NULL);
 
 	zvol_fini_impl();
 	blk_unregister_region(MKDEV(zvol_major, 0), 1UL << MINORBITS);

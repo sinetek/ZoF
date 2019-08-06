@@ -35,6 +35,33 @@
 
 #define	ZVOL_EXCL	0x8
 
+#ifdef __linux__
+struct zvol_state_os {
+	struct gendisk		*zvo_disk;	/* generic disk */
+	struct request_queue	*zvo_queue;	/* request queue */
+	dataset_kstats_t	zvo_kstat;	/* zvol kstats */
+};
+#define zv_disk zv_zso.zvo_disk
+#define zv_queue zv_zso.zvo_queue
+#define zv_kstat zv_zso.zvo_kstat
+
+#endif
+#ifdef __FreeBSD__
+struct zvol_state_os {
+	struct g_provider *zvo_provider;	/* GEOM provider */
+	struct bio_queue_head zvo_queue;
+	int zvo_state;
+	int zvo_sync_cnt;
+	uint64_t zvo_volmode;
+
+};
+#define zv_provider zv_zso.zvo_provider
+#define zv_queue zv_zso.zvo_queue
+#define zv_state zv_zso.zvo_state
+#define zv_sync_cnt zv_zso.zvo_sync_cnt
+#define zv_volmode zv_zso.zvo_volmode
+#endif
+
 /*
  * The in-core state of each volume.
  */
@@ -103,7 +130,9 @@ typedef struct zvol_platform_ops {
 
 void zvol_register_ops(const zvol_platform_ops_t *ops);
 
-extern int zvol_init_os(void);
-extern void zvol_fini_os(void);
+extern int zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize);
+extern void zvol_os_clear_private(zvol_state_t *zv);
+extern int zvol_os_init(void);
+extern void zvol_os_fini(void);
 
 #endif

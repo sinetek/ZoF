@@ -1074,7 +1074,7 @@ zvol_init(void)
 }
 
 void
-zvol_fini_os(void)
+zvol_os_fini(void)
 {
 
 	zvol_fini_impl();

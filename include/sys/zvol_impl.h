@@ -65,6 +65,17 @@ hlist_del(struct hlist_node *n)
 	__var;				\
 })
 
+#define HLIST_HEAD_INIT { }
+#define HLIST_HEAD(name) struct hlist_head name = HLIST_HEAD_INIT
+#define INIT_HLIST_HEAD(head) (head)->first = NULL
+
+#define INIT_HLIST_NODE(node)					\
+	do {																\
+		(node)->next = NULL;											\
+		(node)->pprev = NULL;											\
+	} while (0)
+
+
 static inline int
 atomic_read(const atomic_t *v)
 {
@@ -146,7 +157,7 @@ extern zil_replay_func_t *zvol_replay_vector[TX_MAX_TYPE];
 
 extern unsigned int zvol_volmode;
 extern unsigned int zvol_inhibit_dev;
-
+extern unsigned int zvol_threads;
 /*
  * platform independent functions exported to platform code
  */
@@ -172,5 +183,8 @@ void zvol_rename_minor(zvol_state_t *zv, const char *newname);
 int zvol_setup_zv(zvol_state_t *zv);
 void zvol_free(void *arg);
 int zvol_create_minor_impl(const char *name);
+
+extern int zvol_init_os(void);
+extern void zvol_fini_os(void);
 
 #endif

@@ -140,7 +140,7 @@ SRCS+=	abd.c \
 	zfs_vnops.c \
 	zfs_znode.c \
 	zio_crypt.c \
-	zvol.c
+	zvol_os.c
 
 #unicode
 SRCS+=	uconv.c \
@@ -275,7 +275,8 @@ SRCS+=	aggsum.c \
 	zio_inject.c \
 	zle.c \
 	zrlock.c \
-	zthr.c
+	zthr.c \
+	zvol.c
 
 beforeinstall:
 .if ${MK_DEBUG_FILES} != "no"

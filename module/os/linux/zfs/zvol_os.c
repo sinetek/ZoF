@@ -686,7 +686,7 @@ static int zvol_revalidate_disk(struct gendisk *disk)
 }
 
 int
-zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize __unused)
+zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize)
 {
 
 	revalidate_disk(zv->zv_disk);

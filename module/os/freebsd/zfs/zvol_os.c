@@ -1169,26 +1169,41 @@ zvol_create_minor_impl(const char *name)
 {
 	zvol_state_t *zv;
 	objset_t *os;
+	dmu_object_info_t *doi;
 	struct g_provider *pp;
 	struct g_geom *gp;
-	uint64_t volmode;
+	uint64_t volsize;
+	uint64_t volmode, hash;
 	int error;
 
 	ZFS_LOG(1, "Creating ZVOL %s...", name);
 
-
-	if ((zv = zvol_find_by_name_hash(name, zvol_name_hash(name), RW_NONE)) != NULL) {
+	hash = zvol_name_hash(name);
+	if ((zv = zvol_find_by_name_hash(name, hash, RW_NONE)) != NULL) {
+		ASSERT(MUTEX_HELD(&zv->zv_state_lock));
 		mutex_exit(&zv->zv_state_lock);
 		return (SET_ERROR(EEXIST));
 	}
 
+	DROP_GIANT();
 	/* lie and say we're read-only */
 	error = dmu_objset_own(name, DMU_OST_ZVOL, B_TRUE, B_TRUE, FTAG, &os);
+	doi = kmem_alloc(sizeof (dmu_object_info_t), KM_SLEEP);
 
 	if (error)
-		return (error);
+		goto out_doi;
 
-	DROP_GIANT();
+	error = dmu_object_info(os, ZVOL_OBJ, doi);
+	if (error)
+		goto out_dmu_objset_disown;
+
+	error = zap_lookup(os, ZVOL_ZAP_OBJ, "size", 8, 1, &volsize);
+	if (error)
+		goto out_dmu_objset_disown;
+
+	/*
+	 * zvol_alloc equivalent ...
+	 */
 	zv = kmem_zalloc(sizeof (*zv), KM_SLEEP);
 	zv->zv_state = 0;
 	error = dsl_prop_get_integer(name,
@@ -1228,36 +1243,47 @@ zvol_create_minor_impl(const char *name)
 			mutex_destroy(&zv->zv_state_lock);
 			kmem_free(zv, sizeof (*zv));
 			dmu_objset_disown(os, 1, FTAG);
-			return (error);
+			goto out_dmu_objset_disown;
 		}
 		zv->zv_dev->si_iosize_max = MAXPHYS;
 	}
-
 	(void) strlcpy(zv->zv_name, name, MAXPATHLEN);
-	zv->zv_objset = os;
-	if (dmu_objset_is_snapshot(os) || !spa_writeable(dmu_objset_spa(os)))
-		zv->zv_flags |= ZVOL_RDONLY;
 	rw_init(&zv->zv_suspend_lock, NULL, RW_DEFAULT, NULL);
 	zfs_rangelock_init(&zv->zv_rangelock, NULL, NULL);
+
+	if (dmu_objset_is_snapshot(os) || !spa_writeable(dmu_objset_spa(os)))
+		zv->zv_flags |= ZVOL_RDONLY;
+
+	zv->zv_volblocksize = doi->doi_data_block_size;
+	zv->zv_volsize = volsize;
+	zv->zv_objset = os;
+
 	if (spa_writeable(dmu_objset_spa(os))) {
 		if (zil_replay_disable)
 			zil_destroy(dmu_objset_zil(os), B_FALSE);
 		else
 			zil_replay(os, zv, zvol_replay_vector);
 	}
-	dmu_objset_disown(os, 1, FTAG);
-	zv->zv_objset = NULL;
 
+	/* XXX do prefetch */
+
+	zv->zv_objset = NULL;
+ out_dmu_objset_disown:
+	dmu_objset_disown(os, 1, FTAG);
 
 	if (zv->zv_volmode == ZFS_VOLMODE_GEOM) {
-		zvol_geom_run(zv);
+		if (error == 0)
+			zvol_geom_run(zv);
 		g_topology_unlock();
 	}
-
-	rw_enter(&zvol_state_lock, RW_WRITER);
-	zvol_insert(zv);
-	zvol_minors++;
-	rw_exit(&zvol_state_lock);
+ out_doi:
+	kmem_free(doi, sizeof (dmu_object_info_t));
+	if (error == 0) {
+		rw_enter(&zvol_state_lock, RW_WRITER);
+		zvol_insert(zv);
+		zvol_minors++;
+		rw_exit(&zvol_state_lock);
+	}
 	PICKUP_GIANT();
 	ZFS_LOG(1, "ZVOL %s created.", name);
 	return (0);

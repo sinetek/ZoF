@@ -124,7 +124,11 @@ DECLARE_GEOM_CLASS(zfs_zvol_class, zfs_zvol);
 
 static uint32_t zvol_minors;
 
+#ifdef ZVOL_LOCK_DEBUG
+#define ZVOL_RW_READER RW_WRITER
+#else
 #define ZVOL_RW_READER RW_READER
+#endif
 
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, vol, CTLFLAG_RW, 0, "ZFS VOLUME");

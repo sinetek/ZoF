@@ -96,6 +96,10 @@ unsigned int zvol_inhibit_dev = 0;
 unsigned int zvol_volmode = ZFS_VOLMODE_GEOM;
 unsigned int zvol_threads = 32;
 
+#ifdef ZVOL_LOCK_DEBUG
+#undef RW_READ_HELD
+#define RW_READ_HELD(x) RW_WRITE_HELD(x)
+#endif
 
 #define	ZVOL_HT_SIZE	1024
 struct hlist_head *zvol_htable;

@@ -643,19 +643,48 @@ zvol_geom_start(struct bio *bp)
 
 	zv = bp->bio_to->private;
 	ASSERT(zv != NULL);
+	rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+	switch (bp->bio_cmd) {
+		case BIO_FLUSH:
+		case BIO_WRITE:
+		case BIO_DELETE:
+		/*
+		 * Open a ZIL if this is the first time we have written to this
+		 * zvol. We protect zv->zv_zilog with zv_suspend_lock rather
+		 * than zv_state_lock so that we don't need to acquire an
+		 * additional lock in this path.
+		 */
+		if (zv->zv_zilog == NULL) {
+			rw_exit(&zv->zv_suspend_lock);
+			rw_enter(&zv->zv_suspend_lock, RW_WRITER);
+			if (zv->zv_zilog == NULL) {
+				zv->zv_zilog = zil_open(zv->zv_objset,
+				    zvol_get_data);
+				zv->zv_flags |= ZVOL_WRITTEN_TO;
+			}
+			rw_downgrade(&zv->zv_suspend_lock);
+		}
+		default:
+			;
+	}
+
 	switch (bp->bio_cmd) {
 	case BIO_FLUSH:
 		if (!THREAD_CAN_SLEEP())
 			goto enqueue;
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 		g_io_deliver(bp, 0);
+		rw_exit(&zv->zv_suspend_lock);
 		break;
 	case BIO_READ:
 	case BIO_WRITE:
 	case BIO_DELETE:
-		if (!THREAD_CAN_SLEEP())
+		if (!THREAD_CAN_SLEEP()) {
+			rw_exit(&zv->zv_suspend_lock);
 			goto enqueue;
+		}
 		zvol_strategy(bp);
+		rw_exit(&zv->zv_suspend_lock);
 		break;
 	case BIO_GETATTR: {
 		spa_t *spa = dmu_objset_spa(zv->zv_objset);
@@ -737,29 +766,6 @@ zvol_geom_worker(void *arg)
 		 * rangelock_enter() below.
 		 */
 		rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
-		switch (bp->bio_cmd) {
-		case BIO_FLUSH:
-		case BIO_WRITE:
-		case BIO_DELETE:
-		/*
-		 * Open a ZIL if this is the first time we have written to this
-		 * zvol. We protect zv->zv_zilog with zv_suspend_lock rather
-		 * than zv_state_lock so that we don't need to acquire an
-		 * additional lock in this path.
-		 */
-		if (zv->zv_zilog == NULL) {
-			rw_exit(&zv->zv_suspend_lock);
-			rw_enter(&zv->zv_suspend_lock, RW_WRITER);
-			if (zv->zv_zilog == NULL) {
-				zv->zv_zilog = zil_open(zv->zv_objset,
-				    zvol_get_data);
-				zv->zv_flags |= ZVOL_WRITTEN_TO;
-			}
-			rw_downgrade(&zv->zv_suspend_lock);
-		}
-		default:
-			;
-		}
 		switch (bp->bio_cmd) {
 		case BIO_FLUSH:
 			zil_commit(zv->zv_zilog, ZVOL_OBJ);

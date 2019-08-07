@@ -674,47 +674,43 @@ zvol_geom_start(struct bio *bp)
 			goto enqueue;
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 		g_io_deliver(bp, 0);
-		rw_exit(&zv->zv_suspend_lock);
 		break;
 	case BIO_READ:
 	case BIO_WRITE:
 	case BIO_DELETE:
-		if (!THREAD_CAN_SLEEP()) {
-			rw_exit(&zv->zv_suspend_lock);
+		if (!THREAD_CAN_SLEEP())
 			goto enqueue;
-		}
 		zvol_strategy(bp);
-		rw_exit(&zv->zv_suspend_lock);
 		break;
 	case BIO_GETATTR: {
 		spa_t *spa = dmu_objset_spa(zv->zv_objset);
 		uint64_t refd, avail, usedobjs, availobjs;
 
 		if (g_handleattr_int(bp, "GEOM::candelete", 1))
-			return;
+			goto out;
 		if (strcmp(bp->bio_attribute, "blocksavail") == 0) {
 			dmu_objset_space(zv->zv_objset, &refd, &avail,
 			    &usedobjs, &availobjs);
 			if (g_handleattr_off_t(bp, "blocksavail",
 			    avail / DEV_BSIZE))
-				return;
+				goto out;
 		} else if (strcmp(bp->bio_attribute, "blocksused") == 0) {
 			dmu_objset_space(zv->zv_objset, &refd, &avail,
 			    &usedobjs, &availobjs);
 			if (g_handleattr_off_t(bp, "blocksused",
 			    refd / DEV_BSIZE))
-				return;
+				goto out;
 		} else if (strcmp(bp->bio_attribute, "poolblocksavail") == 0) {
 			avail = metaslab_class_get_space(spa_normal_class(spa));
 			avail -= metaslab_class_get_alloc(spa_normal_class(spa));
 			if (g_handleattr_off_t(bp, "poolblocksavail",
 			    avail / DEV_BSIZE))
-				return;
+				goto out;
 		} else if (strcmp(bp->bio_attribute, "poolblocksused") == 0) {
 			refd = metaslab_class_get_alloc(spa_normal_class(spa));
 			if (g_handleattr_off_t(bp, "poolblocksused",
 			    refd / DEV_BSIZE))
-				return;
+				goto out;
 		}
 		/* FALLTHROUGH */
 	}
@@ -722,9 +718,12 @@ zvol_geom_start(struct bio *bp)
 		g_io_deliver(bp, EOPNOTSUPP);
 		break;
 	}
+ out:
+	rw_exit(&zv->zv_suspend_lock);
 	return;
 
 enqueue:
+	rw_exit(&zv->zv_suspend_lock);
 	mutex_enter(&zv->zv_state_lock);
 	first = (bioq_first(&zv->zv_queue) == NULL);
 	bioq_insert_tail(&zv->zv_queue, bp);
@@ -745,13 +744,11 @@ zvol_geom_worker(void *arg)
 
 	zv = arg;
 	for (;;) {
-		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 		mutex_enter(&zv->zv_state_lock);
 		bp = bioq_takefirst(&zv->zv_queue);
 		if (bp == NULL) {
 			if (zv->zv_state == 1) {
 				zv->zv_state = 2;
-				ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 				wakeup(&zv->zv_state);
 				mutex_exit(&zv->zv_state_lock);
 				kthread_exit();
@@ -781,7 +778,6 @@ zvol_geom_worker(void *arg)
 			break;
 		}
 		rw_exit(&zv->zv_suspend_lock);
-		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
 }
 

@@ -790,11 +790,31 @@ zvol_d_open(struct cdev *dev, int flags, int fmt, struct thread *td)
 {
 	zvol_state_t *zv = dev->si_drv2;
 	int err = 0;
+	boolean_t drop_suspend = B_TRUE;
 
 	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	mutex_enter(&zv->zv_state_lock);
-	rw_exit(&zvol_state_lock);
+	/*
+	 * make sure zvol is not suspended during first open
+	 * (hold zv_suspend_lock) and respect proper lock acquisition
+	 * ordering - zv_suspend_lock before zv_state_lock
+	 */
+	if (zv->zv_open_count == 0) {
+		if (!rw_tryenter(&zv->zv_suspend_lock, ZVOL_RW_READER)) {
+			mutex_exit(&zv->zv_state_lock);
+			rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+			mutex_enter(&zv->zv_state_lock);
+			/* check to see if zv_suspend_lock is needed */
+			if (zv->zv_open_count != 0) {
+				rw_exit(&zv->zv_suspend_lock);
+				drop_suspend = B_FALSE;
+			}
+		}
+	} else {
+		drop_suspend = B_FALSE;
+	}
 
+	rw_exit(&zvol_state_lock);
 	if (zv->zv_open_count == 0)
 		err = zvol_first_open(zv, !(flags & FWRITE));
 
@@ -835,6 +855,8 @@ zvol_d_open(struct cdev *dev, int flags, int fmt, struct thread *td)
 
  out_locked:
 	mutex_exit(&zv->zv_state_lock);
+	if (drop_suspend)
+		rw_exit(&zv->zv_suspend_lock);
 	return SET_ERROR(err);
 }
 
@@ -842,10 +864,10 @@ static int
 zvol_d_close(struct cdev *dev, int flags, int fmt, struct thread *td)
 {
 	zvol_state_t *zv = dev->si_drv2;
+	boolean_t drop_suspend = B_TRUE;
 
 	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	mutex_enter(&zv->zv_state_lock);
-	rw_exit(&zvol_state_lock);
 	if (zv->zv_flags & ZVOL_EXCL) {
 		ASSERT(zv->zv_open_count == 1);
 		zv->zv_flags &= ~ZVOL_EXCL;
@@ -855,8 +877,27 @@ zvol_d_close(struct cdev *dev, int flags, int fmt, struct thread *td)
 	 * If the open count is zero, this is a spurious close.
 	 * That indicates a bug in the kernel / DDI framework.
 	 */
-	ASSERT(zv->zv_open_count != 0);
-
+	ASSERT(zv->zv_open_count > 0);
+	/*
+	 * make sure zvol is not suspended during last close
+	 * (hold zv_suspend_lock) and respect proper lock acquisition
+	 * ordering - zv_suspend_lock before zv_state_lock
+	 */
+	if (zv->zv_open_count == 1) {
+		if (!rw_tryenter(&zv->zv_suspend_lock, ZVOL_RW_READER)) {
+			mutex_exit(&zv->zv_state_lock);
+			rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+			mutex_enter(&zv->zv_state_lock);
+			/* check to see if zv_suspend_lock is needed */
+			if (zv->zv_open_count != 1) {
+				rw_exit(&zv->zv_suspend_lock);
+				drop_suspend = B_FALSE;
+			}
+		}
+	} else {
+		drop_suspend = B_FALSE;
+	}
+	rw_exit(&zvol_state_lock);
 	/*
 	 * You may get multiple opens, but only one close.
 	 */
@@ -867,6 +908,9 @@ zvol_d_close(struct cdev *dev, int flags, int fmt, struct thread *td)
 	if (zv->zv_open_count == 0)
 		zvol_last_close(zv);
 	mutex_exit(&zv->zv_state_lock);
+
+	if (drop_suspend)
+		rw_exit(&zv->zv_suspend_lock);
 
 	return (0);
 }

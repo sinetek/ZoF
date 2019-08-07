@@ -205,13 +205,13 @@ zvol_open(struct g_provider *pp, int flag, int count)
 		return (SET_ERROR(EOPNOTSUPP));
 	}
 
-	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	zv = pp->private;
 	if (zv == NULL) {
 		rw_exit(&zvol_state_lock);
 		return (SET_ERROR(ENXIO));
 	}
 
+	rw_enter(&zvol_state_lock, ZVOL_RW_READER);
 	mutex_enter(&zv->zv_state_lock);
 
 	/*
@@ -314,7 +314,7 @@ zvol_close(struct g_provider *pp, int flag, int count)
 	 * (hold zv_suspend_lock) and respect proper lock acquisition
 	 * ordering - zv_suspend_lock before zv_state_lock
 	 */
-	if (zv->zv_open_count == 1) {
+	if ((zv->zv_open_count - count) == 0) {
 		if (!rw_tryenter(&zv->zv_suspend_lock, ZVOL_RW_READER)) {
 			mutex_exit(&zv->zv_state_lock);
 			rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
@@ -1070,6 +1070,7 @@ zvol_rename_minor(zvol_state_t *zv, const char *newname)
 			if (zv->zv_open_count > 0) {
 				zv->zv_flags &= ~ZVOL_EXCL;
 				zv->zv_open_count = 0;
+				/* XXX  need suspend lock but lock order */
 				zvol_last_close(zv);
 			}
 		}

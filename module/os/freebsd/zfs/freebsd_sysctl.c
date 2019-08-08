@@ -95,9 +95,39 @@ extern arc_state_t ARC_l2c_only;
  */
 
 /* arc.c */
+
+/* legacy compat */
+extern unsigned long l2arc_write_max;	/* def max write size */
+extern unsigned long l2arc_write_boost;	/* extra warmup write */
+extern unsigned long l2arc_headroom;		/* # of dev writes */
+extern unsigned long l2arc_headroom_boost;
+extern unsigned long l2arc_feed_secs;	/* interval seconds */
+extern unsigned long l2arc_feed_min_ms;	/* min interval msecs */
+extern int l2arc_noprefetch;			/* don't cache prefetch bufs */
+extern int l2arc_feed_again;			/* turbo warmup */
+extern int l2arc_norw;			/* no reads during writes */
+
+SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_write_max, CTLFLAG_RW,
+    &l2arc_write_max, 0, "max write size (LEGACY)");
+SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_write_boost, CTLFLAG_RW,
+    &l2arc_write_boost, 0, "extra write during warmup (LEGACY)");
+SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_headroom, CTLFLAG_RW,
+    &l2arc_headroom, 0, "number of dev writes (LEGACY)");
+SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_feed_secs, CTLFLAG_RW,
+    &l2arc_feed_secs, 0, "interval seconds (LEGACY)");
+SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, l2arc_feed_min_ms, CTLFLAG_RW,
+    &l2arc_feed_min_ms, 0, "min interval milliseconds (LEGACY)");
+
+SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_noprefetch, CTLFLAG_RW,
+    &l2arc_noprefetch, 0, "don't cache prefetch bufs (LEGACY)");
+SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_feed_again, CTLFLAG_RW,
+    &l2arc_feed_again, 0, "turbo warmup (LEGACY)");
+SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_norw, CTLFLAG_RW,
+    &l2arc_norw, 0, "no reads during writes (LEGACY)");
 extern int zfs_arc_compression_enabled;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, compressed_arc_enabled, CTLFLAG_RWTUN,
-    &zfs_arc_compression_enabled, 0, "Enable compressed arc buffers");
+SYSCTL_INT(_vfs_zfs, OID_AUTO, compressed_arc_enabled, CTLFLAG_RW,
+    &zfs_arc_compression_enabled, 1, "compressed arc buffers (LEGACY)");
+
 
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,
@@ -203,6 +233,12 @@ SYSCTL_UINT(_vfs_zfs, OID_AUTO, send_holes_without_birth_time, CTLFLAG_RWTUN,
 
 
 /* dmu_zfetch.c */
+SYSCTL_NODE(_vfs_zfs, OID_AUTO, zfetch, CTLFLAG_RW, 0, "ZFS ZFETCH");
+
+/* max bytes to prefetch per stream (default 8MB) */
+extern uint32_t	zfetch_max_distance;
+SYSCTL_UINT(_vfs_zfs_zfetch, OID_AUTO, max_distance, CTLFLAG_RWTUN,
+    &zfetch_max_distance, 0, "Max bytes to prefetch per stream (LEGACY)");
 
 /* max bytes to prefetch indirects for per stream (default 64MB) */
 extern uint32_t	zfetch_max_idistance;
@@ -235,6 +271,15 @@ SYSCTL_UINT(_vfs_zfs, OID_AUTO, scan_idle, CTLFLAG_RWTUN,
     &zfs_scan_idle, 0, "Idle scan window in clock ticks");
 
 /* metaslab.c */
+
+/*
+ * Enable/disable lba weighting (i.e. outer tracks are given preference).
+ */
+extern boolean_t metaslab_lba_weighting_enabled;
+SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, lba_weighting, CTLFLAG_RWTUN,
+    &metaslab_lba_weighting_enabled, 0,
+    "Enable LBA weighting (i.e. outer tracks are given preference)");
+
 
 /*
  * In pools where the log space map feature is not enabled we touch
@@ -542,6 +587,11 @@ SYSCTL_UINT(_vfs_zfs_vdev, OID_AUTO, name ## _max_active, CTLFLAG_RWTUN, \
 
 
 #undef ZFS_VDEV_QUEUE_KNOB
+
+extern uint32_t zfs_vdev_max_active;
+SYSCTL_UINT(_vfs_zfs, OID_AUTO, top_maxinflight, CTLFLAG_RWTUN,
+    &zfs_vdev_max_active, 0,
+    "The maximum number of I/Os of all types active for each device. (LEGACY)");
 
 extern int zfs_vdev_def_queue_depth;
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, def_queue_depth, CTLFLAG_RWTUN,

@@ -138,6 +138,89 @@ typedef	void zfs_kernel_param_t;
 #define	MUTEX_NOLOCKDEP 0
 #define	RW_NOLOCKDEP 0
 
+
+struct hlist_node {
+        struct hlist_node *next, **pprev;
+};
+
+struct hlist_head {
+        struct hlist_node *first;
+};
+
+typedef struct {
+        volatile int counter;
+} atomic_t;
+
+
+#define hlist_for_each(p, head)                                         \
+        for (p = (head)->first; p; p = (p)->next)
+
+#define hlist_entry(ptr, type, field)   container_of(ptr, type, field)
+
+#define container_of(ptr, type, member)                         \
+({                                                              \
+        const __typeof(((type *)0)->member) *__p = (ptr);       \
+        (type *)((uintptr_t)__p - offsetof(type, member));      \
+})
+
+static inline void
+hlist_add_head(struct hlist_node *n, struct hlist_head *h)
+{
+
+        n->next = h->first;
+        if (h->first != NULL)
+                h->first->pprev = &n->next;
+        WRITE_ONCE(h->first, n);
+        n->pprev = &h->first;
+}
+
+static inline void
+hlist_del(struct hlist_node *n)
+{
+
+        WRITE_ONCE(*(n->pprev), n->next);
+        if (n->next != NULL)
+                n->next->pprev = n->pprev;
+}
+
+#define	READ_ONCE(x) ({			\
+	__typeof(x) __var = ({		\
+		barrier();		\
+		ACCESS_ONCE(x);		\
+	});				\
+	barrier();			\
+	__var;				\
+})
+
+#define HLIST_HEAD_INIT { }
+#define HLIST_HEAD(name) struct hlist_head name = HLIST_HEAD_INIT
+#define INIT_HLIST_HEAD(head) (head)->first = NULL
+
+#define INIT_HLIST_NODE(node)					\
+	do {																\
+		(node)->next = NULL;											\
+		(node)->pprev = NULL;											\
+	} while (0)
+
+
+static inline int
+atomic_read(const atomic_t *v)
+{
+	return READ_ONCE(v->counter);
+}
+
+static inline int
+atomic_inc(atomic_t *v)
+{
+	return atomic_fetchadd_int(&v->counter, 1) + 1;
+}
+
+static inline int
+atomic_dec(atomic_t *v)
+{
+	return atomic_fetchadd_int(&v->counter, -1) - 1;
+}
+	
 #else
 typedef long loff_t;
 typedef long rlim64_t;	

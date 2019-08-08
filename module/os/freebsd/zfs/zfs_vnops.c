@@ -2186,7 +2186,7 @@ zfs_mkdir(vnode_t *dvp, char *dirname, vattr_t *vap, vnode_t **vpp, cred_t *cr,
  */
 /*ARGSUSED*/
 static int
-zfs_rmdir_(vnode_t *dvp, vnode_t *vp, char *name, cred_t *cr, int log)
+zfs_rmdir_(vnode_t *dvp, vnode_t *vp, char *name, cred_t *cr)
 {
 	znode_t		*dzp = VTOZ(dvp);
 	znode_t		*zp = VTOZ(vp);
@@ -2239,7 +2239,7 @@ zfs_rmdir_(vnode_t *dvp, vnode_t *vp, char *name, cred_t *cr, int log)
 
 	cache_purge(vp);
 out:
-	if (log && zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+	if (zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
 		zil_commit(zilog, 0);
 
 	ZFS_EXIT(zfsvfs);
@@ -2263,7 +2263,7 @@ zfs_rmdir(vnode_t *dvp, char *name, vnode_t *cwd, cred_t *cr, int flags)
 	if ((error = VOP_LOOKUP(dvp, &vp, &cn)))
 		return (error);
 
-	error = zfs_rmdir_(dvp, vp, name, cr, 0);
+	error = zfs_rmdir_(dvp, vp, name, cr);
 	vput(vp);
 	return (error);
 }
@@ -3946,7 +3946,7 @@ unlockout:			/* all 4 vnodes are locked, ZFS_ENTER called */
 	VOP_UNLOCK(sdvp, 0);
 
 out:				/* original two vnodes are locked */
-	if (log && error == 0 && zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+	if (error == 0 && zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
 		zil_commit(zilog, 0);
 
 	if (*tvpp != NULL)
@@ -5163,7 +5163,7 @@ zfs_freebsd_rmdir(ap)
 
 	ASSERT(cnp->cn_flags & SAVENAME);
 
-	return (zfs_rmdir_(ap->a_dvp, ap->a_vp, cnp->cn_nameptr, cnp->cn_cred, 1));
+	return (zfs_rmdir_(ap->a_dvp, ap->a_vp, cnp->cn_nameptr, cnp->cn_cred));
 }
 
 static int

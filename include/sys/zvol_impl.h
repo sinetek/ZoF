@@ -4,90 +4,9 @@
 #include <sys/zfs_context.h>
 
 #ifndef __linux__
-struct hlist_head {
-        struct hlist_node *first;
-};
-
-struct hlist_node {
-        struct hlist_node *next, **pprev;
-};
-
-typedef struct {
-        volatile int counter;
-} atomic_t;
-
 #include <sys/bio.h>
 
 typedef struct cdev *platform_dev_t;
-
-#define hlist_for_each(p, head)                                         \
-        for (p = (head)->first; p; p = (p)->next)
-
-#define hlist_entry(ptr, type, field)   container_of(ptr, type, field)
-
-#define container_of(ptr, type, member)                         \
-({                                                              \
-        const __typeof(((type *)0)->member) *__p = (ptr);       \
-        (type *)((uintptr_t)__p - offsetof(type, member));      \
-})
-
-static inline void
-hlist_add_head(struct hlist_node *n, struct hlist_head *h)
-{
-
-        n->next = h->first;
-        if (h->first != NULL)
-                h->first->pprev = &n->next;
-        WRITE_ONCE(h->first, n);
-        n->pprev = &h->first;
-}
-
-static inline void
-hlist_del(struct hlist_node *n)
-{
-
-        WRITE_ONCE(*(n->pprev), n->next);
-        if (n->next != NULL)
-                n->next->pprev = n->pprev;
-}
-
-#define	READ_ONCE(x) ({			\
-	__typeof(x) __var = ({		\
-		barrier();		\
-		ACCESS_ONCE(x);		\
-	});				\
-	barrier();			\
-	__var;				\
-})
-
-#define HLIST_HEAD_INIT { }
-#define HLIST_HEAD(name) struct hlist_head name = HLIST_HEAD_INIT
-#define INIT_HLIST_HEAD(head) (head)->first = NULL
-
-#define INIT_HLIST_NODE(node)					\
-	do {																\
-		(node)->next = NULL;											\
-		(node)->pprev = NULL;											\
-	} while (0)
-
-
-static inline int
-atomic_read(const atomic_t *v)
-{
-	return READ_ONCE(v->counter);
-}
-
-static inline int
-atomic_inc(atomic_t *v)
-{
-	return atomic_fetchadd_int(&v->counter, 1) + 1;
-}
-
-static inline int
-atomic_dec(atomic_t *v)
-{
-	return atomic_fetchadd_int(&v->counter, -1) - 1;
-}
 
 #else
 typedef dev_t platform_dev_t;
@@ -111,9 +30,9 @@ struct zvol_state_os {
 	struct request_queue	*zvo_queue;	/* request queue */
 	dataset_kstats_t	zvo_kstat;	/* zvol kstats */
 };
-#define zv_disk zv_zso.zvo_disk
-#define zv_queue zv_zso.zvo_queue
-#define zv_kstat zv_zso.zvo_kstat
+#define	zv_disk zv_zso.zvo_disk
+#define	zv_queue zv_zso.zvo_queue
+#define	zv_kstat zv_zso.zvo_kstat
 
 #endif
 #ifdef __FreeBSD__
@@ -125,11 +44,11 @@ struct zvol_state_os {
 	uint64_t zvo_volmode;
 
 };
-#define zv_provider zv_zso.zvo_provider
-#define zv_queue zv_zso.zvo_queue
-#define zv_state zv_zso.zvo_state
-#define zv_sync_cnt zv_zso.zvo_sync_cnt
-#define zv_volmode zv_zso.zvo_volmode
+#define	zv_provider zv_zso.zvo_provider
+#define	zv_queue zv_zso.zvo_queue
+#define	zv_state zv_zso.zvo_state
+#define	zv_sync_cnt zv_zso.zvo_sync_cnt
+#define	zv_volmode zv_zso.zvo_volmode
 #endif
 
 /*
@@ -179,12 +98,12 @@ void zvol_remove_minors_impl(const char *name);
 void zvol_last_close(zvol_state_t *zv);
 zvol_state_t *zvol_find_by_dev(platform_dev_t dev);
 void zvol_insert(zvol_state_t *zv);
-void zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off, uint64_t len,
-    boolean_t sync);
+void zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off,
+    uint64_t len, boolean_t sync);
 void zvol_log_write(zvol_state_t *zv, dmu_tx_t *tx, uint64_t offset,
     uint64_t size, int sync);
-int zvol_get_data(void *arg, lr_write_t *lr, char *buf, struct lwb *lwb, zio_t *zio);
-
+int zvol_get_data(void *arg, lr_write_t *lr, char *buf, struct lwb *lwb,
+    zio_t *zio);
 /*
  * platform dependent functions exported to platform independent code
  */
@@ -198,5 +117,6 @@ extern int zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize);
 extern void zvol_os_clear_private(zvol_state_t *zv);
 extern int zvol_os_init(void);
 extern void zvol_os_fini(void);
+#define	ZVOL_LOCK_DEBUG
 
 #endif

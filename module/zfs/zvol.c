@@ -98,7 +98,7 @@ unsigned int zvol_threads = 32;
 
 #ifdef ZVOL_LOCK_DEBUG
 #undef RW_READ_HELD
-#define RW_READ_HELD(x) RW_WRITE_HELD(x)
+#define	RW_READ_HELD(x) RW_WRITE_HELD(x)
 #endif
 
 #define	ZVOL_HT_SIZE	1024
@@ -1706,7 +1706,7 @@ zvol_init(void)
 	zvol_taskq = taskq_create(ZVOL_DRIVER, threads, maxclsyspri,
 	    threads * 2, INT_MAX, TASKQ_PREPOPULATE | TASKQ_DYNAMIC);
 	if (zvol_taskq == NULL) {
-		//printk(KERN_INFO "ZFS: taskq_create() failed\n");
+		// printk(KERN_INFO "ZFS: taskq_create() failed\n");
 		error = -ENOMEM;
 		goto out;
 	}

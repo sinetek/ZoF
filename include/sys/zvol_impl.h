@@ -41,9 +41,9 @@ struct zvol_state_os {
 	struct request_queue	*zvo_queue;	/* request queue */
 	dataset_kstats_t	zvo_kstat;	/* zvol kstats */
 };
-#define zv_disk zv_zso.zvo_disk
-#define zv_queue zv_zso.zvo_queue
-#define zv_kstat zv_zso.zvo_kstat
+#define	zv_disk zv_zso.zvo_disk
+#define	zv_queue zv_zso.zvo_queue
+#define	zv_kstat zv_zso.zvo_kstat
 
 #endif
 #ifdef __FreeBSD__
@@ -55,11 +55,11 @@ struct zvol_state_os {
 	uint64_t zvo_volmode;
 
 };
-#define zv_provider zv_zso.zvo_provider
-#define zv_queue zv_zso.zvo_queue
-#define zv_state zv_zso.zvo_state
-#define zv_sync_cnt zv_zso.zvo_sync_cnt
-#define zv_volmode zv_zso.zvo_volmode
+#define	zv_provider zv_zso.zvo_provider
+#define	zv_queue zv_zso.zvo_queue
+#define	zv_state zv_zso.zvo_state
+#define	zv_sync_cnt zv_zso.zvo_sync_cnt
+#define	zv_volmode zv_zso.zvo_volmode
 #endif
 
 /*
@@ -134,5 +134,6 @@ extern int zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize);
 extern void zvol_os_clear_private(zvol_state_t *zv);
 extern int zvol_os_init(void);
 extern void zvol_os_fini(void);
+#define	ZVOL_LOCK_DEBUG
 
 #endif

@@ -1374,13 +1374,13 @@ ZFS_MODULE_PARAM(zfs, zfs_, delay_scale, UQUAD, ZMOD_RW,
 ZFS_MODULE_PARAM(zfs, zfs_, sync_taskq_batch_pct, UINT, ZMOD_RW,
 	"max percent of CPUs that are used to sync dirty data");
 
-ZFS_MODULE_PARAM(zfs, zfs_, zil_clean_taskq_nthr_pct, UINT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_zil, zfs_zil_, clean_taskq_nthr_pct, UINT, ZMOD_RW,
 	"max percent of CPUs that are used per dp_sync_taskq");
 
-ZFS_MODULE_PARAM(zfs, zfs_, zil_clean_taskq_minalloc, UINT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_zil, zfs_zil_, clean_taskq_minalloc, UINT, ZMOD_RW,
 	"number of taskq entries that are pre-populated");
 
-ZFS_MODULE_PARAM(zfs, zfs_, zil_clean_taskq_maxalloc, UINT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs_zil, zfs_zil_, clean_taskq_maxalloc, UINT, ZMOD_RW,
 	"max number of taskq entries that are cached");
 
 /* END CSTYLED */

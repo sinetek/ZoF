@@ -4893,9 +4893,7 @@ dsl_dataset_activate_redaction(dsl_dataset_t *ds, uint64_t *redact_snaps,
 ZFS_MODULE_PARAM(zfs, zfs_, max_recordsize, UINT, RECORDSIZE_PERM,
 	"Max allowed record size");
 
-
-module_param(zfs_allow_redacted_dataset_mount, int, 0644);
-MODULE_PARM_DESC(zfs_allow_redacted_dataset_mount,
+ZFS_MODULE_PARAM(zfs, zfs_, allow_redacted_dataset_mount, UINT, ZMOD_RW,
 	"Allow mounting of redacted datasets");
 
 EXPORT_SYMBOL(dsl_dataset_hold);

@@ -9325,6 +9325,7 @@ module_param(spa_load_verify_shift, int, 0644);
 MODULE_PARM_DESC(spa_load_verify_shift, "log2(fraction of arc that can "
 	"be used by inflight I/Os when verifying pool during import");
 #endif
+
 ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_maxinflight, UINT, ZMOD_RW,
 	"Max concurrent traversal I/Os while verifying pool during import -X");
 
@@ -9337,33 +9338,27 @@ ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_data, UINT, ZMOD_RW,
 ZFS_MODULE_PARAM(zfs_spa, spa_, load_print_vdev_tree, UINT, ZMOD_RW,
 	"Print vdev tree to zfs_dbgmsg during pool import");
 
-/* CSTYLED */
 ZFS_MODULE_PARAM(zfs_zio, zio_, taskq_batch_pct, UINT, ZMOD_RW,
 	"Percentage of CPUs to run an IO worker thread");
 
-/* BEGIN CSTYLED */
 ZFS_MODULE_PARAM(zfs, zfs_, max_missing_tvds, UQUAD, ZMOD_RW,
 	"Allow importing pool with up to this number of missing top-level vdevs"
 	" (in read-only mode)");
-/* END CSTYLED */
 
-module_param(zfs_livelist_condense_zthr_pause, int, 0644);
-MODULE_PARM_DESC(zfs_livelist_condense_zthr_pause,
+ZFS_MODULE_PARAM(zfs_livelist_condense, zfs_livelist_condense_, zthr_pause, UINT, ZMOD_RW,
 	"Set the livelist condense zthr to pause");
-module_param(zfs_livelist_condense_sync_pause, int, 0644);
-MODULE_PARM_DESC(zfs_livelist_condense_sync_pause,
+
+ZFS_MODULE_PARAM(zfs_livelist_condense, zfs_livelist_condense_, sync_pause, UINT, ZMOD_RW,
 	"Set the livelist condense synctask to pause");
 
-module_param(zfs_livelist_condense_sync_cancel, int, 0644);
-MODULE_PARM_DESC(zfs_livelist_condense_sync_cancel,
+ZFS_MODULE_PARAM(zfs_livelist_condense, zfs_livelist_condense_, sync_cancel, UINT, ZMOD_RW,
 	"Whether livelist condensing was canceled in the synctask");
-module_param(zfs_livelist_condense_zthr_cancel, int, 0644);
-MODULE_PARM_DESC(zfs_livelist_condense_zthr_cancel,
+
+
+ZFS_MODULE_PARAM(zfs_livelist_condense, zfs_livelist_condense_, zthr_cancel, UINT, ZMOD_RW,
 	"Whether livelist condensing was canceled in the zthr function");
 
-/* BEGIN CSTYLED */
-module_param(zfs_livelist_condense_new_alloc, int, 0644);
-MODULE_PARM_DESC(zfs_livelist_condense_new_alloc,
+ZFS_MODULE_PARAM(zfs_livelist_condense, zfs_livelist_condense_, new_alloc, UINT, ZMOD_RW,
 	"Whether extra ALLOC blkptrs were added to a livelist entry while it"
 	" was being condensed");
 /* END CSTYLED */

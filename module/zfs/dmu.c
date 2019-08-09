@@ -2522,8 +2522,7 @@ ZFS_MODULE_PARAM(zfs, zfs_, per_txg_dirty_frees_percent, UQUAD, ZMOD_RW,
 ZFS_MODULE_PARAM(zfs, zfs_, dmu_offset_next_sync, UINT, ZMOD_RW,
 	"Enable forcing txg sync to find holes");
 
-module_param(dmu_prefetch_max, int, 0644);
-MODULE_PARM_DESC(dmu_prefetch_max,
+ZFS_MODULE_PARAM(zfs, , dmu_prefetch_max, UINT, ZMOD_RW,
 	"Limit one prefetch call to this size");
 
 /* END CSTYLED */

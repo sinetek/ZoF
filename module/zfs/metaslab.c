@@ -5921,16 +5921,13 @@ ZFS_MODULE_PARAM(zfs_metaslab, zfs_metaslab_, switch_threshold, UINT, ZMOD_RW,
 ZFS_MODULE_PARAM(zfs_metaslab, metaslab_, force_ganging, UQUAD, ZMOD_RW,
 	"blocks larger than this size are forced to be gang blocks");
 
-module_param(metaslab_df_max_search, int, 0644);
-MODULE_PARM_DESC(metaslab_df_max_search,
+ZFS_MODULE_PARAM(zfs_metaslab, metaslab_, df_max_search, UINT, ZMOD_RW,
 	"max distance (bytes) to search forward before using size tree");
 
-module_param(metaslab_df_use_largest_segment, int, 0644);
-MODULE_PARM_DESC(metaslab_df_use_largest_segment,
+ZFS_MODULE_PARAM(zfs_metaslab, metaslab_, df_use_largest_segment, UINT, ZMOD_RW,
 	"when looking in size tree, use largest segment instead of exact fit");
 
-module_param(zfs_metaslab_max_size_cache_sec, ulong, 0644);
-MODULE_PARM_DESC(zfs_metaslab_max_size_cache_sec,
+ZFS_MODULE_PARAM(zfs_metaslab, zfs_metaslab_, max_size_cache_sec, UQUAD, ZMOD_RW,
 	"how long to trust the cached max chunk size of a metaslab");
 
 module_param(zfs_metaslab_mem_limit, int, 0644);

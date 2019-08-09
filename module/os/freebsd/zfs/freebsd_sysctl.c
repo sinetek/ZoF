@@ -287,7 +287,7 @@ SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, lba_weighting, CTLFLAG_RWTUN,
  * is 8~16K.
  */
 extern int zfs_metaslab_sm_blksz_no_log;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, metaslab_sm_blksz_no_log, CTLFLAG_RDTUN,
+SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, sm_blksz_no_log, CTLFLAG_RDTUN,
     &zfs_metaslab_sm_blksz_no_log, 0,
     "Block size for space map in pools with log space map disabled.  "
     "Power of 2 and greater than 4096.");
@@ -298,7 +298,7 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, metaslab_sm_blksz_no_log, CTLFLAG_RDTUN,
  * from a bigger block size like 128K for the metaslab space maps.
  */
 extern int zfs_metaslab_sm_blksz_with_log;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, metaslab_sm_blksz_with_log, CTLFLAG_RDTUN,
+SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, sm_blksz_with_log, CTLFLAG_RDTUN,
     &zfs_metaslab_sm_blksz_with_log, 0,
     "Block size for space map in pools with log space map enabled.  "
     "Power of 2 and greater than 4096.");
@@ -396,13 +396,6 @@ extern uint64_t zfs_max_missing_tvds_scan;
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, max_missing_tvds_scan, CTLFLAG_RWTUN,
     &zfs_max_missing_tvds_scan, 0,
     "allow importing pools with missing top-level vdevs during scan");
-
-
-/* zfs_namecheck.c */
-extern int zfs_max_dataset_nesting;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, zfs_max_dataset_nesting, CTLFLAG_RWTUN,
-	&zfs_max_dataset_nesting, 0,
-	"Limit to the amount of nesting a path can have. Defaults to 50.");
 
 /* spa_misc.c */
 extern int zfs_flags;

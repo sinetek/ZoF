@@ -97,7 +97,7 @@ function is_physical_device #device
 		[[ -f /sys/module/loop/parameters/max_part ]]
 		return $?
 	elif is_freebsd; then
-		echo $device | grep -q -e '^ada[0-9]*$' -e '^da[0-9]*$' > /dev/null 2>&1
+		echo $device | grep -q -e '^a?da[0-9]*$' -e '^md[0-9]*$' > /dev/null 2>&1
 		return $?
 	else
 		echo $device | egrep "^c[0-F]+([td][0-F]+)+$" > /dev/null 2>&1
@@ -194,6 +194,9 @@ function set_slice_prefix
 			fi
 			(( i = i + 1))
 		done
+	elif is_freebsd; then
+		export SLICE_PREFIX="p"
+		return 0
 	fi
 }
 

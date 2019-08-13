@@ -3754,6 +3754,24 @@ function mdb_ctf_set_int
 }
 
 #
+# Compute MD5 digest for given file or stdin if no file given.
+# Note: file path must not contain spaces
+#
+function md5digest
+{
+	typeset file=$1
+
+	case "$(uname)" in
+	FreeBSD)
+		md5 -q $file
+		;;
+	*)
+		md5sum $file | awk '{ print $1 }'
+		;;
+	esac
+}
+
+#
 # Compute SHA256 digest for given file or stdin if no file given.
 # Note: file path must not contain spaces
 #

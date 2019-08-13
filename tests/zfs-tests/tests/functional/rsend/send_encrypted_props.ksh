@@ -196,6 +196,7 @@ if is_freebsd; then
 else
 	recv_cksum=$(md5digest /$ds/$TESTFILE0)
 fi
+
 log_must test "$recv_cksum" == "$cksum"
 log_must zfs destroy -r $ds
 
@@ -209,7 +210,6 @@ log_must test "$(get_prop 'encryptionroot' $ds)" == "$TESTPOOL/crypt"
 log_must test "$(get_prop 'encryption' $ds)" == "aes-256-ccm"
 log_must test "$(get_prop 'keyformat' $ds)" == "passphrase"
 log_must test "$(get_prop 'mounted' $ds)" == "yes"
-
 if is_freebsd; then
 	recv_cksum=$(md5 /$ds/$TESTFILE0 | awk '{ print $1 }')
 else

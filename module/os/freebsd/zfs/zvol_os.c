@@ -1321,16 +1321,13 @@ zvol_os_clear_private(zvol_state_t *zv)
 	struct g_provider *pp;
 
 	ASSERT(RW_LOCK_HELD(&zvol_state_lock));
-	printf("%s %p \n", __func__, zv->zv_provider);
 	if (zv->zv_provider) {
 		zv->zv_state = 1;
 		pp = zv->zv_provider;
 		pp->private = NULL;
 		wakeup_one(&zv->zv_queue);
-		printf("signalling GEOM thread to exit\n");
 		while (zv->zv_state != 2)
 			msleep(&zv->zv_state, &zv->zv_state_lock, 0, "zvol:w", 0);
-		printf("asserting lock not held\n");
 		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
 }

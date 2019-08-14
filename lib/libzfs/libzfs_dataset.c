@@ -3952,6 +3952,10 @@ zfs_destroy(zfs_handle_t *zhp, boolean_t defer)
 		fnvlist_free(nv);
 	} else {
 		error = lzc_destroy(zhp->zfs_name);
+		if (error == EEXIST) {
+			sleep(1);
+			error = lzc_destroy(zhp->zfs_name);
+		}
 	}
 
 	if (error != 0 && error != ENOENT) {

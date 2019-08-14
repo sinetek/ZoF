@@ -3419,7 +3419,7 @@ zfs_ioc_clone(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		spa_t *spa;
 
 		if (spa_open(fsname, &spa, FTAG) == 0) {
-			zvol_create_minors(spa, fsname, B_TRUE);
+			zvol_create_minors(spa, fsname, B_FALSE);
 			spa_close(spa, FTAG);
 		}
 	}

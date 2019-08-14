@@ -1132,6 +1132,12 @@ zpool_find_import_impl(libpc_handle_t *hdl, importargs_t *iarg)
 						s->rn_dfd = dfd;
 						s->rn_hdl = hdl;
 						s->rn_nozpool = B_FALSE;
+						if (avl_find(&slice_cache, s, NULL) != NULL) {
+							printf("%s already exists in the slice cache\n", pp->lg_name);
+							free(s->rn_name);
+							free(s);
+							continue;
+						}
 						avl_add(&slice_cache, s);
 					}
 				}

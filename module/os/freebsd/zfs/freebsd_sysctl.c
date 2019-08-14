@@ -229,12 +229,6 @@ extern int zfs_mdcomp_disable;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, mdcomp_disable, CTLFLAG_RWTUN,
     &zfs_mdcomp_disable, 0, "Disable metadata compression");
 
-/* dmu_traverse.c */
-extern boolean_t send_holes_without_birth_time;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, send_holes_without_birth_time, CTLFLAG_RWTUN,
-    &send_holes_without_birth_time, 0, "Send holes without birth time");
-
-
 /* dmu_zfetch.c */
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, zfetch, CTLFLAG_RW, 0, "ZFS ZFETCH");
 
@@ -404,10 +398,6 @@ SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, max_missing_tvds_scan, CTLFLAG_RWTUN,
     "allow importing pools with missing top-level vdevs during scan");
 
 /* spa_misc.c */
-extern boolean_t zfs_recover;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, recover, CTLFLAG_RWTUN, &zfs_recover, 0,
-    "Try to recover from otherwise-fatal errors.");
-
 extern int zfs_flags;
 static int
 sysctl_vfs_zfs_debug_flags(SYSCTL_HANDLER_ARGS)

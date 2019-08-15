@@ -823,7 +823,7 @@ zfs_mount(zfs_handle_t *zhp, const char *options, int flags)
 #endif
 
 #ifdef __FreeBSD__
-#define do_unmount unmount
+#define	do_unmount unmount
 #endif
 
 /*

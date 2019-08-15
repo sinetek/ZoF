@@ -2924,10 +2924,10 @@ dmu_send_estimate_fast(dsl_dataset_t *ds, dsl_dataset_t *fromds,
 
 #if defined(_KERNEL)
 ZFS_MODULE_PARAM(zfs_send, zfs_send_, corrupt_data, UINT, ZMOD_RW,
-    "Allow sending corrupt data");
+	"Allow sending corrupt data");
 
 ZFS_MODULE_PARAM(zfs_send, zfs_send_, queue_length, UINT, ZMOD_RW,
-    "Maximum send queue length");
+	"Maximum send queue length");
 
 ZFS_MODULE_PARAM(zfs_send, zfs_send_, unmodified_spill_blocks, UINT, ZMOD_RW,
 	"Send unmodified spill blocks");
@@ -2936,7 +2936,7 @@ ZFS_MODULE_PARAM(zfs_send, zfs_send_, no_prefetch_queue_length, UINT, ZMOD_RW,
 	"Maximum send queue length for non-prefetch queues");
 
 ZFS_MODULE_PARAM(zfs_send, zfs_send_, queue_ff, UINT, ZMOD_RW,
-    "Send queue fill fraction");
+	"Send queue fill fraction");
 
 ZFS_MODULE_PARAM(zfs_send, zfs_send_, no_prefetch_queue_ff, UINT, ZMOD_RW,
 	"Send queue fill fraction for non-prefetch queues");

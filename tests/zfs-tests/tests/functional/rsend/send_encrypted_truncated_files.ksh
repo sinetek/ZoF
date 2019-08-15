@@ -104,10 +104,16 @@ log_must rm -f /$TESTPOOL/$TESTFS2/truncated4
 log_must zpool sync $TESTPOOL
 log_must zfs umount $TESTPOOL/$TESTFS2
 log_must zfs mount $TESTPOOL/$TESTFS2
+if is_linux; then
+	# Extra protection against short reads from urandom
+	typeset fullblock="iflag=fullblock"
+else
+	typeset fullblock=""
+fi
 log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS2/truncated3 \
-	bs=128k count=3 iflag=fullblock
+	bs=128k count=3 $fullblock
 log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS2/truncated4 \
-	bs=512 count=1 iflag=fullblock
+	bs=512 count=1 $fullblock
 
 log_must zfs snapshot $TESTPOOL/$TESTFS2@snap2
 expected_cksum=$(recursive_cksum /$TESTPOOL/$TESTFS2)

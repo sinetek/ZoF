@@ -669,8 +669,10 @@ zfs_mount(zfs_handle_t *zhp, const char *options, int flags)
 }
 #endif
 
+#ifdef __FreeBSD__
+#define do_unmount unmount
+#endif
 
-#ifdef __linux__
 /*
  * Unmount a single filesystem.
  */
@@ -758,67 +760,7 @@ zfs_unmount(zfs_handle_t *zhp, const char *mountpoint, int flags)
 
 	return (0);
 }
-#else
 
-/*
- * Unmount a single filesystem.
- */
-static int
-unmount_one(libzfs_handle_t *hdl, const char *mountpoint, int flags)
-{
-	if (unmount(mountpoint, flags) != 0) {
-		zfs_error_aux(hdl, strerror(errno));
-		return (zfs_error_fmt(hdl, EZFS_UMOUNTFAILED,
-		    dgettext(TEXT_DOMAIN, "cannot unmount '%s'"),
-		    mountpoint));
-	}
-
-	return (0);
-}
-
-/*
- * Unmount the given filesystem.
- */
-int
-zfs_unmount(zfs_handle_t *zhp, const char *mountpoint, int flags)
-{
-	libzfs_handle_t *hdl = zhp->zfs_hdl;
-	struct mnttab entry;
-	char *mntpt = NULL;
-
-	/* check to see if we need to unmount the filesystem */
-	if (mountpoint != NULL || ((zfs_get_type(zhp) == ZFS_TYPE_FILESYSTEM) &&
-	    libzfs_mnttab_find(hdl, zhp->zfs_name, &entry) == 0)) {
-		/*
-		 * mountpoint may have come from a call to
-		 * getmnt/getmntany if it isn't NULL. If it is NULL,
-		 * we know it comes from libzfs_mnttab_find which can
-		 * then get freed later. We strdup it to play it safe.
-		 */
-		if (mountpoint == NULL)
-			mntpt = zfs_strdup(hdl, entry.mnt_mountp);
-		else
-			mntpt = zfs_strdup(hdl, mountpoint);
-
-		/*
-		 * Unshare and unmount the filesystem
-		 */
-		if (zfs_unshare_proto(zhp, mntpt, share_all_proto) != 0)
-			return (-1);
-
-		if (unmount_one(hdl, mntpt, flags) != 0) {
-			free(mntpt);
-			(void) zfs_shareall(zhp);
-			return (-1);
-		}
-		libzfs_mnttab_remove(hdl, zhp->zfs_name);
-		free(mntpt);
-	}
-
-	return (0);
-}
-
-#endif
 /*
  * Unmount this filesystem and any children inheriting the mountpoint property.
  * To do this, just act like we're changing the mountpoint property, but don't

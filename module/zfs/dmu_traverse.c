@@ -771,13 +771,14 @@ traverse_pool(spa_t *spa, uint64_t txg_start, int flags,
 #if defined(_KERNEL)
 EXPORT_SYMBOL(traverse_dataset);
 EXPORT_SYMBOL(traverse_pool);
-
+/* BEGIN CSTYLED */
 ZFS_MODULE_PARAM(zfs, zfs_, pd_bytes_max, UINT, ZMOD_RW,
-    "Max number of bytes to prefetch");
+	"Max number of bytes to prefetch");
 
 module_param_named(ignore_hole_birth, send_holes_without_birth_time, int, 0644);
 MODULE_PARM_DESC(ignore_hole_birth, "Alias for send_holes_without_birth_time");
 
 ZFS_MODULE_PARAM(zfs, , send_holes_without_birth_time, UINT, ZMOD_RW,
 	"Ignore hole_birth txg for zfs send");
+/* END CSTYLED */
 #endif

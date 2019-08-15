@@ -291,6 +291,8 @@ if platform.system() == "FreeBSD":
         'userquota/userquota_013_pos': ['SKIP', na_reason_freebsd],
         'rsend/send_encrypted_files': ['SKIP', na_reason_freebsd],
         'rsend/send_realloc_dnode_size': ['SKIP', na_reason_freebsd],
+        'snapshot/snapshot_015_pos': ['SKIP', na_reason_freebsd],
+        'snapshot/snapshot_016_pos': ['SKIP', na_reason_freebsd],
         'xattr/setup': ['SKIP', na_reason_freebsd],
         'zvol/zvol_misc/zvol_misc_002_pos': ['SKIP', na_reason_freebsd],
         'zvol/zvol_misc/zvol_misc_snapdev': ['SKIP', na_reason_freebsd],

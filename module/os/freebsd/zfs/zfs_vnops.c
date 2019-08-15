@@ -1947,7 +1947,7 @@ zfs_remove_(vnode_t *dvp, vnode_t *vp, char *name, cred_t *cr)
 		zfs_unlinked_add(zp, tx);
 		vp->v_vflag |= VV_NOSYNC;
 	}
-
+	/* XXX check changes to linux vnops */
 	txtype = TX_REMOVE;
 	zfs_log_remove(zilog, tx, txtype, dzp, name, obj, unlinked);
 

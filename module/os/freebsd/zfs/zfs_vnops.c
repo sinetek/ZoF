@@ -1947,9 +1947,9 @@ zfs_remove_(vnode_t *dvp, vnode_t *vp, char *name, cred_t *cr)
 		zfs_unlinked_add(zp, tx);
 		vp->v_vflag |= VV_NOSYNC;
 	}
-
+	/* XXX check changes to linux vnops */
 	txtype = TX_REMOVE;
-	zfs_log_remove(zilog, tx, txtype, dzp, name, obj);
+	zfs_log_remove(zilog, tx, txtype, dzp, name, obj, unlinked);
 
 	dmu_tx_commit(tx);
 out:
@@ -2221,7 +2221,7 @@ zfs_rmdir_(vnode_t *dvp, vnode_t *vp, char *name, cred_t *cr)
 
 	if (error == 0) {
 		uint64_t txtype = TX_RMDIR;
-		zfs_log_remove(zilog, tx, txtype, dzp, name, ZFS_NO_OBJECT);
+		zfs_log_remove(zilog, tx, txtype, dzp, name, ZFS_NO_OBJECT, B_FALSE);
 	}
 
 	dmu_tx_commit(tx);

@@ -745,5 +745,5 @@ zfs_log_acl(zilog_t *zilog, dmu_tx_t *tx, znode_t *zp,
 
 #if defined(_KERNEL)
 ZFS_MODULE_PARAM(zfs, zfs_, immediate_write_sz, UQUAD, ZMOD_RW,
-    "Largest data block to write to zil");
+	"Largest data block to write to zil");
 #endif

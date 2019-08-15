@@ -9324,10 +9324,10 @@ EXPORT_SYMBOL(spa_event_notify);
 module_param(spa_load_verify_shift, int, 0644);
 MODULE_PARM_DESC(spa_load_verify_shift, "log2(fraction of arc that can "
 	"be used by inflight I/Os when verifying pool during import");
-#endif
 
 ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_maxinflight, UINT, ZMOD_RW,
 	"Max concurrent traversal I/Os while verifying pool during import -X");
+#endif
 
 ZFS_MODULE_PARAM(zfs_spa, spa_, load_verify_metadata, UINT, ZMOD_RW,
 	"Set to traverse metadata on pool import");

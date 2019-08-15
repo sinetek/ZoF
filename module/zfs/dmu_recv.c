@@ -3237,8 +3237,8 @@ dmu_objset_is_receiving(objset_t *os)
 
 #if defined(_KERNEL)
 ZFS_MODULE_PARAM(zfs_recv, zfs_recv_, queue_length, UINT, ZMOD_RW,
-    "Maximum receive queue length");
+	"Maximum receive queue length");
 
 ZFS_MODULE_PARAM(zfs_recv, zfs_recv_, queue_ff, UINT, ZMOD_RW,
-    "Receive queue fill fraction");
+	"Receive queue fill fraction");
 #endif

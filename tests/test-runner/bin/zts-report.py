@@ -197,7 +197,6 @@ known = {
     'removal/removal_with_zdb': ['SKIP', known_reason],
     'rootpool/setup': ['SKIP', na_reason],
     'rsend/rsend_008_pos': ['SKIP', '6066'],
-    'snapshot/rollback_003_pos': ['SKIP', '6143'],
     'vdev_zaps/vdev_zaps_007_pos': ['FAIL', known_reason],
     'xattr/xattr_008_pos': ['SKIP', na_reason],
     'xattr/xattr_009_neg': ['SKIP', na_reason],
@@ -300,6 +299,13 @@ if platform.system() == "FreeBSD":
         'zvol/zvol_swap/zvol_swap_003_pos': ['SKIP', na_reason_freebsd],
     }
     known.update(known_freebsd)
+
+# Add lists of tests known to not run on Linux
+elif platform.system() == "Linux":
+    known_linux = {
+        'snapshot/rollback_003_pos': ['SKIP', '6143'],
+    }
+    known.update(known_linux)
 
 #
 # These tests may occasionally fail or be skipped.  We want there failures

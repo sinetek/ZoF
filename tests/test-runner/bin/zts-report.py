@@ -301,7 +301,7 @@ if platform.system() == "FreeBSD":
     known.update(known_freebsd)
 
 # Add lists of tests known to not run on Linux
-else if platform.system() == "Linux":
+elif platform.system() == "Linux":
     known_linux = {
         'snapshot/rollback_003_pos': ['SKIP', '6143'],
     }

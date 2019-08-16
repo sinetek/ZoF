@@ -680,11 +680,6 @@ fi
 #
 # Run all the tests as specified.
 #
-msg "${PYTHON} \"${TEST_RUNNER}\" ${QUIET:+-q}" \
-    "-c \"${RUNFILE}\"" \
-    "-T \"${TAGS}\"" \
-    "-i \"${STF_SUITE}\"" \
-    "-I \"${ITERATIONS}\""
 
 ${PYTHON} "${TEST_RUNNER}" ${QUIET:+-q} \
     -c "${RUNFILE}" \
@@ -697,7 +692,7 @@ ${PYTHON} "${TEST_RUNNER}" ${QUIET:+-q} \
 # Analyze the results.
 #
 set -o pipefail
-${PYTHON} "${ZTS_REPORT}" "$RESULTS_FILE" | tee "$REPORT_FILE"
+${ZTS_REPORT} "$RESULTS_FILE" | tee "$REPORT_FILE"
 RESULT=$?
 set +o pipefail
 

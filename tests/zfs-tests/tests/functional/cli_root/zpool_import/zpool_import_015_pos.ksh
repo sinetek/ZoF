@@ -27,6 +27,10 @@
 #	3. Verify 'import -d <device>' works
 #
 
+if is_freebsd; then
+	log_unsupported "'import -d <device>' not supported on FreeBSD"
+fi
+
 verify_runnable "global"
 
 function cleanup

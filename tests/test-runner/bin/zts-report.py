@@ -242,6 +242,8 @@ if platform.system() == "FreeBSD":
         'cli_root/zpool_events/zpool_events_poolname':
             ['SKIP', na_reason_freebsd],
         'cli_root/zpool_events/cleanup': ['SKIP', na_reason_freebsd],
+        'cli_root/zpool_import/zpool_import_015_pos':
+            ['SKIP', na_reason_freebsd],
         'cli_root/zpool_reopen/setup': ['SKIP', na_reason_freebsd],
         'cli_root/zpool_reopen/zpool_reopen_001_pos':
             ['SKIP', na_reason_freebsd],

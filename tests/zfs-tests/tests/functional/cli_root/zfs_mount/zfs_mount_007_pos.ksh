@@ -51,6 +51,10 @@
 #	4. Verify it will not affect the property that is stored on disk.
 #
 
+if is_freebsd; then
+	log_unsupported "'mount -o remount,...' not supported on FreeBSD"
+fi
+
 function cleanup
 {
 	if ! ismounted $TESTPOOL/$TESTFS; then

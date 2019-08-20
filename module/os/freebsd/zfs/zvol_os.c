@@ -639,15 +639,56 @@ zvol_geom_access(struct g_provider *pp, int acr, int acw, int ace)
 	return (error);
 }
 
-static void
-zvol_geom_start(struct bio *bp)
+static int
+zvol_bio_getattr(struct bio *bp)
 {
 	zvol_state_t *zv;
-	boolean_t first;
+
 
 	zv = bp->bio_to->private;
 	ASSERT(zv != NULL);
-	rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+
+	spa_t *spa = dmu_objset_spa(zv->zv_objset);
+	uint64_t refd, avail, usedobjs, availobjs;
+
+	if (g_handleattr_int(bp, "GEOM::candelete", 1))
+		return (0);
+	if (strcmp(bp->bio_attribute, "blocksavail") == 0) {
+		dmu_objset_space(zv->zv_objset, &refd, &avail,
+						 &usedobjs, &availobjs);
+		if (g_handleattr_off_t(bp, "blocksavail",
+							   avail / DEV_BSIZE))
+			return (0);
+	} else if (strcmp(bp->bio_attribute, "blocksused") == 0) {
+		dmu_objset_space(zv->zv_objset, &refd, &avail,
+						 &usedobjs, &availobjs);
+		if (g_handleattr_off_t(bp, "blocksused",
+							   refd / DEV_BSIZE))
+			return (0);
+	} else if (strcmp(bp->bio_attribute, "poolblocksavail") == 0) {
+		avail = metaslab_class_get_space(spa_normal_class(spa));
+		avail -= metaslab_class_get_alloc(spa_normal_class(spa));
+		if (g_handleattr_off_t(bp, "poolblocksavail",
+							   avail / DEV_BSIZE))
+			return (0);
+	} else if (strcmp(bp->bio_attribute, "poolblocksused") == 0) {
+		refd = metaslab_class_get_alloc(spa_normal_class(spa));
+		if (g_handleattr_off_t(bp, "poolblocksused",
+							   refd / DEV_BSIZE))
+			return (0);
+	}
+	return (1);
+}
+
+static void
+zvol_check_zilog(struct bio *bp)
+{
+	zvol_state_t *zv;
+
+
+	zv = bp->bio_to->private;
+	ASSERT(zv != NULL);
+
 	switch (bp->bio_cmd) {
 		case BIO_FLUSH:
 		case BIO_WRITE:
@@ -671,69 +712,50 @@ zvol_geom_start(struct bio *bp)
 		default:
 			;
 	}
+}
+
+static void
+zvol_geom_start(struct bio *bp)
+{
+	zvol_state_t *zv;
+	boolean_t first;
+
+	zv = bp->bio_to->private;
+	ASSERT(zv != NULL);
+
+	if (bp->bio_cmd == BIO_GETATTR) {
+		if (!zvol_bio_getattr(bp))
+			g_io_deliver(bp, EOPNOTSUPP);
+		return;
+	}
+
+	if (!THREAD_CAN_SLEEP()) {
+		mtx_lock(&zv->zv_queue_mtx);
+		first = (bioq_first(&zv->zv_queue) == NULL);
+		bioq_insert_tail(&zv->zv_queue, bp);
+		mtx_unlock(&zv->zv_queue_mtx);
+		if (first)
+			wakeup_one(&zv->zv_queue);
+		return;
+	}
+	rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+	zvol_check_zilog(bp);
 
 	switch (bp->bio_cmd) {
 	case BIO_FLUSH:
-		if (!THREAD_CAN_SLEEP())
-			goto enqueue;
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 		g_io_deliver(bp, 0);
 		break;
 	case BIO_READ:
 	case BIO_WRITE:
 	case BIO_DELETE:
-		if (!THREAD_CAN_SLEEP())
-			goto enqueue;
 		zvol_strategy(bp);
 		break;
-	case BIO_GETATTR: {
-		spa_t *spa = dmu_objset_spa(zv->zv_objset);
-		uint64_t refd, avail, usedobjs, availobjs;
-
-		if (g_handleattr_int(bp, "GEOM::candelete", 1))
-			goto out;
-		if (strcmp(bp->bio_attribute, "blocksavail") == 0) {
-			dmu_objset_space(zv->zv_objset, &refd, &avail,
-			    &usedobjs, &availobjs);
-			if (g_handleattr_off_t(bp, "blocksavail",
-			    avail / DEV_BSIZE))
-				goto out;
-		} else if (strcmp(bp->bio_attribute, "blocksused") == 0) {
-			dmu_objset_space(zv->zv_objset, &refd, &avail,
-			    &usedobjs, &availobjs);
-			if (g_handleattr_off_t(bp, "blocksused",
-			    refd / DEV_BSIZE))
-				goto out;
-		} else if (strcmp(bp->bio_attribute, "poolblocksavail") == 0) {
-			avail = metaslab_class_get_space(spa_normal_class(spa));
-			avail -= metaslab_class_get_alloc(spa_normal_class(spa));
-			if (g_handleattr_off_t(bp, "poolblocksavail",
-			    avail / DEV_BSIZE))
-				goto out;
-		} else if (strcmp(bp->bio_attribute, "poolblocksused") == 0) {
-			refd = metaslab_class_get_alloc(spa_normal_class(spa));
-			if (g_handleattr_off_t(bp, "poolblocksused",
-			    refd / DEV_BSIZE))
-				goto out;
-		}
-		/* FALLTHROUGH */
-	}
 	default:
 		g_io_deliver(bp, EOPNOTSUPP);
 		break;
 	}
- out:
 	rw_exit(&zv->zv_suspend_lock);
-	return;
-
-enqueue:
-	rw_exit(&zv->zv_suspend_lock);
-	mutex_enter(&zv->zv_state_lock);
-	first = (bioq_first(&zv->zv_queue) == NULL);
-	bioq_insert_tail(&zv->zv_queue, bp);
-	mutex_exit(&zv->zv_state_lock);
-	if (first)
-		wakeup_one(&zv->zv_queue);
 }
 
 static void
@@ -748,38 +770,35 @@ zvol_geom_worker(void *arg)
 
 	zv = arg;
 	for (;;) {
-		mutex_enter(&zv->zv_state_lock);
+		mtx_lock(&zv->zv_queue_mtx);
 		bp = bioq_takefirst(&zv->zv_queue);
 		if (bp == NULL) {
 			if (zv->zv_state == 1) {
 				zv->zv_state = 2;
 				wakeup(&zv->zv_state);
-				mutex_exit(&zv->zv_state_lock);
+				mtx_unlock(&zv->zv_queue_mtx);
 				kthread_exit();
 			}
-			msleep(&zv->zv_queue, &zv->zv_state_lock, PRIBIO | PDROP,
-			    "zvol:io", 0);
+			msleep(&zv->zv_queue, &zv->zv_queue_mtx, PRIBIO | PDROP,
+				   "zvol:io", 0);
 			continue;
 		}
-		mutex_exit(&zv->zv_state_lock);
-		/*
-		 * To be released in the I/O function. See the comment on
-		 * rangelock_enter() below.
-		 */
+		mtx_unlock(&zv->zv_queue_mtx);
 		rw_enter(&zv->zv_suspend_lock, ZVOL_RW_READER);
+		zvol_check_zilog(bp);
 		switch (bp->bio_cmd) {
-		case BIO_FLUSH:
-			zil_commit(zv->zv_zilog, ZVOL_OBJ);
-			g_io_deliver(bp, 0);
-			break;
-		case BIO_READ:
-		case BIO_WRITE:
-		case BIO_DELETE:
-			zvol_strategy(bp);
-			break;
-		default:
-			g_io_deliver(bp, EOPNOTSUPP);
-			break;
+			case BIO_FLUSH:
+				zil_commit(zv->zv_zilog, ZVOL_OBJ);
+				g_io_deliver(bp, 0);
+				break;
+			case BIO_READ:
+			case BIO_WRITE:
+			case BIO_DELETE:
+				zvol_strategy(bp);
+				break;
+			default:
+				g_io_deliver(bp, EOPNOTSUPP);
+				break;
 		}
 		rw_exit(&zv->zv_suspend_lock);
 	}
@@ -1157,6 +1176,7 @@ zvol_free(void *arg)
 	}
 
 	mutex_destroy(&zv->zv_state_lock);
+	mtx_destroy(&zv->zv_queue_mtx);
 	kmem_free(zv, sizeof (zvol_state_t));
 	zvol_minors--;
 }
@@ -1213,6 +1233,7 @@ zvol_create_minor_impl(const char *name)
 
 	zv->zv_volmode = volmode;
 	mutex_init(&zv->zv_state_lock, NULL, MUTEX_DEFAULT, NULL);
+	mtx_init(&zv->zv_queue_mtx, "zvol", NULL, MTX_DEF);
 	if (zv->zv_volmode == ZFS_VOLMODE_GEOM) {
 		g_topology_lock();
 		gp = g_new_geomf(&zfs_zvol_class, "zfs::zvol::%s", name);
@@ -1327,7 +1348,7 @@ zvol_os_clear_private(zvol_state_t *zv)
 		pp->private = NULL;
 		wakeup_one(&zv->zv_queue);
 		while (zv->zv_state != 2)
-			msleep(&zv->zv_state, &zv->zv_state_lock, 0, "zvol:w", 0);
+			msleep(&zv->zv_state, &zv->zv_queue_mtx, 0, "zvol:w", 0);
 		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
 }

@@ -1876,18 +1876,6 @@ metaslab_verify_weight_and_frag(metaslab_t *msp)
 	VERIFY3U(msp->ms_weight, ==, weight);
 }
 
-#if defined(__linux__) && defined(_KERNEL)
-static int
-kmem_cache_inuse(kmem_cache_t *cache)
-{
-	return (cache->skc_obj_total);
-}
-static int
-kmem_cache_entry_size(kmem_cache_t *cache)
-{
-	return (cache->skc_obj_size);
-}
-#endif
 /*
  * If we're over the zfs_metaslab_mem_limit, select the loaded metaslab from
  * this class that was used longest ago, and attempt to unload it.  We don't

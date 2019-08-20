@@ -3088,10 +3088,8 @@ function get_rootfs
 	typeset rootfs=""
 
 	if is_freebsd; then
-		rootfs=$(mount | grep 'on / ' | awk '{print $1}')
-	fi
-
-	if ! is_linux && ! is_freebsd; then
+		rootfs=$(mount -p | awk '$2 == "/" && $3 == "zfs" {print $1}')
+	elif ! is_linux; then
 		rootfs=$(awk '{if ($2 == "/" && $3 == "zfs") print $1}' \
 			/etc/mnttab)
 	fi
@@ -3117,10 +3115,8 @@ function get_rootpool
 	typeset rootpool=""
 
 	if is_freebsd; then
-		rootfs=$(mount | grep 'on / ' | awk '{print $1}')
-	fi
-
-	if ! is_linux && ! is_freebsd; then
+		rootfs=$(mount -p | awk '$2 == "/" && $3 == "zfs" {print $1}')
+	elif ! is_linux; then
 		rootfs=$(awk '{if ($2 == "/" && $3 =="zfs") print $1}' \
 			 /etc/mnttab)
 	fi
@@ -3129,8 +3125,7 @@ function get_rootpool
 	fi
 	zfs list $rootfs > /dev/null 2>&1
 	if (($? == 0)); then
-		rootpool=`echo $rootfs | awk -F\/ '{print $1}'`
-		echo $rootpool
+		echo ${rootpool%%/*}
 	else
 		log_fail "This is not a zfsroot system."
 	fi

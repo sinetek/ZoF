@@ -117,6 +117,4 @@ extern int zvol_os_update_volsize(zvol_state_t *zv, uint64_t volsize);
 extern void zvol_os_clear_private(zvol_state_t *zv);
 extern int zvol_os_init(void);
 extern void zvol_os_fini(void);
-#define	ZVOL_LOCK_DEBUG
-
 #endif

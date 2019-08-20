@@ -2,10 +2,10 @@ obj-m += avl/
 obj-m += icp/
 obj-m += lua/
 obj-m += nvpair/
-obj-m += spl/
+obj-m += os/linux/spl/
 obj-m += unicode/
 obj-m += zcommon/
-obj-m += zfs/
+obj-m += os/linux/zfs/
 
 INSTALL_MOD_DIR ?= extra
 

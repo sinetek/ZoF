@@ -876,7 +876,7 @@ validate_ioc_values(void)
 {
 	boolean_t result = TRUE;
 
-#define CHECK(expr) do { \
+#define	CHECK(expr) do { \
 	if (!(expr)) { \
 		result = FALSE; \
 		fprintf(stderr, "(%s) === FALSE\n", #expr); \

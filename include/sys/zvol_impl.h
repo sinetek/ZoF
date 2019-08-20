@@ -39,6 +39,7 @@ struct zvol_state_os {
 struct zvol_state_os {
 	struct g_provider *zvo_provider;	/* GEOM provider */
 	struct bio_queue_head zvo_queue;
+	struct mtx zvo_queue_mtx;
 	int zvo_state;
 	int zvo_sync_cnt;
 	uint64_t zvo_volmode;
@@ -49,6 +50,7 @@ struct zvol_state_os {
 #define	zv_state zv_zso.zvo_state
 #define	zv_sync_cnt zv_zso.zvo_sync_cnt
 #define	zv_volmode zv_zso.zvo_volmode
+#define	zv_queue_mtx zv_zso.zvo_queue_mtx
 #endif
 
 /*

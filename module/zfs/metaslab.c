@@ -1876,6 +1876,18 @@ metaslab_verify_weight_and_frag(metaslab_t *msp)
 	VERIFY3U(msp->ms_weight, ==, weight);
 }
 
+#if defined(__linux__) && defined(_KERNEL)
+static int
+kmem_cache_inuse(kmem_cache_t *cache)
+{
+	return (cache->skc_obj_total);
+}
+static int
+kmem_cache_entry_size(kmem_cache_t *cache)
+{
+	return (cache->skc_obj_size);
+}
+#endif
 /*
  * If we're over the zfs_metaslab_mem_limit, select the loaded metaslab from
  * this class that was used longest ago, and attempt to unload it.  We don't
@@ -1890,8 +1902,8 @@ metaslab_potentially_evict(metaslab_class_t *mc)
 #if defined(_KERNEL) && !defined(__FreeBSD__)
 	uint64_t allmem = arc_all_memory();
 	extern kmem_cache_t *range_seg_cache;
-	uint64_t inuse = range_seg_cache->skc_obj_total;
-	uint64_t size =	range_seg_cache->skc_obj_size;
+	uint64_t inuse = kmem_cache_inuse(range_seg_cache);
+	uint64_t size =	kmem_cache_entry_size(range_seg_cache);
 	int tries = 0;
 	for (; allmem * zfs_metaslab_mem_limit / 100 < inuse * size &&
 	    tries < multilist_get_num_sublists(mc->mc_metaslab_txg_list) * 2;
@@ -1928,7 +1940,7 @@ metaslab_potentially_evict(metaslab_class_t *mc)
 			 */
 			if (msp->ms_loading) {
 				msp = next_msp;
-				inuse = range_seg_cache->skc_obj_total;
+				inuse = kmem_cache_inuse(range_seg_cache);
 				continue;
 			}
 			/*
@@ -1950,7 +1962,7 @@ metaslab_potentially_evict(metaslab_class_t *mc)
 			}
 			mutex_exit(&msp->ms_lock);
 			msp = next_msp;
-			inuse = range_seg_cache->skc_obj_total;
+			inuse = kmem_cache_inuse(range_seg_cache);
 		}
 	}
 #endif

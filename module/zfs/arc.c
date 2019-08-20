@@ -4605,7 +4605,7 @@ arc_reduce_target_size(int64_t to_free)
 	}
 }
 #ifdef __FreeBSD__
-static uint64_t
+uint64_t
 arc_all_memory(void)
 {
 	return ((uint64_t)ptob(physmem));

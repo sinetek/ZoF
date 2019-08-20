@@ -230,6 +230,8 @@ extern uint64_t spl_kmem_cache_entry_size(kmem_cache_t *cache);
 #define	kmem_cache_reap_now(skc)	\
     spl_kmem_cache_reap_now(skc, skc->skc_reap)
 #define	kmem_reap()			spl_kmem_reap()
+#define	kmem_cache_inuse(c) spl_kmem_cache_inuse(c)
+#define	kmem_cache_entry_size(c) spl_kmem_cache_entry_size(c)
 
 /*
  * The following functions are only available for internal use.

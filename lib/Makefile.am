@@ -3,11 +3,11 @@
 SUBDIRS = libavl libicp libshare libspl libtpool
 
 if BUILD_LINUX
-SUBDIRS+= libefi
+SUBDIRS += libefi
 endif
 
 # libzutil depends on libefi if present
-SUBDIRS+= libzutil libunicode
+SUBDIRS += libzutil libunicode
 
 # These four libraries, which are installed as the final build product,
 # incorporate the six convenience libraries given above.

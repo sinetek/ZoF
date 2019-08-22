@@ -81,6 +81,6 @@ SUBDIRS = \
 	zvol
 
 if BUILD_LINUX
-SUBDIRS+= \
+SUBDIRS += \
 	tmpfile
 endif

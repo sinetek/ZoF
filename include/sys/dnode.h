@@ -115,6 +115,10 @@ extern "C" {
 #define	DNODES_PER_LEVEL_SHIFT	(DN_MAX_INDBLKSHIFT - SPA_BLKPTRSHIFT)
 #define	DNODES_PER_LEVEL	(1ULL << DNODES_PER_LEVEL_SHIFT)
 
+/* Next level for a given dnode and txg */
+#define	DN_NEXT_LEVEL(dn, txg) \
+	(dn)->dn_next_nlevels[(txg) & TXG_MASK]
+
 #define	DN_MAX_LEVELS	(DIV_ROUND_UP(DN_MAX_OFFSET_SHIFT - SPA_MINBLOCKSHIFT, \
 	DN_MIN_INDBLKSHIFT - SPA_BLKPTRSHIFT) + 1)
 
@@ -416,6 +420,7 @@ boolean_t dnode_add_ref(dnode_t *dn, void *ref);
 void dnode_rele(dnode_t *dn, void *ref);
 void dnode_rele_and_unlock(dnode_t *dn, void *tag, boolean_t evicting);
 void dnode_setdirty(dnode_t *dn, dmu_tx_t *tx);
+void dnode_set_dirtyctx(dnode_t *dn, dmu_tx_t *tx, void *tag);
 void dnode_sync(dnode_t *dn, dmu_tx_t *tx);
 void dnode_allocate(dnode_t *dn, dmu_object_type_t ot, int blocksize, int ibs,
     dmu_object_type_t bonustype, int bonuslen, int dn_slots, dmu_tx_t *tx);

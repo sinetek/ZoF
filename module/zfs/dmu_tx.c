@@ -256,22 +256,8 @@ dmu_tx_count_write(dmu_tx_hold_t *txh, uint64_t off, uint64_t len)
 
 		/* first level-0 block */
 		uint64_t start = off >> dn->dn_datablkshift;
-		if (P2PHASE(off, dn->dn_datablksz) || len < dn->dn_datablksz) {
-			err = dmu_tx_check_ioerr(zio, dn, 0, start);
-			if (err != 0) {
-				txh->txh_tx->tx_err = err;
-			}
-		}
-
 		/* last level-0 block */
 		uint64_t end = (off + len - 1) >> dn->dn_datablkshift;
-		if (end != start && end <= dn->dn_maxblkid &&
-		    P2PHASE(off + len, dn->dn_datablksz)) {
-			err = dmu_tx_check_ioerr(zio, dn, 0, end);
-			if (err != 0) {
-				txh->txh_tx->tx_err = err;
-			}
-		}
 
 		/* level-1 blocks */
 		if (dn->dn_nlevels > 1) {
@@ -575,7 +561,7 @@ dmu_tx_hold_space(dmu_tx_t *tx, uint64_t space)
 
 #ifdef ZFS_DEBUG
 void
-dmu_tx_dirty_buf(dmu_tx_t *tx, dmu_buf_impl_t *db)
+dmu_tx_verify_dirty_buf(dmu_tx_t *tx, dmu_buf_impl_t *db)
 {
 	boolean_t match_object = B_FALSE;
 	boolean_t match_offset = B_FALSE;
@@ -1183,7 +1169,7 @@ dmu_tx_abort(dmu_tx_t *tx)
 	 * Call any registered callbacks with an error code.
 	 */
 	if (!list_is_empty(&tx->tx_callbacks))
-		dmu_tx_do_callbacks(&tx->tx_callbacks, ECANCELED);
+		dmu_tx_do_callbacks(&tx->tx_callbacks, SET_ERROR(ECANCELED));
 
 	dmu_tx_destroy(tx);
 }

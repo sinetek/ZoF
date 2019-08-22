@@ -6,13 +6,13 @@ include config/tgz.am
 
 SUBDIRS = include
 if BUILD_LINUX
-SUBDIRS+= rpm
+SUBDIRS += rpm
 endif
 
 if CONFIG_USER
 SUBDIRS += etc man scripts lib tests cmd contrib
 if BUILD_LINUX
-SUBDIRS+= udev
+SUBDIRS += udev
 endif
 endif
 if CONFIG_KERNEL

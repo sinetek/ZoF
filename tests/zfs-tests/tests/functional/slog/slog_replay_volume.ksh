@@ -115,8 +115,8 @@ log_must zpool freeze $TESTPOOL
 
 # TX_WRITE
 if is_freebsd; then
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 conv=sync
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 conv=sync
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1
 else
 	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
 	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync

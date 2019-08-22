@@ -44,10 +44,6 @@
 
 verify_runnable "global"
 
-if is_freebsd; then
-	log_unsupported "Requires setting up loop device"
-fi
-
 function cleanup_testenv
 {
 	cleanup

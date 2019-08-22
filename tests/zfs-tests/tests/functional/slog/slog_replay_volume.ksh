@@ -113,8 +113,8 @@ log_must zpool freeze $TESTPOOL
 
 # TX_WRITE
 if is_freebsd; then
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 conv=sync
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 conv=sync
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1
+	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1
 else
 	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
 	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
@@ -129,13 +129,15 @@ log_must dd if=/dev/urandom of=$MNTPNT/throughput-128k bs=128k count=1
 log_must dd if=/dev/urandom of=$MNTPNT/holes bs=128k count=8
 log_must dd if=/dev/zero of=$MNTPNT/holes bs=128k count=2 seek=2 conv=notrunc
 
-# TX_TRUNCATE
-if fallocate --punch-hole 2>&1 | grep -q "unrecognized option"; then
-	log_note "fallocate(1) does not support --punch-hole"
-else
-	log_must dd if=/dev/urandom of=$MNTPNT/discard bs=128k count=16
-	log_must fallocate --punch-hole -l 128K -o 512K $MNTPNT/discard
-	log_must fallocate --punch-hole -l 512K -o 1M $MNTPNT/discard
+if is_linux; then
+	# TX_TRUNCATE
+	if fallocate --punch-hole 2>&1 | grep -q "unrecognized option"; then
+		log_note "fallocate(1) does not support --punch-hole"
+	else
+		log_must dd if=/dev/urandom of=$MNTPNT/discard bs=128k count=16
+		log_must fallocate --punch-hole -l 128K -o 512K $MNTPNT/discard
+		log_must fallocate --punch-hole -l 512K -o 1M $MNTPNT/discard
+	fi
 fi
 
 #

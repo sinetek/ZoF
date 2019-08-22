@@ -28,7 +28,7 @@ USER_C = \
 	libzfs_util.c
 
 if BUILD_FREEBSD
-USER_C+= \
+USER_C += \
 	freebsd_deviceid.c \
 	freebsd_fsshare.c \
 	freebsd_libzfs_compat.c \

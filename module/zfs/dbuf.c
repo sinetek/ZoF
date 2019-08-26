@@ -1838,7 +1838,6 @@ dbuf_read_impl(dmu_buf_impl_t *db, zio_t *zio, uint32_t *flags,
 	ASSERT(!zfs_refcount_is_zero(&db->db_holds));
 	ASSERT(MUTEX_HELD(&db->db_mtx));
 
-	ASSERT(db->db_parent == NULL);
 	ASSERT(db->db_state == DB_UNCACHED || (db->db_state & DB_PARTIAL));
 	if (dbuf_read_bonus(db, dn, *flags, &err) || dbuf_read_hole(db, dn, *flags) || err) {
 		DB_DNODE_EXIT(db);
@@ -2927,7 +2926,7 @@ dbuf_dirty_parent(dbuf_dirty_state_t *dds)
 	}
 
 	if (db->db_level == 0) {
-		dnode_new_blkid(dn, db->db_blkid, tx, B_FALSE, B_TRUE);
+		dnode_new_blkid(dn, db->db_blkid, tx, drop_struct_lock, B_TRUE);
 		ASSERT3U(dn->dn_maxblkid, >=, db->db_blkid);
 	}
 

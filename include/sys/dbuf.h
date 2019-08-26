@@ -55,6 +55,7 @@ extern "C" {
 #define	DB_RF_NEVERWAIT		(1 << 4)
 #define	DB_RF_CACHED		(1 << 5)
 #define	DB_RF_NO_DECRYPT	(1 << 6)
+#define	DB_RF_CACHED_ONLY	(1 << 7)
 
 /*
  * The simplified state transition diagram for dbufs looks like:

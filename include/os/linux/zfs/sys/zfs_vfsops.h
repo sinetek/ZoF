@@ -228,6 +228,10 @@ extern int zfs_vget(struct super_block *sb, struct inode **ipp, fid_t *fidp);
 extern int zfs_prune(struct super_block *sb, unsigned long nr_to_scan,
     int *objects);
 
+#ifdef _KERNEL
+extern int zfsvfs_update_fromname(const char *oldname, const char *newname);
+#endif
+
 #ifdef	__cplusplus
 }
 #endif

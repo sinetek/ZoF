@@ -2452,6 +2452,65 @@ zfs_get_vfs_flag_unmounted(objset_t *os)
 	return (unmounted);
 }
 
+#ifdef _KERNEL
+struct zfsvfs_update_fromname_cb_data {
+	const char *oldname, *newname;
+	size_t oldlen;
+};
+
+static int
+zfsvfs_update_fromname_cb(struct vfsmount *vfsmnt, void *data)
+{
+	char tmpbuf[MAXPATHLEN];
+	struct zfsvfs_update_fromname_cb_data *ctx = data;
+	const char *oldname = ctx->oldname;
+	const char *newname = ctx->newname;
+	struct mount *mnt = real_mount(vfsmnt);
+	char *fromname = mnt->mnt_devname;
+	size_t oldlen = ctx->oldlen;
+
+	if (strncmp(fromname, oldname, oldlen) != 0)
+		return (0);
+	switch (fromname[oldlen]) {
+	case '\0':
+		mnt->mnt_devname = kstrdup_const(newname,
+		    GFP_KERNEL);
+		break;
+	case '/':
+	case '@':
+		(void)snprintf(tmpbuf, sizeof (tmpbuf), "%s%s",
+		    newname, fromname + oldlen);
+		mnt->mnt_devname = kstrdup_const(tmpbuf,
+		    GFP_KERNEL);
+		break;
+	default:
+		return (0);
+	}
+	if (mnt->mnt_devname == NULL) {
+		mnt->mnt_devname = fromname;
+		return (ENOMEM);
+	}
+	kfree_const(fromname);
+	return (0);
+}
+
+int
+zfsvfs_update_fromname(const char *oldname, const char *newname)
+{
+	struct zfsvfs_update_fromname_cb_data data = {
+		.oldname = oldname,
+		.newname = newname,
+		.oldlen = strlen(oldname),
+	};
+	int error;
+
+	error = iterate_mounts(zfsvfs_update_fromname_cb, &data,
+	    current->fs->root.mnt); /* XXX: namespaces? */
+
+	return (error);
+}
+#endif
+
 struct objnode {
 	avl_node_t node;
 	uint64_t obj;

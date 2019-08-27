@@ -23,8 +23,7 @@ SUBDIRS = \
 	rename_dir \
 	rm_lnkcnt_zero_file \
 	threadsappend \
-	stride_dd \
-	threadsappend
+	stride_dd
 
 
 if BUILD_LINUX

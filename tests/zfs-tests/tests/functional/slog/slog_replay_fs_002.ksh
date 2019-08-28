@@ -80,8 +80,13 @@ log_must zpool import -f -d $VDIR $TESTPOOL
 # after freezing the pool unless a ZIL header already exists. Create a file
 # synchronously to force ZFS to write one out.
 #
-log_must dd if=/dev/zero of=/$TESTPOOL/$TESTFS/sync \
-    conv=fdatasync,fsync bs=1 count=1
+if is_freebsd; then
+	log_must dd if=/dev/zero of=/$TESTPOOL/$TESTFS/sync bs=1 count=1
+	log_must fsync /$TESTPOOL/$TESTFS/sync
+else
+	log_must dd if=/dev/zero of=/$TESTPOOL/$TESTFS/sync \
+	    conv=fdatasync,fsync bs=1 count=1
+fi
 
 #
 # 2. Freeze TESTFS

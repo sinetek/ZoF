@@ -36,4 +36,20 @@ typedef const struct kernel_param zfs_kernel_param_t;
 typedef struct kernel_param zfs_kernel_param_t;
 #endif
 
+#define	ZMOD_RW 0644
+#define	ZMOD_RD 0444
+
+/* BEGIN CSTYLED */
+#define	INT int
+#define	UINT uint
+#define	ULONG ulong
+#define	LONG long
+#define	STRING charp
+/* END CSTYLED */
+
+#define	ZFS_MODULE_PARAM(scope_prefix, name_prefix, name, type, perm, desc) \
+	module_param(name_prefix ## name, type, perm); \
+	MODULE_PARM_DESC(name_prefix ## name, desc)
+
+
 #endif	/* _MOD_COMPAT_H */

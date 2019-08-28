@@ -65,6 +65,7 @@
 #include <sys/procfs_list.h>
 #include <linux/dcache_compat.h>
 #include <linux/utsname_compat.h>
+#include <linux/mod_compat.h>
 
 #else /* _KERNEL */
 
@@ -201,12 +202,18 @@ extern int aok;
 	(unsigned long)i)
 
 /*
+ * Tunables.
+ */
+#define	ZFS_MODULE_PARAM(scope_prefix, name_prefix, name, type, perm, desc)
+
+/*
  * Threads.
  */
 typedef pthread_t	kthread_t;
 
 #define	TS_RUN		0x00000002
 #define	TS_JOINABLE	0x00000004
+#define	EXPORT_SYMBOL(x)
 
 #define	curthread	((void *)(uintptr_t)pthread_self())
 #define	kpreempt(x)	yield()

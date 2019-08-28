@@ -1022,29 +1022,32 @@ function set_partition
 #
 function delete_partitions
 {
+	typeset disk
+
 	if [[ -z $DISKSARRAY ]]; then
 		DISKSARRAY=$DISKS
 	fi
 
-	if is_linux; then
-		for disk in $DISKSARRAY; do
-			for (( j = 1; j < MAX_PARTITIONS; j++ )); do
-				typeset partition=${disk}${SLICE_PREFIX}${j}
-				parted $DEV_DSKDIR/$disk -s rm $j > /dev/null 2>&1
-				if lsblk | grep -qF ${partition}; then
-					log_fail "Partition ${partition} not deleted"
-				else
-					log_note "Partition ${partition} deleted"
-				fi
-			done
-		done
-	elif is_freebsd; then
+	if is_freebsd; then
 		for disk in $DISKSARRAY; do
 			if gpart destroy -F $disk; then
 				log_note "Partitions for ${disk} deleted"
 			else
 				log_fail "Partitions for ${disk} not deleted"
 			fi
+		done
+	elif is_linux; then
+		typeset -i part
+		for disk in $DISKSARRAY; do
+			for (( part = 1; part < MAX_PARTITIONS; part++ )); do
+				typeset partition=${disk}${SLICE_PREFIX}${part}
+				parted $DEV_DSKDIR/$disk -s rm $part > /dev/null 2>&1
+				if lsblk | grep -qF ${partition}; then
+					log_fail "Partition ${partition} not deleted"
+				else
+					log_note "Partition ${partition} deleted"
+				fi
+			done
 		done
 	fi
 }

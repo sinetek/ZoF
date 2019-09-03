@@ -136,6 +136,9 @@ LINE_LENGTH = 72
 DATE_FORMAT = '%a %b %d %H:%M:%S %Y'
 TITLE = 'ZFS Subsystem Report'
 
+SECTIONS = 'arc archits dmu l2arc spl tunables vdev zil'.split()
+SECTION_HELP = 'print info from one section ('+' '.join(SECTIONS)+')'
+
 # Tunables and SPL are handled separately because they come from
 # different sources
 SECTION_PATHS = {'arc': 'arcstats',
@@ -145,8 +148,6 @@ SECTION_PATHS = {'arc': 'arcstats',
                  'xuio': 'xuio_stats',
                  'zfetch': 'zfetchstats',
                  'zil': 'zil'}
-SECTIONS = sorted(SECTION_PATHS.keys())
-SECTION_HELP = 'print info from one section (%s)' % ' '.join(SECTIONS)
 
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument('-a', '--alternate', action='store_true', default=False,

@@ -3823,7 +3823,7 @@ function md5digest
 		md5 -q $file
 		;;
 	*)
-		md5sum $file | awk '{ print $1 }'
+		md5sum -b $file | awk '{ print $1 }'
 		;;
 	esac
 }
@@ -3841,7 +3841,7 @@ function sha256digest
 		sha256 -q $file
 		;;
 	*)
-		sha256sum $file | awk '{ print $1 }'
+		sha256sum -b $file | awk '{ print $1 }'
 		;;
 	esac
 }

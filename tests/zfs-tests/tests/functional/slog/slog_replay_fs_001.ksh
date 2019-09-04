@@ -58,14 +58,8 @@
 
 verify_runnable "global"
 
-function cleanup_fs
-{
-	rm -f $TESTDIR/checksum
-	cleanup
-}
-
 log_assert "Replay of intent log succeeds."
-log_onexit cleanup_fs
+log_onexit cleanup
 log_must setup
 
 #

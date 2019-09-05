@@ -207,6 +207,7 @@
 #include <sys/vdev_trim.h>
 #include <sys/vdev_impl.h>
 #include <sys/vdev_initialize.h>
+#include <sys/zfs_ioctl_os.h>
 
 #include "zfs_namecheck.h"
 #include "zfs_prop.h"
@@ -3202,6 +3203,19 @@ zfs_fill_zplprops_root(uint64_t spa_vers, nvlist_t *createprops,
 
 /*
  * innvl: {
+ *     "snaps" -> { snapshot1, snapshot2 }
+ *     (optional boolean) "defer"
+ * }
+ *
+ * outnvl: snapshot -> error code (int32)
+ */
+static const zfs_ioc_key_t zfs_keys_destroy_snaps[] = {
+	{"snaps",	DATA_TYPE_NVLIST,	0},
+	{"defer", 	DATA_TYPE_BOOLEAN,	ZK_OPTIONAL},
+};
+
+/*
+ * innvl: {
  *     "type" -> dmu_objset_type_t (int32)
  *     (optional) "props" -> { prop -> value }
  *     (optional) "hidden_args" -> { "wkeydata" -> value }
@@ -4206,13 +4220,11 @@ zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		}
 		deactivate_super(zfsvfs->z_sb);
 	}
-#ifndef __FreeBSD__
 	else if ((zv = zvol_suspend(fsname)) != NULL) {
 		error = dsl_dataset_rollback(fsname, target, zvol_tag(zv),
 		    outnvl);
 		zvol_resume(zv);
 	}
-#endif
 	else {
 		error = dsl_dataset_rollback(fsname, target, NULL, outnvl);
 	}
@@ -4954,12 +4966,10 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 			error = error ? error : end_err;
 			deactivate_super(zfsvfs->z_sb);
 		}
-#ifndef __FreeBSD__
 		else if ((zv = zvol_suspend(tofs)) != NULL) {
 			error = dmu_recv_end(&drc, zvol_tag(zv));
 			zvol_resume(zv);
 		}
-#endif
 		else {
 			error = dmu_recv_end(&drc, NULL);
 		}
@@ -6407,74 +6417,6 @@ static const zfs_ioc_key_t zfs_keys_send_new[] = {
 	{"redactbook",		DATA_TYPE_STRING,	ZK_OPTIONAL},
 };
 
-#ifdef __FreeBSD__
-static int
-zfs_ioc_jail(zfs_cmd_t *zc)
-{
-
-	return (zone_dataset_attach(curthread->td_ucred, zc->zc_name,
-	    (int)zc->zc_jailid));
-}
-
-static int
-zfs_ioc_unjail(zfs_cmd_t *zc)
-{
-
-	return (zone_dataset_detach(curthread->td_ucred, zc->zc_name,
-	    (int)zc->zc_jailid));
-}
-
-static const zfs_ioc_key_t zfs_keys_nextboot[] = {
-	{"command",		DATA_TYPE_STRING,	0},
-	{ ZPOOL_CONFIG_POOL_GUID,		DATA_TYPE_UINT64,	0},
-	{ ZPOOL_CONFIG_GUID,		DATA_TYPE_UINT64,	0}
-};
-
-static int
-zfs_ioc_nextboot(const char *unused, nvlist_t *innvl, nvlist_t *outnvl)
-{
-	char name[MAXNAMELEN];
-	spa_t *spa;
-	vdev_t *vd;
-	char *command;
-	uint64_t pool_guid;
-	uint64_t vdev_guid;
-	int error;
-
-	if (nvlist_lookup_uint64(innvl,
-	    ZPOOL_CONFIG_POOL_GUID, &pool_guid) != 0)
-		return (EINVAL);
-	if (nvlist_lookup_uint64(innvl,
-	    ZPOOL_CONFIG_GUID, &vdev_guid) != 0)
-		return (EINVAL);
-	if (nvlist_lookup_string(innvl,
-	    "command", &command) != 0)
-		return (EINVAL);
-
-	mutex_enter(&spa_namespace_lock);
-	spa = spa_by_guid(pool_guid, vdev_guid);
-	if (spa != NULL)
-		strcpy(name, spa_name(spa));
-	mutex_exit(&spa_namespace_lock);
-	if (spa == NULL)
-		return (ENOENT);
-
-	if ((error = spa_open(name, &spa, FTAG)) != 0)
-		return (error);
-	spa_vdev_state_enter(spa, SCL_ALL);
-	vd = spa_lookup_by_guid(spa, vdev_guid, B_TRUE);
-	if (vd == NULL) {
-		(void) spa_vdev_state_exit(spa, NULL, ENXIO);
-		spa_close(spa, FTAG);
-		return (ENODEV);
-	}
-	error = vdev_label_write_pad2(vd, command, strlen(command));
-	(void) spa_vdev_state_exit(spa, NULL, 0);
-	txg_wait_synced(spa->spa_dsl_pool, 0);
-	spa_close(spa, FTAG);
-	return (error);
-}
-#endif
 static int
 zfs_ioc_send_new(const char *snapname, nvlist_t *innvl, nvlist_t *outnvl)
 {

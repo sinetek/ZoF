@@ -590,7 +590,6 @@ zap_lockdir_by_dnode(dnode_t *dn, dmu_tx_t *tx,
 	if (err != 0) {
 		return (err);
 	}
-	/* BEGIN CSTYLED */
 #ifdef ZFS_DEBUG
 	{
 		dmu_object_info_t doi;
@@ -598,7 +597,6 @@ zap_lockdir_by_dnode(dnode_t *dn, dmu_tx_t *tx,
 		ASSERT3U(DMU_OT_BYTESWAP(doi.doi_type), ==, DMU_BSWAP_ZAP);
 	}
 #endif
-	/* END CSTYLED */
 
 	err = zap_lockdir_impl(db, tag, tx, lti, fatreader, adding, zapp);
 	if (err != 0) {
@@ -616,8 +614,6 @@ zap_lockdir(objset_t *os, uint64_t obj, dmu_tx_t *tx,
 	int err = dmu_buf_hold(os, obj, 0, tag, &db, DMU_READ_NO_PREFETCH);
 	if (err != 0)
 		return (err);
-
-	/* BEGIN CSTYLED */
 #ifdef ZFS_DEBUG
 	{
 		dmu_object_info_t doi;
@@ -625,7 +621,6 @@ zap_lockdir(objset_t *os, uint64_t obj, dmu_tx_t *tx,
 		ASSERT3U(DMU_OT_BYTESWAP(doi.doi_type), ==, DMU_BSWAP_ZAP);
 	}
 #endif
-	/* END CSTYLED */
 	err = zap_lockdir_impl(db, tag, tx, lti, fatreader, adding, zapp);
 	if (err != 0)
 		dmu_buf_rele(db, tag);

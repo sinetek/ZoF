@@ -23,7 +23,7 @@
 #include <sys/dsl_pool.h>
 #include <sys/vdev_indirect_births.h>
 
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
+#ifdef ZFS_DEBUG
 static boolean_t
 vdev_indirect_births_verify(vdev_indirect_births_t *vib)
 {

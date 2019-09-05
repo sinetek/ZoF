@@ -134,6 +134,7 @@ SRCS+=	abd.c \
 	zfs_acl.c \
 	zfs_ctldir.c \
 	zfs_dir.c \
+	zfs_ioctl_os.c \
 	zfs_log.c \
 	zfs_replay.c \
 	zfs_vfsops.c \

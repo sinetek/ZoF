@@ -1636,7 +1636,7 @@ vdev_raidz_child_done(zio_t *zio)
 static void
 vdev_raidz_io_verify(zio_t *zio, raidz_map_t *rm, int col)
 {
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
+#ifdef ZFS_DEBUG
 	vdev_t *vd = zio->io_vd;
 	vdev_t *tvd = vd->vdev_top;
 

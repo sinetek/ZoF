@@ -808,7 +808,7 @@ dbuf_init(void)
 	 * The hash table is big enough to fill all of physical memory
 	 * with an average block size of zfs_arc_average_blocksize (default 8K).
 	 * By default, the table will take up
-	 * totalmem * sizeof (void*) / 8K (1MB per GB with 8-byte pointers).
+	 * totalmem * sizeof(void*) / 8K (1MB per GB with 8-byte pointers).
 	 */
 	while (hsize * zfs_arc_average_blocksize < physmem * PAGESIZE)
 		hsize <<= 1;
@@ -1050,7 +1050,6 @@ dbuf_verify(dmu_buf_impl_t *db)
 		 * partially fill in a hole.
 		 */
 		if (db->db_dirtycnt == 0) {
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
 			if (db->db_level == 0) {
 				uint64_t *buf = db->db.db_data;
 				int i;
@@ -1087,7 +1086,6 @@ dbuf_verify(dmu_buf_impl_t *db)
 					ASSERT0(bp->blk_phys_birth);
 				}
 			}
-#endif
 		}
 	}
 	DB_DNODE_EXIT(db);

@@ -25,7 +25,7 @@
 #include <sys/zfeature.h>
 #include <sys/dmu_objset.h>
 
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
+#ifdef ZFS_DEBUG
 static boolean_t
 vdev_indirect_mapping_verify(vdev_indirect_mapping_t *vim)
 {

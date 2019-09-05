@@ -65,13 +65,7 @@ log_must zpool create $spool $VDEV0
 log_must zfs create $spool/$sfs
 
 typeset -i orig_count=$(zpool history $spool | wc -l)
-if ! is_freebsd; then
-	typeset orig_md5=$(zpool history $spool | head -2 | md5sum | \
-	    awk '{print $1}')
-else
-	typeset orig_md5=$(zpool history $spool | head -2 | md5digest)
-fi
-
+typeset orig_md5=$(zpool history $spool | head -2 | md5digest)
 typeset -i i=0
 while ((i < 300)); do
 	zfs set compression=off $spool/$sfs
@@ -86,11 +80,7 @@ done
 TMPFILE=$TEST_BASE_DIR/spool.$$
 zpool history $spool >$TMPFILE
 typeset -i entry_count=$(wc -l $TMPFILE | awk '{print $1}')
-if ! is_freebsd; then
-	typeset final_md5=$(head -2 $TMPFILE | md5sum | awk '{print $1}')
-else
-	typeset final_md5=$(head -2 $TMPFILE | md5digest)
-fi
+typeset final_md5=$(head -2 $TMPFILE | md5digest)
 
 grep 'zpool create' $TMPFILE >/dev/null 2>&1 ||
     log_fail "'zpool create' was not found in pool history"

@@ -74,7 +74,7 @@ function verify_assertion #slices
 			echo "y" | newfs -v $t > /dev/null 2>&1
 			(( $? != 0 )) && \
 				log_fail "newfs over exported pool " \
-					"failes unexpectedly."
+					"failes unexpected."
 		fi
 	done
 

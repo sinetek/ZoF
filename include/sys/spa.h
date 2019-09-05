@@ -33,13 +33,6 @@
 #ifndef _SYS_SPA_H
 #define	_SYS_SPA_H
 
-#ifndef __linux__
-#include <sys/cdefs.h>
-#else
-#if !defined(__printflike)
-#define	__printflike(x, y) __attribute__((__format__(__printf__, x, y)))
-#endif
-#endif
 #include <sys/avl.h>
 #include <sys/zfs_context.h>
 #include <sys/kstat.h>

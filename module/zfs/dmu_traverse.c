@@ -784,4 +784,3 @@ MODULE_PARM_DESC(ignore_hole_birth,
 ZFS_MODULE_PARAM(zfs, , send_holes_without_birth_time, INT, ZMOD_RW,
 	"Ignore hole_birth txg for zfs send");
 /* END CSTYLED */
-#endif

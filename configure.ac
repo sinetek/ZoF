@@ -150,6 +150,7 @@ AC_CONFIG_FILES([
 	module/icp/Makefile
 	include/Makefile
 	include/os/Makefile
+	include/os/freebsd/Makefile
 	include/os/linux/Makefile
 	include/os/linux/kernel/Makefile
 	include/os/linux/kernel/linux/Makefile

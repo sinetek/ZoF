@@ -128,9 +128,6 @@ extern "C" {
 #ifdef ZFS_DEBUG
 #undef NDEBUG
 #endif
-#ifdef __LP64__
-#define	_LP64
-#endif
 
 #ifdef _KERNEL
 #include <linux/types.h>

@@ -3223,6 +3223,19 @@ zfs_fill_zplprops_root(uint64_t spa_vers, nvlist_t *createprops,
 
 /*
  * innvl: {
+ *     "snaps" -> { snapshot1, snapshot2 }
+ *     (optional boolean) "defer"
+ * }
+ *
+ * outnvl: snapshot -> error code (int32)
+ */
+static const zfs_ioc_key_t zfs_keys_destroy_snaps[] = {
+	{"snaps",	DATA_TYPE_NVLIST,	0},
+	{"defer", 	DATA_TYPE_BOOLEAN,	ZK_OPTIONAL},
+};
+
+/*
+ * innvl: {
  *     "type" -> dmu_objset_type_t (int32)
  *     (optional) "props" -> { prop -> value }
  *     (optional) "hidden_args" -> { "wkeydata" -> value }
@@ -4187,13 +4200,11 @@ zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		}
 		deactivate_super(zfsvfs->z_sb);
 	}
-#ifndef __FreeBSD__
 	else if ((zv = zvol_suspend(fsname)) != NULL) {
 		error = dsl_dataset_rollback(fsname, target, zvol_tag(zv),
 		    outnvl);
 		zvol_resume(zv);
 	}
-#endif
 	else {
 		error = dsl_dataset_rollback(fsname, target, NULL, outnvl);
 	}

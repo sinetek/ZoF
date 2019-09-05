@@ -255,17 +255,6 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, default_ibs, CTLFLAG_RWTUN,
 
 
 /* dsl_scan.c */
-extern unsigned int zfs_resilver_delay;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, resilver_delay, CTLFLAG_RWTUN,
-    &zfs_resilver_delay, 0, "Number of ticks to delay resilver");
-
-extern unsigned int zfs_scrub_delay;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, scrub_delay, CTLFLAG_RWTUN,
-    &zfs_scrub_delay, 0, "Number of ticks to delay scrub");
-
-extern unsigned int zfs_scan_idle;
-SYSCTL_UINT(_vfs_zfs, OID_AUTO, scan_idle, CTLFLAG_RWTUN,
-    &zfs_scan_idle, 0, "Idle scan window in clock ticks");
 
 /* metaslab.c */
 

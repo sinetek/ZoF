@@ -149,6 +149,17 @@ AC_CONFIG_FILES([
 	module/icp/Makefile
 	include/Makefile
 	include/os/Makefile
+	include/os/freebsd/Makefile
+	include/os/freebsd/linux/Makefile
+	include/os/freebsd/spl/Makefile
+	include/os/freebsd/spl/acl/Makefile
+	include/os/freebsd/spl/rpc/Makefile
+	include/os/freebsd/spl/sys/Makefile
+	include/os/freebsd/spl/sys/fm/Makefile
+	include/os/freebsd/spl/sys/fm/fs/Makefile
+	include/os/freebsd/spl/sys/sysevent/Makefile
+	include/os/freebsd/zfs/Makefile
+	include/os/freebsd/zfs/sys/Makefile
 	include/os/linux/Makefile
 	include/os/linux/kernel/Makefile
 	include/os/linux/kernel/linux/Makefile

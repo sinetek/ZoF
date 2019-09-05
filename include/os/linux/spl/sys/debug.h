@@ -54,6 +54,9 @@ int spl_panic(const char *file, const char *func, int line,
     const char *fmt, ...);
 void spl_dumpstack(void);
 
+#ifndef	__printflike
+#define	__printflike(x, y) __attribute__((__format__(__printf__, x, y)))
+#endif
 #ifndef expect
 #define	expect(expr, value) (__builtin_expect((expr), (value)))
 #endif

@@ -125,6 +125,9 @@ extern "C" {
 #define	module_param_named(a, b, c, d)
 #define	MODULE_PARM_DESC(a, b)
 #define	asm __asm
+#ifdef ZFS_DEBUG
+#undef NDEBUG
+#endif
 
 #ifdef _KERNEL
 #include <linux/types.h>

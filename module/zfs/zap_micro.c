@@ -591,7 +591,7 @@ zap_lockdir_by_dnode(dnode_t *dn, dmu_tx_t *tx,
 		return (err);
 	}
 	/* BEGIN CSTYLED */
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
+#ifdef ZFS_DEBUG
 	{
 		dmu_object_info_t doi;
 		dmu_object_info_from_db(db, &doi);
@@ -618,7 +618,7 @@ zap_lockdir(objset_t *os, uint64_t obj, dmu_tx_t *tx,
 		return (err);
 
 	/* BEGIN CSTYLED */
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
+#ifdef ZFS_DEBUG
 	{
 		dmu_object_info_t doi;
 		dmu_object_info_from_db(db, &doi);
@@ -1192,7 +1192,7 @@ mzap_addent(zap_name_t *zn, uint64_t value)
 
 	ASSERT(RW_WRITE_HELD(&zap->zap_rwlock));
 
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
+#ifdef ZFS_DEBUG
 	for (int i = 0; i < zap->zap_m.zap_num_chunks; i++) {
 		mzap_ent_phys_t *mze = &zap_m_phys(zap)->mz_chunk[i];
 		ASSERT(strcmp(zn->zn_key_orig, mze->mze_name) != 0);

@@ -115,12 +115,7 @@ log_must rmdir /$TESTPOOL/$TESTFS/dir_to_delete
 # Create a simple validation payload
 log_must mkdir -p $TESTDIR
 log_must dd if=/dev/urandom of=/$TESTPOOL/$TESTFS/payload bs=1k count=8
-
-if is_freebsd; then
-	log_must eval "sha256 /$TESTPOOL/$TESTFS/payload >$TESTDIR/checksum"
-else
-	typeset checksum=$(sha256digest /$TESTPOOL/$TESTFS/payload)
-fi
+typeset checksum=$(sha256digest /$TESTPOOL/$TESTFS/payload)
 
 # TX_WRITE (small file with ordering)
 log_must mkfile 1k /$TESTPOOL/$TESTFS/small_file
@@ -228,11 +223,7 @@ log_note "Verify working set diff:"
 log_must diff -r /$TESTPOOL/$TESTFS $TESTDIR/copy
 
 log_note "Verify file checksum:"
-if is_freebsd; then
-	typeset checksum1=$(sha256 /$TESTPOOL/$TESTFS/payload)
-else
-	typeset checksum1=$(sha256digest /$TESTPOOL/$TESTFS/payload)
-fi
+typeset checksum1=$(sha256digest /$TESTPOOL/$TESTFS/payload)
 [[ "$checksum1" == "$checksum" ]] || \
     log_fail "checksum mismatch ($checksum1 != $checksum)"
 

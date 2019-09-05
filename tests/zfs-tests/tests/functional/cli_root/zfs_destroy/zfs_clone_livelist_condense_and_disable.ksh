@@ -57,12 +57,10 @@ function check_ll_len
 function test_condense
 {
 	# set the max livelist entries to a small value to more easily
-
-    # trigger a condense
+	# trigger a condense
 	set_tunable64 $LIVELIST_MAX_ENTRIES 0x14
 	# set a small percent shared threshold so the livelist is not disabled
 	set_tunable32 $LIVELIST_MIN_PERCENT_SHARED 0xa
-
 	clone_dataset $TESTFS1 snap $TESTCLONE
 
 	# sync between each write to make sure a new entry is created

@@ -268,7 +268,7 @@ extern "C" {
  * Define the appropriate "implementation choices".
  */
 #if !defined(_LP64)
-#define	_LP64
+#error "_LP64 not defined"
 #endif
 #if !defined(_I32LPx) && defined(_KERNEL)
 #define	_I32LPx
@@ -378,7 +378,7 @@ extern "C" {
  * Define the appropriate "implementation choices"
  */
 #if !defined(_LP64)
-#define	_LP64
+#error "_LP64 not defined"
 #endif
 #define	_SUNOS_VTOC_16
 #define	_DMA_USES_PHYSADDR
@@ -507,7 +507,7 @@ extern "C" {
  * Define the appropriate "implementation choices".
  */
 #if !defined(_LP64)
-#define	_LP64
+#error "_LP64 not defined"
 #endif
 #else
 #define	_LONG_ALIGNMENT			4
@@ -668,7 +668,7 @@ extern "C" {
  * Define the appropriate "implementation choices"
  */
 #if !defined(_LP64)
-#define	_LP64
+#error "_LP64 not defined"
 #endif
 #if !defined(_I32LPx)
 #define	_I32LPx

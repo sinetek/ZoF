@@ -1,5 +1,5 @@
 #ifndef _LINUX_ZFS_IOCTL_OS_H_
-#define _LINUX_ZFS_IOCTL_OS_H_
+#define	_LINUX_ZFS_IOCTL_OS_H_
 
 typedef int zfs_ioc_legacy_func_t(zfs_cmd_t *);
 typedef int zfs_ioc_func_t(const char *, nvlist_t *, nvlist_t *);
@@ -46,9 +46,9 @@ typedef struct zfs_ioc_key {
 	ioc_key_flag_t	zkey_flags;
 } zfs_ioc_key_t;
 
-
 int zfs_secpolicy_config(zfs_cmd_t *zc, nvlist_t *innvl, cred_t *cr);
 
+/* BEGIN CSTYLED */
 void zfs_ioctl_register_dataset_nolog(zfs_ioc_t ioc, zfs_ioc_legacy_func_t *func,
     zfs_secpolicy_func_t *secpolicy, zfs_ioc_poolcheck_t pool_check);
 
@@ -56,9 +56,11 @@ void zfs_ioctl_register(const char *name, zfs_ioc_t ioc, zfs_ioc_func_t *func,
     zfs_secpolicy_func_t *secpolicy, zfs_ioc_namecheck_t namecheck,
     zfs_ioc_poolcheck_t pool_check, boolean_t smush_outnvlist,
     boolean_t allow_log, const zfs_ioc_key_t *nvl_keys, size_t num_keys);
+/* END CSTYLED */
 
 void zfs_ioctl_init_os(void);
 
-int zfs_ioc_destroy_snaps(const char *poolname, nvlist_t *innvl, nvlist_t *outnvl);
+int zfs_ioc_destroy_snaps(const char *poolname, nvlist_t *innvl,
+    nvlist_t *outnvl);
 
 #endif

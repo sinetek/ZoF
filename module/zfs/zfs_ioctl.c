@@ -4199,13 +4199,11 @@ zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 			error = error ? error : resume_err;
 		}
 		deactivate_super(zfsvfs->z_sb);
-	}
-	else if ((zv = zvol_suspend(fsname)) != NULL) {
+	} else if ((zv = zvol_suspend(fsname)) != NULL) {
 		error = dsl_dataset_rollback(fsname, target, zvol_tag(zv),
 		    outnvl);
 		zvol_resume(zv);
-	}
-	else {
+	} else {
 		error = dsl_dataset_rollback(fsname, target, NULL, outnvl);
 	}
 	return (error);

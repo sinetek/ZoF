@@ -262,12 +262,14 @@ spl_kmem_cache_inuse(kmem_cache_t *cache)
 {
 	return (cache->skc_obj_total);
 }
+EXPORT_SYMBOL(spl_kmem_cache_inuse);
 
 int
 spl_kmem_cache_entry_size(kmem_cache_t *cache)
 {
 	return (cache->skc_obj_size);
 }
+EXPORT_SYMBOL(spl_kmem_cache_entry_size);
 
 /*
  * Lookup the spl_kmem_object_t for an object given that object.

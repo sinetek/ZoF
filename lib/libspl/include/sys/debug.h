@@ -28,5 +28,7 @@
 #define	_LIBSPL_SYS_DEBUG_H
 
 #include <assert.h>
-
+#ifndef	__printflike
+#define	__printflike(x, y) __attribute__((__format__(__printf__, x, y)))
+#endif
 #endif

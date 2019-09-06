@@ -70,20 +70,6 @@
 #include <linux/utsname_compat.h>
 #include <linux/mod_compat.h>
 
-#define	ZMOD_RW 0644
-#define	ZMOD_RD 0444
-
-/* BEGIN CSTYLED */
-#define	UINT uint
-#define	UQUAD ulong
-#define	STRING charp
-/* END CSTYLED */
-
-#define	ZFS_MODULE_PARAM(scope_prefix, name_prefix, name, type, perm, desc) \
-	module_param(name_prefix ## name, type, perm); \
-	MODULE_PARM_DESC(name_prefix ## name, desc)
-
-
 #elif defined(__FreeBSD__)
 #include <sys/kcondvar.h>
 #include <sys/rwlock.h>

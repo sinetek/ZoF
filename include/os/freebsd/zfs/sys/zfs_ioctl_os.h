@@ -1,6 +1,14 @@
 #ifndef _FREEBSD_ZFS_IOCTL_OS_H_
 #define _FREEBSD_ZFS_IOCTL_OS_H_
 
+#include <sys/buf.h>
+
+#define	z_sb z_vfs
+#define	deactivate_super vfs_unbusy
+#define	group_leader p_pid
+#define	KMALLOC_MAX_SIZE MAXPHYS
+#define	VOP_SEEK(...) (0)
+
 typedef int zfs_ioc_legacy_func_t(zfs_cmd_t *);
 typedef int zfs_ioc_func_t(const char *, nvlist_t *, nvlist_t *);
 typedef int zfs_secpolicy_func_t(zfs_cmd_t *, nvlist_t *, cred_t *);
@@ -57,11 +65,11 @@ void zfs_ioctl_register(const char *name, zfs_ioc_t ioc, zfs_ioc_func_t *func,
     zfs_ioc_poolcheck_t pool_check, boolean_t smush_outnvlist,
     boolean_t allow_log, const zfs_ioc_key_t *nvl_keys, size_t num_keys);
 
-
-
+void zfs_ioctl_init(void);
 void zfs_ioctl_init_os(void);
 
 int zfs_ioc_destroy_snaps(const char *poolname, nvlist_t *innvl, nvlist_t *outnvl);
 
+int zfs_vfs_ref(zfsvfs_t **zfvp);
 
 #endif

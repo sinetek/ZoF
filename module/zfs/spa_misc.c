@@ -2755,10 +2755,7 @@ spa_suspend_async_destroy(spa_t *spa)
 	return (B_FALSE);
 }
 
-#if defined(_KERNEL) && defined(__linux__)
-#include <linux/mod_compat.h>
-
-static int
+int
 param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp)
 {
 	spa_t *spa = NULL;

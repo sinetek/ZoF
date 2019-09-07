@@ -205,6 +205,157 @@ zfsdev_getminor(struct file *filp, minor_t *minorp)
 	return (SET_ERROR(EBADF));
 }
 
+extern kmutex_t zfsdev_state_lock;
+extern void zfs_init(void);
+extern void zfs_fini(void);
+extern zfsdev_state_t *zfsdev_state_list;
+
+extern uint_t zfs_fsyncer_key;
+extern uint_t rrw_tsd_key;
+extern uint_t zfs_allow_log_key;
+
+int
+zfs_vfs_ref(zfsvfs_t **zfvp)
+{
+	if (*zfvp == NULL || (*zfvp)->z_sb == NULL ||
+	    !atomic_inc_not_zero(&((*zfvp)->z_sb->s_active))) {
+		return (SET_ERROR(ESRCH));
+	}
+	return (0);
+}
+
+
+static int
+zfsdev_state_init(struct file *filp)
+{
+	zfsdev_state_t *zs, *zsprev = NULL;
+	minor_t minor;
+	boolean_t newzs = B_FALSE;
+
+	ASSERT(MUTEX_HELD(&zfsdev_state_lock));
+
+	minor = zfsdev_minor_alloc();
+	if (minor == 0)
+		return (SET_ERROR(ENXIO));
+
+	for (zs = zfsdev_state_list; zs != NULL; zs = zs->zs_next) {
+		if (zs->zs_minor == -1)
+			break;
+		zsprev = zs;
+	}
+
+	if (!zs) {
+		zs = kmem_zalloc(sizeof (zfsdev_state_t), KM_SLEEP);
+		newzs = B_TRUE;
+	}
+
+	zs->zs_file = filp;
+	filp->private_data = zs;
+
+	zfs_onexit_init((zfs_onexit_t **)&zs->zs_onexit);
+	zfs_zevent_init((zfs_zevent_t **)&zs->zs_zevent);
+
+
+	/*
+	 * In order to provide for lock-free concurrent read access
+	 * to the minor list in zfsdev_get_state_impl(), new entries
+	 * must be completely written before linking them into the
+	 * list whereas existing entries are already linked; the last
+	 * operation must be updating zs_minor (from -1 to the new
+	 * value).
+	 */
+	if (newzs) {
+		zs->zs_minor = minor;
+		smp_wmb();
+		zsprev->zs_next = zs;
+	} else {
+		smp_wmb();
+		zs->zs_minor = minor;
+	}
+
+	return (0);
+}
+
+static int
+zfsdev_state_destroy(struct file *filp)
+{
+	zfsdev_state_t *zs;
+
+	ASSERT(MUTEX_HELD(&zfsdev_state_lock));
+	ASSERT(filp->private_data != NULL);
+
+	zs = filp->private_data;
+	zs->zs_minor = -1;
+	zfs_onexit_destroy(zs->zs_onexit);
+	zfs_zevent_destroy(zs->zs_zevent);
+
+	return (0);
+}
+
+static int
+zfsdev_open(struct inode *ino, struct file *filp)
+{
+	int error;
+
+	mutex_enter(&zfsdev_state_lock);
+	error = zfsdev_state_init(filp);
+	mutex_exit(&zfsdev_state_lock);
+
+	return (-error);
+}
+
+static int
+zfsdev_release(struct inode *ino, struct file *filp)
+{
+	int error;
+
+	mutex_enter(&zfsdev_state_lock);
+	error = zfsdev_state_destroy(filp);
+	mutex_exit(&zfsdev_state_lock);
+
+	return (-error);
+}
+
+static long
+zfsdev_ioctl_linux(struct file *filp, unsigned cmd, unsigned long arg)
+{
+	uint_t vecnum;
+
+	vecnum = cmd - ZFS_IOC_FIRST;
+	return (zfsdev_ioctl_common(vecnum, arg));
+}
+
+int
+zfsdev_getminor(struct file *filp, minor_t *minorp)
+{
+	zfsdev_state_t *zs, *fpd;
+
+	ASSERT(filp != NULL);
+	ASSERT(!MUTEX_HELD(&zfsdev_state_lock));
+
+	fpd = filp->private_data;
+	if (fpd == NULL)
+		return (SET_ERROR(EBADF));
+
+	mutex_enter(&zfsdev_state_lock);
+
+	for (zs = zfsdev_state_list; zs != NULL; zs = zs->zs_next) {
+
+		if (zs->zs_minor == -1)
+			continue;
+
+		if (fpd == zs) {
+			*minorp = fpd->zs_minor;
+			mutex_exit(&zfsdev_state_lock);
+			return (0);
+		}
+	}
+
+	mutex_exit(&zfsdev_state_lock);
+
+	return (SET_ERROR(EBADF));
+}
+
 void
 zfs_ioctl_init_os(void)
 {

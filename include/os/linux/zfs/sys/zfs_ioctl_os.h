@@ -1,5 +1,8 @@
 #ifndef _LINUX_ZFS_IOCTL_OS_H_
 #define	_LINUX_ZFS_IOCTL_OS_H_
+#include <sys/zfs_sysfs.h>
+#include <linux/miscdevice.h>
+#include <linux/slab.h>
 
 typedef int zfs_ioc_legacy_func_t(zfs_cmd_t *);
 typedef int zfs_ioc_func_t(const char *, nvlist_t *, nvlist_t *);
@@ -58,9 +61,14 @@ void zfs_ioctl_register(const char *name, zfs_ioc_t ioc, zfs_ioc_func_t *func,
     boolean_t allow_log, const zfs_ioc_key_t *nvl_keys, size_t num_keys);
 /* END CSTYLED */
 
+int zfsdev_getminor(struct file *filp, minor_t *minorp);
+
+void zfs_ioctl_init(void);
 void zfs_ioctl_init_os(void);
 
 int zfs_ioc_destroy_snaps(const char *poolname, nvlist_t *innvl,
     nvlist_t *outnvl);
+
+int zfs_vfs_ref(zfsvfs_t **zfvp);
 
 #endif

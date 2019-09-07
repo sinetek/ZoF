@@ -53,6 +53,19 @@
 #include <sys/vdev_initialize.h>
 #include <sys/zfs_ioctl_os.h>
 
+int
+zfs_vfs_ref(zfsvfs_t **zfvp)
+{
+	int error = 0;
+
+	if (*zfvp) {
+		vfs_ref((*zfvp)->z_vfs);
+	} else {
+		error = SET_ERROR(ESRCH);
+	}
+
+	return (error);
+}
 
 static const zfs_ioc_key_t zfs_keys_nextboot[] = {
 	{"command",		DATA_TYPE_STRING,	0},

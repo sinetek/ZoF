@@ -92,7 +92,7 @@ function do_vol_test
 	case "$type" in
 	"ext2")
 		if is_freebsd; then
-			log_unsupported "$type test not implemented for freebsd"
+			log_unsupported "ext2 test not implemented for freebsd"
 		fi
 		log_must eval "echo y | newfs $vol_r_path >/dev/null 2>&1"
 		log_must mount -o rw $vol_b_path $mntp

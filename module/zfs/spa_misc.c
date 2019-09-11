@@ -2754,8 +2754,9 @@ spa_suspend_async_destroy(spa_t *spa)
 	return (B_FALSE);
 }
 
+#ifdef _KERNEL
 int
-param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp)
+param_set_deadman_failmode_common(const char *val)
 {
 	spa_t *spa = NULL;
 	char *p;
@@ -2777,11 +2778,21 @@ param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp)
 		mutex_exit(&spa_namespace_lock);
 	}
 
-	return (param_set_charp(val, kp));
+	return (0);
 }
 
-#if defined(_KERNEL) && defined(__linux__)
+#ifdef __linux__
 #include <linux/mod_compat.h>
+
+static int
+param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp)
+{
+	int error;
+
+	error = param_set_deadman_failmode_common(val);
+
+	return (error || param_set_charp(val, kp));
+}
 
 static int
 param_set_deadman_ziotime(const char *val, zfs_kernel_param_t *kp)
@@ -2844,7 +2855,8 @@ param_set_slop_shift(const char *buf, zfs_kernel_param_t *kp)
 
 	return (0);
 }
-#endif
+#endif /* __linux__ */
+#endif /* _KERNEL */
 
 /* Namespace manipulation */
 EXPORT_SYMBOL(spa_lookup);

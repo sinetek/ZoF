@@ -62,10 +62,10 @@ if sys.platform.startswith('freebsd'):
         """Collect information on a specific subsystem of the ARC"""
 
         base = 'kstat.zfs.misc.%s.' % namespace
-        return {kstat.name: D(kstat.value) for kstat in sysctl.filter(base)}
+        return [(kstat.name, D(kstat.value)) for kstat in sysctl.filter(base)]
 
     def load_tunables():
-        return {ctl.name: ctl.value for ctl in sysctl.filter('vfs.zfs')}
+        return dict((ctl.name, ctl.value) for ctl in sysctl.filter('vfs.zfs'))
 
 else:
 

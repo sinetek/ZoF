@@ -44,6 +44,42 @@ import sys
 import time
 
 DESCRIPTION = 'Print ARC and other statistics for ZFS on Linux'
+INDENT = ' '*8
+LINE_LENGTH = 72
+DATE_FORMAT = '%a %b %d %H:%M:%S %Y'
+TITLE = 'ZFS Subsystem Report'
+
+SECTIONS = 'arc archits dmu l2arc spl tunables vdev zil'.split()
+SECTION_HELP = 'print info from one section ('+' '.join(SECTIONS)+')'
+
+# Tunables and SPL are handled separately because they come from
+# different sources
+SECTION_PATHS = {'arc': 'arcstats',
+                 'dmu': 'dmu_tx',
+                 'l2arc': 'arcstats',  # L2ARC stuff lives in arcstats
+                 'vdev': 'vdev_cache_stats',
+                 'xuio': 'xuio_stats',
+                 'zfetch': 'zfetchstats',
+                 'zil': 'zil'}
+
+parser = argparse.ArgumentParser(description=DESCRIPTION)
+parser.add_argument('-a', '--alternate', action='store_true', default=False,
+                    help='use alternate formatting for tunables and SPL',
+                    dest='alt')
+parser.add_argument('-d', '--description', action='store_true', default=False,
+                    help='print descriptions with tunables and SPL',
+                    dest='desc')
+parser.add_argument('-g', '--graph', action='store_true', default=False,
+                    help='print graph on ARC use and exit', dest='graph')
+parser.add_argument('-p', '--page', type=int, dest='page',
+                    help='print page by number (DEPRECATED, use "-s")')
+parser.add_argument('-r', '--raw', action='store_true', default=False,
+                    help='dump all available data with minimal formatting',
+                    dest='raw')
+parser.add_argument('-s', '--section', dest='section', help=SECTION_HELP)
+ARGS = parser.parse_args()
+
+
 if sys.platform.startswith('freebsd'):
     # Requires py36-sysctl on FreeBSD
     import sysctl
@@ -58,7 +94,8 @@ if sys.platform.startswith('freebsd'):
         return [fmt(kstat) for kstat in sysctl.filter(base)]
 
     def get_params(base):
-        return {ctl.name[8:]: str(ctl.value) for ctl in sysctl.filter(base)}
+        cut = 8 # = len('vfs.zfs.')
+        return {ctl.name[cut:]: str(ctl.value) for ctl in sysctl.filter(base)}
 
     def get_tunable_params():
         return get_params('vfs.zfs')
@@ -81,8 +118,7 @@ else:
     VDEV_CACHE_SIZE = 'zfs_vdev_cache_size'
 
     def load_kstats(section):
-        path = '{basepath}/{section}'.format(basepath=KSTAT_PATH,
-                                             section=section)
+        path = os.path.join(PROC_PATH, section)
         with open(path) as f:
             return list(f)[2:] # Get rid of header
 
@@ -93,7 +129,7 @@ else:
         """
         result = {}
         for name in os.listdir(basepath):
-            path = '{basepath}/{name}'.format(basepath=basepath, name=name)
+            path = os.path.join(basepath, name)
             with open(path) as f:
                 value = f.read()
                 result[name] = value.strip()
@@ -114,7 +150,6 @@ else:
         # to make sure we get what is really loaded in the kernel
         command = ["cat", "/sys/module/{0}/version".format(request)]
         req = request.upper()
-        version = "(Can't get {0} version)".format(req)
 
         # The recommended way to do this is with subprocess.run(). However,
         # some installed versions of Python are < 3.5, so we offer them
@@ -165,60 +200,6 @@ parser.add_argument('-r', '--raw', action='store_true', default=False,
                     dest='raw')
 parser.add_argument('-s', '--section', dest='section', help=SECTION_HELP)
 ARGS = parser.parse_args()
-
-
-def get_params(basepath):
-    """Collect information on the Solaris Porting Layer (SPL) or the
-    tunables, depending on the PATH given. Does not check if PATH is
-    legal.
-    """
-    result = {}
-    for name in os.listdir(basepath):
-        path = os.path.join(basepath, name)
-        with open(path) as f:
-            value = f.read()
-            result[name] = value.strip()
-    return result
-
-
-def get_spl_params():
-    return get_params(SPL_PATH)
-
-
-def get_tunable_params():
-    return get_params(TUNABLES_PATH)
-
-
-def get_vdev_params():
-    return get_params(TUNABLES_PATH)
-
-
-def get_version_impl(request):
-    # The original arc_summary called /sbin/modinfo/{spl,zfs} to get
-    # the version information. We switch to /sys/module/{spl,zfs}/version
-    # to make sure we get what is really loaded in the kernel
-    command = ["cat", "/sys/module/{0}/version".format(request)]
-    req = request.upper()
-
-    # The recommended way to do this is with subprocess.run(). However,
-    # some installed versions of Python are < 3.5, so we offer them
-    # the option of doing it the old way (for now)
-    info = ''
-    if 'run' in dir(subprocess):
-        info = subprocess.run(command, stdout=subprocess.PIPE,
-                              universal_newlines=True)
-        version = info.stdout.strip()
-    else:
-        info = subprocess.check_output(command, universal_newlines=True)
-        version = info.strip()
-
-    return version
-
-
-def load_kstats(section):
-    path = os.path.join(PROC_PATH, section)
-    with open(path) as f:
-        return list(f)[2:] # Get rid of header
 
 
 def cleanup_line(single_line):

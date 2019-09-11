@@ -422,7 +422,7 @@ SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, deadman_ziotime_ms, CTLFLAG_RWTUN,
     "Time until an individual I/O is considered to be \"hung\" in milliseconds");
 
 extern char *zfs_deadman_failmode;
-extern int param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp);
+extern int param_set_deadman_failmode_common(const char *val);
 
 static int 
 zfs_deadman_failmode_sysctl(SYSCTL_HANDLER_ARGS)
@@ -445,7 +445,7 @@ zfs_deadman_failmode_sysctl(SYSCTL_HANDLER_ARGS)
 	if (!strcmp(buf,  "panic"))
 		zfs_deadman_failmode = "panic";
 
-	return (-param_set_deadman_failmode(buf, NULL));
+	return (-param_set_deadman_failmode_common(buf));
 }
 
 SYSCTL_PROC(_vfs_zfs, OID_AUTO, deadman_failmode, CTLTYPE_STRING|CTLFLAG_RWTUN,

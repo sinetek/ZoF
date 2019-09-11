@@ -2755,8 +2755,7 @@ spa_suspend_async_destroy(spa_t *spa)
 	return (B_FALSE);
 }
 
-#if defined(_KERNEL) && defined(__linux__)
-#include <linux/mod_compat.h>
+#ifdef _KERNEL
 
 int
 param_set_deadman_failmode_common(const char *val)

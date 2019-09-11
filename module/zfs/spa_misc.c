@@ -2755,8 +2755,9 @@ spa_suspend_async_destroy(spa_t *spa)
 	return (B_FALSE);
 }
 
+#ifdef _KERNEL
 int
-param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp)
+param_set_deadman_failmode_common(const char *val)
 {
 	spa_t *spa = NULL;
 	char *p;
@@ -2778,7 +2779,7 @@ param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp)
 		mutex_exit(&spa_namespace_lock);
 	}
 
-	return (param_set_charp(val, kp));
+	return (0);
 }
 #endif
 

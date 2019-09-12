@@ -1262,7 +1262,7 @@ dmu_objset_create_sync(void *arg, dmu_tx_t *tx)
 		mutex_exit(&ds->ds_lock);
 	}
 
-	spa_history_log_internal_ds(ds, "create", tx, " ");
+	spa_history_log_internal_ds_quiet(ds, "create", tx);
 	zvol_create_minors(spa, doca->doca_name, B_TRUE);
 
 	dsl_dataset_rele_flags(ds, DS_HOLD_FLAG_DECRYPT, FTAG);

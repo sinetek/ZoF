@@ -1156,6 +1156,8 @@ extern void spa_history_log_internal(spa_t *spa, const char *operation,
     dmu_tx_t *tx, const char *fmt, ...) __printflike(4, 5);
 extern void spa_history_log_internal_ds(struct dsl_dataset *ds, const char *op,
     dmu_tx_t *tx, const char *fmt, ...)  __printflike(4, 5);
+#define	spa_history_log_internal_ds_quiet(_ds, _op, _tx) \
+    spa_history_log_internal_ds(_ds, _op, _tx, " ")
 extern void spa_history_log_internal_dd(dsl_dir_t *dd, const char *operation,
     dmu_tx_t *tx, const char *fmt, ...) __printflike(4, 5);
 

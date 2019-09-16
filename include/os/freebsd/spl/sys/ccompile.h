@@ -252,8 +252,9 @@ typedef int enum_t;
 #define	pwrite64 pwrite
 #define	ftruncate64 ftruncate
 #define	lseek64 lseek
-#define	pread64 pread	
+#define	pread64 pread
 #define	stat64 stat
+#define	lstat64 lstat
 #define	statfs64 statfs
 #define	readdir64 readdir
 #define	dirent64 dirent

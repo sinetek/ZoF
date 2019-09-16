@@ -11,7 +11,7 @@ zpool_SOURCES = \
 	zpool_util.h
 
 if BUILD_LINUX
-zpool_SOURCES += linux_zpool_vdev.c
+zpool_SOURCES += zpool_vdev.c
 endif
 
 if BUILD_FREEBSD

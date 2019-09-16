@@ -125,6 +125,12 @@ vdev_cmd_data_list_t *all_pools_for_each_vdev_run(int argc, char **argv,
 
 void free_vdev_cmd_data_list(vdev_cmd_data_list_t *vcdl);
 
+int check_device(const char *path, boolean_t force,
+    boolean_t isspare, boolean_t iswholedisk);
+boolean_t check_sector_size_database(char *path, int *sector_size);
+void vdev_error(const char *fmt, ...);
+int check_file(const char *file, boolean_t force, boolean_t isspare);
+
 #ifdef	__cplusplus
 }
 #endif

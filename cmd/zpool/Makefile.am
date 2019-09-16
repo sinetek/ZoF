@@ -8,14 +8,15 @@ zpool_SOURCES = \
 	zpool_iter.c \
 	zpool_main.c \
 	zpool_util.c \
-	zpool_util.h
+	zpool_util.h \
+	zpool_vdev.c
 
 if BUILD_LINUX
-zpool_SOURCES += zpool_vdev.c
+zpool_SOURCES += os/linux/zpool_vdev_os.c
 endif
 
 if BUILD_FREEBSD
-zpool_SOURCES += freebsd_zpool_vdev.c
+zpool_SOURCES += os/freebsd/zpool_vdev_os.c
 endif
 
 if BUILD_LINUX

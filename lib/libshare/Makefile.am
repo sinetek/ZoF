@@ -9,6 +9,10 @@ DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/lib/libspl/include/os/linux
 endif
 
+if BUILD_FREEBSD
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/freebsd
+endif
 
 noinst_LTLIBRARIES = libshare.la
 

@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <sys/systeminfo.h>
 
-#ifndef __FreeBSD__
 static unsigned long
 get_spl_hostid(void)
 {
@@ -57,14 +56,10 @@ get_spl_hostid(void)
 
 	return (hostid & HOSTID_MASK);
 }
-#endif
 
 unsigned long
 get_system_hostid(void)
 {
-#ifdef __FreeBSD__
-	unsigned long system_hostid = gethostid();
-#else
 	unsigned long system_hostid = get_spl_hostid();
 	/*
 	 * We do not use the library call gethostid() because
@@ -87,7 +82,6 @@ get_system_hostid(void)
 			close(fd);
 		}
 	}
-#endif
 
 	return (system_hostid);
 }

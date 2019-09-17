@@ -33,7 +33,7 @@ USER_C += \
 endif
 
 if BUILD_FREEBSD
-USER_C += freebsd_getmntany.c
+USER_C += os/freebsd/getmntany.c
 endif
 
 USER_ASM = atomic.S

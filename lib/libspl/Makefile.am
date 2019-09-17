@@ -33,12 +33,18 @@ if BUILD_LINUX
 USER_C += \
 	os/linux/gethostid.c \
 	os/linux/getmntany.c
+
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/linux
 endif
 
 if BUILD_FREEBSD
 USER_C += \
 	os/freebsd/gethostid.c \
 	os/freebsd/getmntany.c
+
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/freebsd
 endif
 
 USER_ASM = atomic.S

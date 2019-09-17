@@ -4,6 +4,11 @@ DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/lib/libspl/include
 
+if BUILD_LINUX
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/linux
+endif
+
 noinst_LTLIBRARIES = libefi.la
 
 USER_C = \

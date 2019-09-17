@@ -16,6 +16,16 @@ DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/module/icp/include \
 	-I$(top_srcdir)/lib/libspl/include
 
+if BUILD_LINUX
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/linux
+endif
+
+if BUILD_FREEBSD
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/freebsd
+endif
+
 lib_LTLIBRARIES = libzfs.la
 
 USER_C = \

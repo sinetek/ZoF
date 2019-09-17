@@ -2,6 +2,16 @@ include $(top_srcdir)/config/Rules.am
 
 DEFAULT_INCLUDES += -I.
 
+if BUILD_LINUX
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/linux
+endif
+
+if BUILD_FREEBSD
+DEFAULT_INCLUDES += \
+	-I$(top_srcdir)/lib/libspl/include/os/freebsd
+endif
+
 sbin_PROGRAMS = zpool
 
 zpool_SOURCES = \

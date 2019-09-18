@@ -337,6 +337,7 @@ make_leaf_vdev(nvlist_t *props, const char *arg, uint64_t is_log)
 			}
 		}
 	}
+	zpool_vdev_enable_file(&statbuf, &wholedisk);
 
 	/*
 	 * Determine whether this is a device or a file.

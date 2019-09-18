@@ -129,6 +129,7 @@ int check_device(const char *path, boolean_t force,
 boolean_t check_sector_size_database(char *path, int *sector_size);
 void vdev_error(const char *fmt, ...);
 int check_file(const char *file, boolean_t force, boolean_t isspare);
+void zpool_vdev_enable_file(struct stat64 *sb, boolean_t *wholedisk);
 
 #ifdef	__cplusplus
 }

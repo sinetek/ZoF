@@ -409,3 +409,8 @@ check_device(const char *path, boolean_t force,
 
 	return (error);
 }
+
+void
+zpool_vdev_enable_file(struct stat64 *sb, boolean_t *wholedisk)
+{
+}

@@ -1,4 +1,4 @@
-SUBDIRS = ia32 rpc sys util
+SUBDIRS = ia32 rpc sys util os
 
 libspldir = $(includedir)/libspl
 libspl_HEADERS = \

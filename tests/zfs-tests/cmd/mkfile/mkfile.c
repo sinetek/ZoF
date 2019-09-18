@@ -40,7 +40,9 @@
 #endif
 
 #define	MIN(a, b)	((a) < (b) ? (a) : (b))
-
+#ifdef BLOCK_SIZE
+#undef BLOCK_SIZE
+#endif
 #define	BLOCK_SIZE	512		/* bytes */
 #define	KILOBYTE	1024
 #define	MEGABYTE	(KILOBYTE * KILOBYTE)

@@ -8,16 +8,6 @@ DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/lib/libspl/include
 
-if BUILD_LINUX
-DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/linux
-endif
-
-if BUILD_FREEBSD
-DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/freebsd
-endif
-
 udev_PROGRAMS = zvol_id
 
 zvol_id_SOURCES = \

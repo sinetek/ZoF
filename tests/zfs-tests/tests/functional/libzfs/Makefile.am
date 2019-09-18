@@ -13,17 +13,6 @@ DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/lib/libspl/include
 
-if BUILD_LINUX
-DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/linux
-endif
-
-if BUILD_FREEBSD
-DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/freebsd
-endif
-
-
 many_fds_LDADD = \
 	$(top_builddir)/lib/libzfs/libzfs.la
 

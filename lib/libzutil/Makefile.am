@@ -22,15 +22,6 @@ DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/lib/libspl/include/os/linux
 endif
 
-if BUILD_FREEBSD
-USER_C += \
-	freebsd_mnttab.c \
-	freebsd_zutil_import.c
-
-DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/freebsd
-endif
-
 nodist_libzutil_la_SOURCES = $(USER_C)
 
 libzutil_la_LIBADD = \

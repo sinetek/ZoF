@@ -2,11 +2,6 @@ include $(top_srcdir)/config/Rules.am
 
 SUBDIRS = zed.d
 
-if BUILD_LINUX
-DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/linux
-endif
-
 sbin_PROGRAMS = zed
 
 ZED_SRC = \

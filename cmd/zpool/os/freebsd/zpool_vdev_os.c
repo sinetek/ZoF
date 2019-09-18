@@ -83,16 +83,6 @@
 #include "zpool_util.h"
 #include <sys/zfs_context.h>
 
-#define	BACKUP_SLICE	"s2"
-#define	labs(x) (x)
-/*
- * For any given vdev specification, we can have multiple errors.  The
- * vdev_error() function keeps track of whether we have seen an error yet, and
- * prints out a header if its the first error we've seen.
- */
-boolean_t error_seen;
-boolean_t is_force;
-
 int
 check_device(const char *name, boolean_t force, boolean_t isspare,
     boolean_t iswholedisk)

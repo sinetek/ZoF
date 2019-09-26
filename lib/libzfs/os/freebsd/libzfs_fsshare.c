@@ -44,6 +44,99 @@ __FBSDID("$FreeBSD$");
 #define	OPTSSIZE	1024
 #define	MAXLINESIZE	(PATH_MAX + OPTSSIZE)
 
+/*
+ * Share the given filesystem according to the options in the specified
+ * protocol specific properties (sharenfs, sharesmb).  We rely
+ * on "libshare" to do the dirty work for us.
+ */
+int
+zfs_share_proto(zfs_handle_t *zhp, zfs_share_proto_t *proto)
+{
+	char mountpoint[ZFS_MAXPROPLEN];
+	char shareopts[ZFS_MAXPROPLEN];
+	char sourcestr[ZFS_MAXPROPLEN];
+	libzfs_handle_t *hdl = zhp->zfs_hdl;
+	sa_share_t share;
+	zfs_share_proto_t *curr_proto;
+	zprop_source_t sourcetype;
+	int err, ret __attribute__((unused));
+
+	if (!zfs_is_mountable(zhp, mountpoint, sizeof (mountpoint), NULL, 0))
+		return (0);
+
+	for (curr_proto = proto; *curr_proto != PROTO_END; curr_proto++) {
+		/*
+		 * Return success if there are no share options.
+		 */
+		if (zfs_prop_get(zhp, proto_table[*curr_proto].p_prop,
+		    shareopts, sizeof (shareopts), &sourcetype, sourcestr,
+		    ZFS_MAXPROPLEN, B_FALSE) != 0 ||
+		    strcmp(shareopts, "off") == 0)
+			continue;
+
+		ret = zfs_init_libshare(hdl, SA_INIT_SHARE_API);
+		if (ret != SA_OK) {
+			(void) zfs_error_fmt(hdl, EZFS_SHARENFSFAILED,
+			    dgettext(TEXT_DOMAIN, "cannot share '%s': %s"),
+			    zfs_get_name(zhp), sa_errorstr(ret));
+			return (-1);
+		}
+
+		/*
+		 * If the 'zoned' property is set, then zfs_is_mountable()
+		 * will have already bailed out if we are in the global zone.
+		 * But local zones cannot be NFS servers, so we ignore it for
+		 * local zones as well.
+		 */
+		if (zfs_prop_get_int(zhp, ZFS_PROP_ZONED))
+			continue;
+
+		if (*curr_proto != PROTO_NFS) {
+			fprintf(stderr, "Unsupported share protocol: %d.\n",
+			    *curr_proto);
+			continue;
+		}
+
+		if (strcmp(shareopts, "on") == 0)
+			err = fsshare(ZFS_EXPORTS_PATH, mountpoint, "");
+		else
+			err = fsshare(ZFS_EXPORTS_PATH, mountpoint, shareopts);
+		if (err != 0) {
+			(void) zfs_error_fmt(hdl,
+			    proto_table[*curr_proto].p_share_err,
+			    dgettext(TEXT_DOMAIN, "cannot share '%s'"),
+			    zfs_get_name(zhp));
+			return (-1);
+		}
+
+	}
+	return (0);
+}
+
+/*
+ * Unshare a filesystem by mountpoint.
+ */
+int
+unshare_one(libzfs_handle_t *hdl, const char *name, const char *mountpoint,
+    zfs_share_proto_t proto)
+{
+	int err;
+
+	if (proto != PROTO_NFS) {
+		fprintf(stderr, "No SMB support in FreeBSD yet.\n");
+		return (EOPNOTSUPP);
+	}
+
+	err = fsunshare(ZFS_EXPORTS_PATH, mountpoint);
+	if (err != 0) {
+		zfs_error_aux(hdl, "%s", strerror(err));
+		return (zfs_error_fmt(hdl, EZFS_UNSHARENFSFAILED,
+		    dgettext(TEXT_DOMAIN,
+		    "cannot unshare '%s'"), name));
+	}
+	return (0);
+}
+
 static void
 restart_mountd(void)
 {

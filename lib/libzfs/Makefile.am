@@ -34,12 +34,18 @@ USER_C = \
 
 if BUILD_FREEBSD
 USER_C += \
-	freebsd_deviceid.c \
-	freebsd_fsshare.c \
-	freebsd_libzfs_compat.c \
-	freebsd_libzfs_ioctl_compat.c \
-	zmount.c
+	os/freebsd/libzfs_deviceid.c \
+	os/freebsd/libzfs_fsshare.c \
+	os/freebsd/libzfs_compat.c \
+	os/freebsd/libzfs_ioctl_compat.c \
+	os/freebsd/libzfs_zmount.c
 endif
+
+if BUILD_LINUX
+USER_C += \
+	os/linux/libzfs_mount_os.c
+endif
+
 
 KERNEL_C = \
 	algs/sha2/sha2.c \

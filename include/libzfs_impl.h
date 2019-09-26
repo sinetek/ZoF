@@ -206,6 +206,14 @@ void namespace_clear(libzfs_handle_t *);
  * libshare (sharemgr) interfaces used internally.
  */
 
+typedef struct {
+	zfs_prop_t p_prop;
+	char *p_name;
+	int p_share_err;
+	int p_unshare_err;
+} proto_table_t;
+
+extern proto_table_t proto_table[PROTO_END];
 extern int zfs_init_libshare(libzfs_handle_t *, int);
 extern void zfs_uninit_libshare(libzfs_handle_t *);
 extern int zfs_parse_options(char *, zfs_share_proto_t);
@@ -213,6 +221,14 @@ extern int zfs_parse_options(char *, zfs_share_proto_t);
 extern int zfs_unshare_proto(zfs_handle_t *,
     const char *, zfs_share_proto_t *);
 
+extern int do_mount(const char *src, const char *mntpt, char *opts, int flags);
+extern int do_unmount(const char *mntpt, int flags);
+extern int zfs_can_user_mount(void);
+extern int zfs_share_proto(zfs_handle_t *zhp, zfs_share_proto_t *proto);
+extern int unshare_one(libzfs_handle_t *hdl, const char *name,
+    const char *mountpoint, zfs_share_proto_t proto);
+extern boolean_t zfs_is_mountable(zfs_handle_t *zhp, char *buf, size_t buflen,
+    zprop_source_t *source, int flags);
 #ifdef	__cplusplus
 }
 #endif

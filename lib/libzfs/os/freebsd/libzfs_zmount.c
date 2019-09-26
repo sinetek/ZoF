@@ -104,3 +104,18 @@ zmount(const char *spec, const char *dir, int mflag, char *fstype,
 	free(tofree);
 	return (rv);
 }
+
+int
+do_mount(const char *src, const char *mntpt, char *opts, int flags)
+{
+
+	return (zmount(src, mntpt, flags, MNTTYPE_ZFS, NULL, 0, opts,
+	    sizeof(mntpt)));
+}
+
+int
+do_unmount(const char *mntpt, int flags)
+{
+
+	return (unmount(mntpt, flags));
+}

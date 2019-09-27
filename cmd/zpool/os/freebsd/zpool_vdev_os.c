@@ -127,7 +127,7 @@ check_sector_size_database(char *path, int *sector_size)
 }
 
 void
-zpool_vdev_enable_file(struct stat64 *sb, boolean_t *wholedisk)
+zpool_vdev_enable_file(struct stat64 *statbuf, boolean_t *wholedisk)
 {
 	if (S_ISCHR(statbuf->st_mode)) {
 		statbuf->st_mode &= ~S_IFCHR;

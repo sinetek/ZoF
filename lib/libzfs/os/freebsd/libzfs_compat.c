@@ -117,3 +117,73 @@ libzfs_load_module(const char *module)
 	}
 	return (0);
 }
+
+int
+zpool_relabel_disk(libzfs_handle_t *hdl, const char *path, const char *msg)
+{
+	return (0);
+}
+
+int
+zpool_label_disk(libzfs_handle_t *hdl, zpool_handle_t *zhp, char *name)
+{
+	return (0);
+}
+
+int
+find_shares_object(differ_info_t *di)
+{
+	return (0);
+}
+
+/*
+ * Attach/detach the given filesystem to/from the given jail.
+ */
+int
+zfs_jail(zfs_handle_t *zhp, int jailid, int attach)
+{
+	libzfs_handle_t *hdl = zhp->zfs_hdl;
+	zfs_cmd_t zc = { { 0 } };
+	char errbuf[1024];
+	unsigned long cmd;
+	int ret;
+
+	if (attach) {
+		(void) snprintf(errbuf, sizeof (errbuf),
+		    dgettext(TEXT_DOMAIN, "cannot jail '%s'"), zhp->zfs_name);
+	} else {
+		(void) snprintf(errbuf, sizeof (errbuf),
+		    dgettext(TEXT_DOMAIN, "cannot unjail '%s'"), zhp->zfs_name);
+	}
+
+	switch (zhp->zfs_type) {
+	case ZFS_TYPE_VOLUME:
+		zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
+		    "volumes can not be jailed"));
+		return (zfs_error(hdl, EZFS_BADTYPE, errbuf));
+	case ZFS_TYPE_SNAPSHOT:
+		zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
+		    "snapshots can not be jailed"));
+		return (zfs_error(hdl, EZFS_BADTYPE, errbuf));
+	case ZFS_TYPE_BOOKMARK:
+		zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
+		    "bookmarks can not be jailed"));
+		return (zfs_error(hdl, EZFS_BADTYPE, errbuf));
+	case ZFS_TYPE_POOL:
+	case ZFS_TYPE_FILESYSTEM:
+		/* OK */
+		;
+	}
+	assert(zhp->zfs_type == ZFS_TYPE_FILESYSTEM);
+
+	(void) strlcpy(zc.zc_name, zhp->zfs_name, sizeof (zc.zc_name));
+	zc.zc_objset_type = DMU_OST_ZFS;
+	zc.zc_jailid = jailid;
+
+	cmd = attach ? ZFS_IOC_JAIL : ZFS_IOC_UNJAIL;
+	if ((ret = ioctl(hdl->libzfs_fd, cmd, &zc)) != 0)
+		zfs_standard_error(hdl, errno, errbuf);
+
+	return (ret);
+}
+

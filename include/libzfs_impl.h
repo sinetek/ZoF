@@ -210,6 +210,27 @@ typedef struct {
 	int p_unshare_err;
 } proto_table_t;
 
+typedef struct differ_info {
+	zfs_handle_t *zhp;
+	char *fromsnap;
+	char *frommnt;
+	char *tosnap;
+	char *tomnt;
+	char *ds;
+	char *dsmnt;
+	char *tmpsnap;
+	char errbuf[1024];
+	boolean_t isclone;
+	boolean_t scripted;
+	boolean_t classify;
+	boolean_t timestamped;
+	uint64_t shares;
+	int zerr;
+	int cleanupfd;
+	int outputfd;
+	int datafd;
+} differ_info_t;
+
 extern proto_table_t proto_table[PROTO_END];
 extern int zfs_init_libshare(libzfs_handle_t *, int);
 extern void zfs_uninit_libshare(libzfs_handle_t *);
@@ -228,6 +249,8 @@ extern boolean_t zfs_is_mountable(zfs_handle_t *zhp, char *buf, size_t buflen,
     zprop_source_t *source, int flags);
 extern zfs_share_type_t is_shared_impl(libzfs_handle_t *hdl, const char *mountpoint, zfs_share_proto_t proto);
 extern int libzfs_load_module(const char *module);
+extern int zpool_relabel_disk(libzfs_handle_t *hdl, const char *path, const char *msg);
+extern int find_shares_object(differ_info_t *di);
 
 
 #ifdef	__cplusplus

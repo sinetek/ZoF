@@ -8,7 +8,8 @@ SUBDIRS = include $(TARGET_ASM_DIR)
 DIST_SUBDIRS = include asm-generic asm-i386 asm-x86_64
 
 DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include
+	-I$(top_srcdir)/lib/libspl/include \
+	-I$(top_srcdir)/include
 
 AM_CFLAGS += $(LIBTIRPC_CFLAGS)
 
@@ -38,7 +39,8 @@ endif
 if BUILD_FREEBSD
 USER_C += \
 	os/freebsd/gethostid.c \
-	os/freebsd/getmntany.c
+	os/freebsd/getmntany.c \
+	os/freebsd/mnttab.c
 endif
 
 USER_ASM = atomic.S

@@ -121,60 +121,7 @@ zfs_share_proto_t share_all_proto[] = {
 	PROTO_END
 };
 
-/*
- * Search the sharetab for the given mountpoint and protocol, returning
- * a zfs_share_type_t value.
- */
-static zfs_share_type_t
-is_shared(libzfs_handle_t *hdl, const char *mountpoint, zfs_share_proto_t proto)
-{
-	char buf[MAXPATHLEN], *tab;
-	char *ptr;
 
-	if (hdl->libzfs_sharetab == NULL)
-		return (SHARED_NOT_SHARED);
-
-	/* Reopen ZFS_SHARETAB to prevent reading stale data from open file */
-	if (freopen(ZFS_SHARETAB, "r", hdl->libzfs_sharetab) == NULL)
-		return (SHARED_NOT_SHARED);
-
-	(void) fseek(hdl->libzfs_sharetab, 0, SEEK_SET);
-
-	while (fgets(buf, sizeof (buf), hdl->libzfs_sharetab) != NULL) {
-
-		/* the mountpoint is the first entry on each line */
-		if ((tab = strchr(buf, '\t')) == NULL)
-			continue;
-
-		*tab = '\0';
-		if (strcmp(buf, mountpoint) == 0) {
-			/*
-			 * the protocol field is the third field
-			 * skip over second field
-			 */
-			ptr = ++tab;
-			if ((tab = strchr(ptr, '\t')) == NULL)
-				continue;
-			ptr = ++tab;
-			if ((tab = strchr(ptr, '\t')) == NULL)
-				continue;
-			*tab = '\0';
-			if (strcmp(ptr,
-			    proto_table[proto].p_name) == 0) {
-				switch (proto) {
-				case PROTO_NFS:
-					return (SHARED_NFS);
-				case PROTO_SMB:
-					return (SHARED_SMB);
-				default:
-					return (0);
-				}
-			}
-		}
-	}
-
-	return (SHARED_NOT_SHARED);
-}
 
 static boolean_t
 dir_is_empty_stat(const char *dirname)
@@ -718,7 +665,7 @@ zfs_is_shared_proto(zfs_handle_t *zhp, char **where, zfs_share_proto_t proto)
 	if (!zfs_is_mounted(zhp, &mountpoint))
 		return (SHARED_NOT_SHARED);
 
-	if ((rc = is_shared(zhp->zfs_hdl, mountpoint, proto))
+	if ((rc = is_shared_impl(zhp->zfs_hdl, mountpoint, proto))
 	    != SHARED_NOT_SHARED) {
 		if (where != NULL)
 			*where = mountpoint;
@@ -743,43 +690,6 @@ zfs_is_shared_smb(zfs_handle_t *zhp, char **where)
 {
 	return (zfs_is_shared_proto(zhp, where,
 	    PROTO_SMB) != SHARED_NOT_SHARED);
-}
-
-/*
- * zfs_init_libshare(zhandle, service)
- *
- * Initialize the libshare API if it hasn't already been initialized.
- * In all cases it returns 0 if it succeeded and an error if not. The
- * service value is which part(s) of the API to initialize and is a
- * direct map to the libshare sa_init(service) interface.
- */
-int
-zfs_init_libshare(libzfs_handle_t *zhandle, int service)
-{
-	int ret = SA_OK;
-
-	if (ret == SA_OK && zhandle->libzfs_shareflags & ZFSSHARE_MISS) {
-		/*
-		 * We had a cache miss. Most likely it is a new ZFS
-		 * dataset that was just created. We want to make sure
-		 * so check timestamps to see if a different process
-		 * has updated any of the configuration. If there was
-		 * some non-ZFS change, we need to re-initialize the
-		 * internal cache.
-		 */
-		zhandle->libzfs_shareflags &= ~ZFSSHARE_MISS;
-		if (sa_needs_refresh(zhandle->libzfs_sharehdl)) {
-			zfs_uninit_libshare(zhandle);
-			zhandle->libzfs_sharehdl = sa_init(service);
-		}
-	}
-
-	if (ret == SA_OK && zhandle && zhandle->libzfs_sharehdl == NULL)
-		zhandle->libzfs_sharehdl = sa_init(service);
-
-	if (ret == SA_OK && zhandle->libzfs_sharehdl == NULL)
-		ret = SA_NO_MEMORY;
-	return (ret);
 }
 
 /*
@@ -853,7 +763,7 @@ zfs_unshare_proto(zfs_handle_t *zhp, const char *mountpoint,
 		for (curr_proto = proto; *curr_proto != PROTO_END;
 		    curr_proto++) {
 
-			if (is_shared(hdl, mntpt, *curr_proto) &&
+			if (is_shared_impl(hdl, mntpt, *curr_proto) &&
 			    unshare_one(hdl, zhp->zfs_name,
 			    mntpt, *curr_proto) != 0) {
 				if (mntpt != NULL)
@@ -1523,7 +1433,7 @@ zpool_disable_datasets(zpool_handle_t *zhp, boolean_t force)
 		zfs_share_proto_t *curr_proto;
 		for (curr_proto = share_all_proto; *curr_proto != PROTO_END;
 		    curr_proto++) {
-			if (is_shared(hdl, mountpoints[i], *curr_proto) &&
+			if (is_shared_impl(hdl, mountpoints[i], *curr_proto) &&
 			    unshare_one(hdl, mountpoints[i],
 			    mountpoints[i], *curr_proto) != 0)
 				goto out;

@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 #define	fstat64 fstat
 #endif
-
+#undef MIN /* already defined in sys/param.h on FreeBSD */
 #define	MIN(a, b)	((a) < (b) ? (a) : (b))
 #ifdef BLOCK_SIZE
 #undef BLOCK_SIZE

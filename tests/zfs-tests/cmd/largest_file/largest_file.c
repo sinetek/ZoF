@@ -37,6 +37,7 @@
 #include <unistd.h>
 
 typedef long long	offset_t;
+#undef MAXOFFSET_T /* already defined in stat.h on FreeBSD */
 #define	MAXOFFSET_T	LLONG_MAX
 
 /*

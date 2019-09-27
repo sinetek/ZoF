@@ -229,6 +229,9 @@ extern int unshare_one(libzfs_handle_t *hdl, const char *name,
     const char *mountpoint, zfs_share_proto_t proto);
 extern boolean_t zfs_is_mountable(zfs_handle_t *zhp, char *buf, size_t buflen,
     zprop_source_t *source, int flags);
+extern zfs_share_type_t is_shared_impl(libzfs_handle_t *hdl, const char *mountpoint, zfs_share_proto_t proto);
+
+
 #ifdef	__cplusplus
 }
 #endif

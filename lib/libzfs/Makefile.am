@@ -38,7 +38,8 @@ endif
 
 if BUILD_LINUX
 USER_C += \
-	os/linux/libzfs_mount_os.c
+	os/linux/libzfs_mount_os.c \
+	os/linux/libzfs_util_os.c
 endif
 
 

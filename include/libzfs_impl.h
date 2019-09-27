@@ -39,10 +39,7 @@
 #include <libshare.h>
 #include <libzfs_core.h>
 
-#ifdef __FreeBSD__
-#include <libzfs_compat.h>
-#endif
-#ifdef	__cplusplus
+ #ifdef	__cplusplus
 extern "C" {
 #endif
 
@@ -230,6 +227,7 @@ extern int unshare_one(libzfs_handle_t *hdl, const char *name,
 extern boolean_t zfs_is_mountable(zfs_handle_t *zhp, char *buf, size_t buflen,
     zprop_source_t *source, int flags);
 extern zfs_share_type_t is_shared_impl(libzfs_handle_t *hdl, const char *mountpoint, zfs_share_proto_t proto);
+extern int libzfs_load_module(const char *module);
 
 
 #ifdef	__cplusplus

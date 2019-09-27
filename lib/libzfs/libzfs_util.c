@@ -57,8 +57,6 @@
 #include <sys/zfs_sysfs.h>
 
 #ifdef __FreeBSD__
-#include <sys/linker.h>
-#include <sys/module.h>
 #define	execvpe exect
 #define	ESTRPIPE EPIPE
 #define	ZFS_MODULE "openzfs"
@@ -70,36 +68,6 @@ int
 libzfs_errno(libzfs_handle_t *hdl)
 {
 	return (hdl->libzfs_error);
-}
-
-const char *
-libzfs_error_init(int error)
-{
-#ifdef __FreeBSD__
-
-	return (strerror(error));
-#else
-	switch (error) {
-	case ENXIO:
-		return (dgettext(TEXT_DOMAIN, "The ZFS modules are not "
-		    "loaded.\nTry running '/sbin/modprobe zfs' as root "
-		    "to load them."));
-	case ENOENT:
-		return (dgettext(TEXT_DOMAIN, "/dev/zfs and /proc/self/mounts "
-		    "are required.\nTry running 'udevadm trigger' and 'mount "
-		    "-t proc proc /proc' as root."));
-	case ENOEXEC:
-		return (dgettext(TEXT_DOMAIN, "The ZFS modules cannot be "
-		    "auto-loaded.\nTry running '/sbin/modprobe zfs' as "
-		    "root to manually load them."));
-	case EACCES:
-		return (dgettext(TEXT_DOMAIN, "Permission denied the "
-		    "ZFS utilities must be run as root."));
-	default:
-		return (dgettext(TEXT_DOMAIN, "Failed to initialize the "
-		    "libzfs library."));
-	}
-#endif
 }
 
 const char *
@@ -727,21 +695,6 @@ libzfs_print_on_error(libzfs_handle_t *hdl, boolean_t printerr)
 	hdl->libzfs_printerr = printerr;
 }
 
-#ifdef __linux__
-static int
-libzfs_module_loaded(const char *module)
-{
-	const char path_prefix[] = "/sys/module/";
-	char path[256];
-
-	memcpy(path, path_prefix, sizeof (path_prefix) - 1);
-	strcpy(path + sizeof (path_prefix) - 1, module);
-
-	return (access(path, F_OK) == 0);
-}
-#endif
-
-
 /*
  * Read lines from an open file descriptor and store them in an array of
  * strings until EOF.  lines[] will be allocated and populated with all the
@@ -918,88 +871,6 @@ libzfs_envvar_is_set(char *envvar)
 		return (1);
 
 	return (0);
-}
-
-/*
- * Verify the required ZFS_DEV device is available and optionally attempt
- * to load the ZFS modules.  Under normal circumstances the modules
- * should already have been loaded by some external mechanism.
- *
- * Environment variables:
- * - ZFS_MODULE_LOADING="YES|yes|ON|on" - Attempt to load modules.
- * - ZFS_MODULE_TIMEOUT="<seconds>"     - Seconds to wait for ZFS_DEV
- */
-static int
-libzfs_load_module(const char *module)
-{
-#ifdef __FreeBSD__
-
-	if (modfind(ZFS_DRIVER) < 0) {
-		/* Not present in kernel, try loading it. */
-		if (kldload(module) < 0 && errno != EEXIST) {
-			return (errno);
-		}
-	}
-	return (0);
-#else
-	char *argv[4] = {"/sbin/modprobe", "-q", (char *)module, (char *)0};
-	char *load_str, *timeout_str;
-	long timeout = 10; /* seconds */
-	long busy_timeout = 10; /* milliseconds */
-	int load = 0, fd;
-	hrtime_t start;
-
-	/* Optionally request module loading */
-	if (!libzfs_module_loaded(module)) {
-		load_str = getenv("ZFS_MODULE_LOADING");
-		if (load_str) {
-			if (!strncasecmp(load_str, "YES", strlen("YES")) ||
-			    !strncasecmp(load_str, "ON", strlen("ON")))
-				load = 1;
-			else
-				load = 0;
-		}
-
-		if (load) {
-			if (libzfs_run_process("/sbin/modprobe", argv, 0))
-				return (ENOEXEC);
-		}
-
-		if (!libzfs_module_loaded(module))
-			return (ENXIO);
-	}
-
-	/*
-	 * Device creation by udev is asynchronous and waiting may be
-	 * required.  Busy wait for 10ms and then fall back to polling every
-	 * 10ms for the allowed timeout (default 10s, max 10m).  This is
-	 * done to optimize for the common case where the device is
-	 * immediately available and to avoid penalizing the possible
-	 * case where udev is slow or unable to create the device.
-	 */
-	timeout_str = getenv("ZFS_MODULE_TIMEOUT");
-	if (timeout_str) {
-		timeout = strtol(timeout_str, NULL, 0);
-		timeout = MAX(MIN(timeout, (10 * 60)), 0); /* 0 <= N <= 600 */
-	}
-
-	start = gethrtime();
-	do {
-		fd = open(ZFS_DEV, O_RDWR);
-		if (fd >= 0) {
-			(void) close(fd);
-			return (0);
-		} else if (errno != ENOENT) {
-			return (errno);
-		} else if (NSEC2MSEC(gethrtime() - start) < busy_timeout) {
-			sched_yield();
-		} else {
-			usleep(10 * MILLISEC);
-		}
-	} while (NSEC2MSEC(gethrtime() - start) < (timeout * MILLISEC));
-
-	return (ENOENT);
-#endif
 }
 
 libzfs_handle_t *
@@ -1241,12 +1112,6 @@ zcmd_read_dst_nvlist(libzfs_handle_t *hdl, zfs_cmd_t *zc, nvlist_t **nvlp)
 		return (no_memory(hdl));
 
 	return (0);
-}
-
-int
-zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
-{
-	return (ioctl(hdl->libzfs_fd, request, zc));
 }
 
 /*

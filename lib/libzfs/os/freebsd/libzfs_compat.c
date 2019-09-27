@@ -26,6 +26,9 @@
 #include <libzfs_compat.h>
 #include <sys/sysctl.h>
 
+#include <sys/linker.h>
+#include <sys/module.h>
+
 int zfs_ioctl_version = ZFS_IOCVER_UNDEF;
 // static int zfs_spa_version = -1;
 
@@ -64,7 +67,7 @@ get_zfs_spa_version(void)
  * zc_nvlist_dst_size even if an error is returned, on FreeBSD if an
  * error is returned zc_nvlist_dst_size won't be updated.
  */
-int
+static int
 zcmd_ioctl(int fd, int request, zfs_cmd_t *zc)
 {
 	size_t oldsize;
@@ -79,4 +82,38 @@ zcmd_ioctl(int fd, int request, zfs_cmd_t *zc)
 	}
 
 	return (ret);
+}
+
+const char *
+libzfs_error_init(int error)
+{
+
+	return (strerror(error));
+}
+
+int
+zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
+{
+	return (zcmd_ioctl(hdl->libzfs_fd, request, zc));
+}
+
+/*
+ * Verify the required ZFS_DEV device is available and optionally attempt
+ * to load the ZFS modules.  Under normal circumstances the modules
+ * should already have been loaded by some external mechanism.
+ *
+ * Environment variables:
+ * - ZFS_MODULE_LOADING="YES|yes|ON|on" - Attempt to load modules.
+ * - ZFS_MODULE_TIMEOUT="<seconds>"     - Seconds to wait for ZFS_DEV
+ */
+int
+libzfs_load_module(const char *module)
+{
+	if (modfind(ZFS_DRIVER) < 0) {
+		/* Not present in kernel, try loading it. */
+		if (kldload(module) < 0 && errno != EEXIST) {
+			return (errno);
+		}
+	}
+	return (0);
 }

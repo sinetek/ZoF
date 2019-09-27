@@ -17,6 +17,11 @@ USER_C = \
 	zutil_nicenum.c \
 	zutil_pool.c
 
+if BUILD_FREEBSD
+USER_C += \
+	freebsd_zutil_import.c
+endif
+
 if BUILD_LINUX
 DEFAULT_INCLUDES += \
 	-I$(top_srcdir)/lib/libspl/include/os/linux

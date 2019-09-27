@@ -23,8 +23,7 @@ endif
 
 if BUILD_FREEBSD
 USER_C += \
-	os/freebsd/zutil_import_os.c \
-	os/freebsd/zutil_mnttab_os.c
+	os/freebsd/zutil_import_os.c
 endif
 
 nodist_libzutil_la_SOURCES = $(USER_C)

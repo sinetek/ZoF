@@ -51,10 +51,6 @@
 #include <sys/trace_defs.h>
 #include <sys/mmp.h>
 
-#ifdef __linux__
-#include <sys/trace_txg.h>
-#endif
-
 /*
  * ZFS Write Throttle
  * ------------------

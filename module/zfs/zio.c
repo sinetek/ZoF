@@ -49,10 +49,6 @@
 #include <sys/dsl_crypt.h>
 #include <sys/cityhash.h>
 
-#ifdef __linux__
-#include <sys/trace_zio.h>
-#endif
-
 /*
  * ==========================================================================
  * I/O type descriptions

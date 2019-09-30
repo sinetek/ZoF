@@ -44,10 +44,6 @@
 #include <sys/trace_defs.h>
 #include <sys/abd.h>
 
-#ifdef __linux__
-#include <sys/trace_zil.h>
-#endif
-
 /*
  * The ZFS Intent Log (ZIL) saves "transaction records" (itxs) of system
  * calls that change the file system. Each itx has enough information to

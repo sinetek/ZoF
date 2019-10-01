@@ -51,10 +51,6 @@
 #	4. Verify it will not affect the property that is stored on disk.
 #
 
-if is_freebsd; then
-	log_unsupported "'mount -o remount,...' not supported on FreeBSD"
-fi
-
 function cleanup
 {
 	if ! ismounted $TESTPOOL/$TESTFS; then
@@ -127,7 +123,8 @@ for property in ${properties[@]}; do
 
 	# Set filesystem property temporarily
 	reverse_opt=$(get_reverse_option $fs $property)
-	log_must zfs mount -o remount,$reverse_opt $fs
+	log_must zfs unmount $fs
+	log_must zfs mount -o $reverse_opt $fs
 
 	cur_val=$(get_prop $property $fs)
 	(($? != 0)) && log_fail "get_prop $property $fs"
@@ -139,7 +136,7 @@ for property in ${properties[@]}; do
 				"be enabled in LZ"
 		fi
 	elif [[ $orig_val == $cur_val ]]; then
-		log_fail "zfs mount -o remount,$reverse_opt " \
+		log_fail "zfs mount -o $reverse_opt " \
 			"doesn't change property."
 	fi
 
@@ -150,7 +147,7 @@ for property in ${properties[@]}; do
 	cur_val=$(get_prop $property $fs)
 	(($? != 0)) && log_fail "get_prop $property $fs"
 	if [[ $orig_val != $cur_val ]]; then
-		log_fail "zfs mount -o remount,$reverse_opt " \
+		log_fail "zfs mount -o $reverse_opt " \
 			"change the property that is stored on disks"
 	fi
 done

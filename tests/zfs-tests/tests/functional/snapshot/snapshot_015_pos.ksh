@@ -47,12 +47,6 @@
 #	4. Verify remove directory in snapdir can destroy snapshot.
 #
 
-if is_freebsd; then
-	log_unsupported \
-	    "Snapshot creation/destruction via mkdir or rm in .zfs/snapshot" \
-	    "is not supported on FreeBSD"
-fi
-
 verify_runnable "both"
 
 function cleanup

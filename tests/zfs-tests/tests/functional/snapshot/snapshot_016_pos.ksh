@@ -43,11 +43,6 @@
 #	2. Verify destroying the renamed snapshot via 'zfs destroy' succeeds
 #
 
-if is_freebsd; then
-	log_unsupported "Renaming snapshots via mv in .zfs/snapshot" \
-	    "is not supported on FreeBSD"
-fi
-
 verify_runnable "both"
 
 function cleanup

@@ -605,7 +605,7 @@ class TestRun(object):
 
     def read(self, options):
         """
-        Read in the specified runfile, and apply the TestRun properties
+        Read in the specified runfiles, and apply the TestRun properties
         listed in the 'DEFAULT' section to our TestRun. Then read each
         section, and apply the appropriate properties to the Test or
         TestGroup. Properties from individual sections override those set
@@ -613,8 +613,11 @@ class TestRun(object):
         verification, add it to the TestRun.
         """
         config = configparser.RawConfigParser()
-        if not len(config.read(options.runfile)):
-            fail("Coulnd't read config file %s" % options.runfile)
+        parsed = config.read(options.runfiles)
+        failed = options.runfiles - set(parsed)
+        if len(failed):
+            files = ' '.join(sorted(failed))
+            fail("Couldn't read config files: %s" % files)
 
         for opt in TestRun.props:
             if config.has_option('DEFAULT', opt):
@@ -873,32 +876,34 @@ def fail(retstr, ret=1):
 
 
 def options_cb(option, opt_str, value, parser):
-    path_options = ['runfile', 'outputdir', 'template', 'testdir']
+    path_options = ['outputdir', 'template', 'testdir']
 
-    if option.dest == 'runfile' and '-w' in parser.rargs or \
+    if option.dest == 'runfiles' and '-w' in parser.rargs or \
             option.dest == 'template' and '-c' in parser.rargs:
         fail('-c and -w are mutually exclusive.')
 
     if opt_str in parser.rargs:
         fail('%s may only be specified once.' % opt_str)
 
-    if option.dest == 'runfile':
+    if option.dest == 'runfiles':
         parser.values.cmd = 'rdconfig'
+        value = {os.path.abspath(p) for p in value.split(',')}
     if option.dest == 'template':
         parser.values.cmd = 'wrconfig'
     if option.dest == 'tags':
         value = [x.strip() for x in value.split(',')]
 
-    setattr(parser.values, option.dest, value)
     if option.dest in path_options:
         setattr(parser.values, option.dest, os.path.abspath(value))
+    else:
+        setattr(parser.values, option.dest, value)
 
 
 def parse_args():
     parser = OptionParser()
     parser.add_option('-c', action='callback', callback=options_cb,
-                      type='string', dest='runfile', metavar='runfile',
-                      help='Specify tests to run via config file.')
+                      type='string', dest='runfiles', metavar='runfiles',
+                      help='Specify tests to run via config files.')
     parser.add_option('-d', action='store_true', default=False, dest='dryrun',
                       help='Dry run. Print tests, but take no other action.')
     parser.add_option('-g', action='store_true', default=False,
@@ -940,10 +945,10 @@ def parse_args():
                       help='Number of times to run the test run.')
     (options, pathnames) = parser.parse_args()
 
-    if not options.runfile and not options.template:
+    if not options.runfiles and not options.template:
         options.cmd = 'runtests'
 
-    if options.runfile and len(pathnames):
+    if options.runfiles and len(pathnames):
         fail('Extraneous arguments.')
 
     options.pathnames = [os.path.abspath(path) for path in pathnames]

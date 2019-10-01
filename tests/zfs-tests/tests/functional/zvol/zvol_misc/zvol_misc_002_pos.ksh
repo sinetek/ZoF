@@ -42,10 +42,6 @@
 # 3. Verify fsck on the snapshot is OK
 #
 
-if is_freebsd; then
-	log_unsupported "Snapshot devices not supported on FreeBSD"
-fi
-
 verify_runnable "global"
 
 volsize=$(zfs get -H -o value volsize $TESTPOOL/$TESTVOL)

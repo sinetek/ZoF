@@ -55,10 +55,6 @@
 #	   allowed.
 #
 
-if is_freebsd; then
-	log_unsupported "FreeBSD allows stacking mounts on the same mountpoint"
-fi
-
 verify_runnable "both"
 
 function cleanup

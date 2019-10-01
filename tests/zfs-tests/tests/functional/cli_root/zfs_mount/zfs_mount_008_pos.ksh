@@ -43,10 +43,6 @@
 #	   inaccessible.
 #
 
-if is_freebsd; then
-	log_unsupported "Overlay mounting not supported on FreeBSD"
-fi
-
 function cleanup
 {
 	! ismounted $fs && log_must zfs mount $fs

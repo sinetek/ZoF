@@ -51,10 +51,6 @@ function cleanup
 	log_must zed_stop
 }
 
-if is_freebsd; then
-	log_unsupported "Events not supported on FreeBSD"
-fi
-
 log_assert "Verify zpool sub-commands generate expected events"
 log_onexit cleanup
 

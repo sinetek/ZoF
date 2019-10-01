@@ -28,10 +28,6 @@
 
 verify_runnable "both"
 
-if is_freebsd; then
-	log_unsupported "Events not supported on FreeBSD"
-fi
-
 function log_must_follow # <command>
 {
 	typeset command="$1"

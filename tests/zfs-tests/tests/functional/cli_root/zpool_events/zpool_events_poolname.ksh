@@ -30,10 +30,6 @@
 
 verify_runnable "both"
 
-if is_freebsd; then
-	log_unsupported "Events not supported on FreeBSD"
-fi
-
 function cleanup
 {
 	destroy_pool $NEWPOOL

@@ -42,15 +42,15 @@
 # 3. Verify the command aborts and generate a core file
 #
 
-if is_freebsd; then
-	log_unsupported "No coreadm on FreeBSD"
-fi
-
 verify_runnable "both"
 
 function cleanup
 {
 	unset ZFS_ABORT
+
+	if is_freebsd && [[ -n $savedcorefile ]]; then
+		sysctl kern.corefile=$savedcorefile
+	fi
 
 	if [[ -d $corepath ]]; then
 		rm -rf $corepath
@@ -66,7 +66,8 @@ log_assert "With ZFS_ABORT set, all zfs commands can abort and generate a " \
     "core file."
 log_onexit cleanup
 
-#preparation work for testing
+# Preparation work for testing
+savedcorefile=""
 corepath=$TESTDIR/core
 if [[ -d $corepath ]]; then
 	rm -rf $corepath
@@ -98,6 +99,10 @@ if is_linux; then
 	echo "$corepath/core.zfs" >/proc/sys/kernel/core_pattern
 	echo 0 >/proc/sys/kernel/core_uses_pid
 	export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
+elif is_freebsd; then
+	ulimit -c unlimited
+	savedcorefile=$(sysctl -n kern.corefile)
+	log_must sysctl kern.corefile=$corepath/core.%N
 else
 	log_must coreadm -p ${corepath}/core.%f
 fi
@@ -106,7 +111,6 @@ log_must export ZFS_ABORT=yes
 
 for subcmd in "${cmds[@]}" "${badparams[@]}"; do
 	zfs $subcmd >/dev/null 2>&1 && log_fail "$subcmd passed incorrectly."
-	corefile=${corepath}/core.zfs
 	if [[ ! -e $corefile ]]; then
 		log_fail "zfs $subcmd cannot generate core file with " \
 		    "ZFS_ABORT set."

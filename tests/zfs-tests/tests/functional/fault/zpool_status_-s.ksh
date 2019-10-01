@@ -37,10 +37,6 @@
 . $STF_SUITE/include/libtest.shlib
 . $STF_SUITE/include/zpool_script.shlib
 
-if is_freebsd; then
-	log_unsupported "Events not supported on FreeBSD"
-fi
-
 DISK=${DISKS%% *}
 
 verify_runnable "both"

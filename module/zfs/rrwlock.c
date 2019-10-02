@@ -28,9 +28,7 @@
 
 #include <sys/refcount.h>
 #include <sys/rrwlock.h>
-#ifdef __linux__
-#include <sys/trace_rrwlock.h>
-#endif
+#include <sys/trace_defs.h>
 
 /*
  * This file contains the implementation of a re-entrant read

@@ -1625,11 +1625,7 @@ sa_add_projid(sa_handle_t *hdl, dmu_tx_t *tx, uint64_t projid)
 
 	zp->z_projid = projid;
 	zp->z_pflags |= ZFS_PROJID;
-#ifdef __linux__
-	links = ZTOI(zp)->i_nlink;
-#else
-	links = zp->z_links;
-#endif
+	links = ZTONLNK(zp);
 	count = 0;
 	err = 0;
 

@@ -369,11 +369,7 @@ zfs_sa_upgrade(sa_handle_t *hdl, dmu_tx_t *tx)
 	    &ctime, 16);
 	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_CRTIME(zfsvfs), NULL,
 	    &crtime, 16);
-#ifdef __linux__
-	links = ZTOI(zp)->i_nlink;
-#else
-	links = zp->z_links;
-#endif
+	links = ZTONLNK(zp);
 	SA_ADD_BULK_ATTR(sa_attrs, count, SA_ZPL_LINKS(zfsvfs), NULL,
 	    &links, 8);
 	if (dmu_objset_projectquota_enabled(hdl->sa_os))

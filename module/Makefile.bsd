@@ -130,6 +130,7 @@ SRCS+=	abd.c \
 	freebsd_sysctl.c \
 	hkdf.c \
 	vdev_file.c \
+	vdev_label_os.c \
 	vdev_geom.c \
 	zfs_acl.c \
 	zfs_ctldir.c \

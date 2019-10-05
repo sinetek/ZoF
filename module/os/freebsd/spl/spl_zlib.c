@@ -1,7 +1,7 @@
 #include <sys/kmem.h>
 #include <sys/kmem_cache.h>
 #include <sys/zmod.h>
-#if __FreeBSD_version >= 1300024
+#if __FreeBSD_version >= 1300041
 #include <contrib/zlib/zlib.h>
 #else
 #include <sys/zlib.h>
@@ -80,10 +80,8 @@ zlib_inflateInit(z_stream *stream)
 static int
 zlib_inflate(z_stream *stream, int finish)
 {
-#if __FreeBSD_version >= 1300040
+#if __FreeBSD_version >= 1300024
 	return (inflate(stream, finish));
-#elif __FreeBSD_version >= 1300024
-	return (zlib104_inflate(stream, finish));
 #else
 	return (_zlib104_inflate(stream, finish));
 #endif

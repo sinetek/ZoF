@@ -900,7 +900,8 @@ function set_partition
 	typeset size=$3
 	typeset disk=$4
 
-	if is_linux; then
+	case "$(uname)" in
+	Linux)
 		if [[ -z $size || -z $disk ]]; then
 			log_fail "The size or disk name is unspecified."
 		fi
@@ -947,7 +948,36 @@ function set_partition
 
 		blockdev --rereadpt $disk 2>/dev/null
 		block_device_wait $disk
-	else
+		;;
+	FreeBSD)
+		if [[ -z $size || -z $disk ]]; then
+			log_fail "The size or disk name is unspecified."
+		fi
+		[[ -n $DEV_DSKDIR ]] && disk=$DEV_DSKDIR/$disk
+
+		if [[ $slicenum -eq 0 ]] || ! gpart show $disk >/dev/null 2>&1; then
+			gpart destroy -F $disk >/dev/null 2>&1
+			gpart create -s GPT $disk
+			if [[ $? -ne 0 ]]; then
+				log_note "Failed to create GPT partition table on $disk"
+				return 1
+			fi
+		fi
+
+		typeset index=$((slicenum + 1))
+
+		if [[ -n $start ]]; then
+			start="-b $start"
+		fi
+		gpart add -t freebsd-zfs $start -s $size -i $index $disk
+		if [[ $ret_val -ne 0 ]]; then
+			log_note "Failed to create partition $slicenum on $disk"
+			return 1
+		fi
+
+		block_device_wait $disk
+		;;
+	*)
 		if [[ -z $slicenum || -z $size || -z $disk ]]; then
 			log_fail "The slice, size or disk name is unspecified."
 		fi
@@ -968,7 +998,8 @@ function set_partition
 		format -e -s -d $disk -f $format_file
 		typeset ret_val=$?
 		rm -f $format_file
-	fi
+		;;
+	esac
 
 	if [[ $ret_val -ne 0 ]]; then
 		log_note "Unable to format $disk slice $slicenum to $size"
@@ -1025,13 +1056,22 @@ function get_endslice #<disk> <slice>
 		log_fail "The disk name or slice number is unspecified."
 	fi
 
-	if is_linux; then
+	case "$(uname)" in
+	Linux)
 		endcyl=$(parted -s $DEV_DSKDIR/$disk -- unit cyl print | \
 			grep "part${slice}" | \
 			awk '{print $3}' | \
 			sed 's,cyl,,')
 		((endcyl = (endcyl + 1)))
-	else
+		;;
+	FreeBSD)
+		disk=${disk#/dev/zvol/}
+		disk=${disk%p*}
+		slice=$((slice + 1))
+		endcyl=$(gpart show $disk | \
+			awk -v slice=$slice '$3 == slice { print $1 + $2 }')
+		;;
+	*)
 		disk=${disk#/dev/dsk/}
 		disk=${disk#/dev/rdsk/}
 		disk=${disk%s*}
@@ -1049,7 +1089,8 @@ function get_endslice #<disk> <slice>
 		    nawk -v token="$slice" '{if ($1==token) print $6}')
 
 		((endcyl = (endcyl + 1) / ratio))
-	fi
+		;;
+	esac
 
 	echo $endcyl
 }

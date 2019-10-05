@@ -652,7 +652,7 @@ zvol_get_done(zgd_t *zgd, int error)
 	if (zgd->zgd_db)
 		dmu_buf_rele(zgd->zgd_db, zgd);
 
-	rangelock_exit(zgd->zgd_lr);
+	zfs_rangelock_exit(zgd->zgd_lr);
 
 	kmem_free(zgd, sizeof (zgd_t));
 }

@@ -715,8 +715,8 @@ zfs_read(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 	/*
 	 * Lock the range against changes.
 	 */
-	lr = rangelock_enter(&zp->z_rangelock, uio->uio_loffset, uio->uio_resid,
-	    RL_READER);
+	lr = zfs_rangelock_enter(&zp->z_rangelock, uio->uio_loffset,
+	    uio->uio_resid, RL_READER);
 
 	/*
 	 * If we are reading past end-of-file we can skip
@@ -752,7 +752,7 @@ zfs_read(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 		n -= nbytes;
 	}
 out:
-	rangelock_exit(lr);
+	zfs_rangelock_exit(lr);
 
 	ZFS_ACCESSTIME_STAMP(zfsvfs, zp);
 	ZFS_EXIT(zfsvfs);
@@ -867,7 +867,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 		 * Obtain an appending range lock to guarantee file append
 		 * semantics.  We reset the write offset once we have the lock.
 		 */
-		lr = rangelock_enter(&zp->z_rangelock, 0, n, RL_APPEND);
+		lr = zfs_rangelock_enter(&zp->z_rangelock, 0, n, RL_APPEND);
 		woff = lr->lr_offset;
 		if (lr->lr_length == UINT64_MAX) {
 			/*
@@ -884,17 +884,17 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 		 * this write, then this range lock will lock the entire file
 		 * so that we can re-write the block safely.
 		 */
-		lr = rangelock_enter(&zp->z_rangelock, woff, n, RL_WRITER);
+		lr = zfs_rangelock_enter(&zp->z_rangelock, woff, n, RL_WRITER);
 	}
 
 	if (vn_rlimit_fsize(vp, uio, uio->uio_td)) {
-		rangelock_exit(lr);
+		zfs_rangelock_exit(lr);
 		ZFS_EXIT(zfsvfs);
 		return (EFBIG);
 	}
 
 	if (woff >= limit) {
-		rangelock_exit(lr);
+		zfs_rangelock_exit(lr);
 		ZFS_EXIT(zfsvfs);
 		return (SET_ERROR(EFBIG));
 	}
@@ -996,7 +996,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 				new_blksz = MIN(end_size, max_blksz);
 			}
 			zfs_grow_blocksize(zp, new_blksz, tx);
-			rangelock_reduce(lr, woff, n);
+			zfs_rangelock_reduce(lr, woff, n);
 		}
 
 		/*
@@ -1113,7 +1113,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 
 	}
 
-	rangelock_exit(lr);
+	zfs_rangelock_exit(lr);
 
 	/*
 	 * If we're in replay mode, or we made no progress, return error.
@@ -1198,7 +1198,7 @@ zfs_get_done(zgd_t *zgd, int error)
 	if (zgd->zgd_db)
 		dmu_buf_rele(zgd->zgd_db, zgd);
 
-	rangelock_exit(zgd->zgd_lr);
+	zfs_rangelock_exit(zgd->zgd_lr);
 
 	/*
 	 * Release the vnode asynchronously as we currently have the
@@ -1260,8 +1260,8 @@ zfs_get_data(void *arg, lr_write_t *lr, char *buf, struct lwb *lwb, zio_t *zio)
 	 * we don't have to write the data twice.
 	 */
 	if (buf != NULL) { /* immediate write */
-		zgd->zgd_lr = rangelock_enter(&zp->z_rangelock, offset, size,
-		    RL_READER);
+		zgd->zgd_lr = zfs_rangelock_enter(&zp->z_rangelock, offset,
+		    size, RL_READER);
 		/* test for truncation needs to be done while range locked */
 		if (offset >= zp->z_size) {
 			error = SET_ERROR(ENOENT);
@@ -1282,12 +1282,12 @@ zfs_get_data(void *arg, lr_write_t *lr, char *buf, struct lwb *lwb, zio_t *zio)
 			size = zp->z_blksz;
 			blkoff = ISP2(size) ? P2PHASE(offset, size) : offset;
 			offset -= blkoff;
-			zgd->zgd_lr = rangelock_enter(&zp->z_rangelock, offset,
-			    size, RL_READER);
+			zgd->zgd_lr = zfs_rangelock_enter(&zp->z_rangelock,
+			    offset, size, RL_READER);
 			if (zp->z_blksz == size)
 				break;
 			offset += blkoff;
-			rangelock_exit(zgd->zgd_lr);
+			zfs_rangelock_exit(zgd->zgd_lr);
 		}
 		/* test for truncation needs to be done while range locked */
 		if (lr->lr_offset >= zp->z_size)
@@ -4643,11 +4643,12 @@ zfs_getpages(struct vnode *vp, vm_page_t *ma, int count, int *rbehind,
 	 */
 	for (;;) {
 		blksz = zp->z_blksz;
-		lr = rangelock_enter(&zp->z_rangelock, rounddown(start, blksz),
+		lr = zfs_rangelock_enter(&zp->z_rangelock,
+		    rounddown(start, blksz),
 		    roundup(end, blksz) - rounddown(start, blksz), RL_READER);
 		if (blksz == zp->z_blksz)
 			break;
-		rangelock_exit(lr);
+		zfs_rangelock_exit(lr);
 	}
 
 	object = ma[0]->object;
@@ -4655,7 +4656,7 @@ zfs_getpages(struct vnode *vp, vm_page_t *ma, int count, int *rbehind,
 	obj_size = object->un_pager.vnp.vnp_size;
 	zfs_vmobject_wunlock(object);
 	if (IDX_TO_OFF(ma[count - 1]->pindex) >= obj_size) {
-		rangelock_exit(lr);
+		zfs_rangelock_exit(lr);
 		ZFS_EXIT(zfsvfs);
 		return (zfs_vm_pagerret_bad);
 	}
@@ -4683,7 +4684,7 @@ zfs_getpages(struct vnode *vp, vm_page_t *ma, int count, int *rbehind,
 	error = dmu_read_pages(os, zp->z_id, ma, count, &pgsin_b, &pgsin_a,
 	    MIN(end, obj_size) - (end - PAGE_SIZE));
 
-	rangelock_exit(lr);
+	zfs_rangelock_exit(lr);
 	ZFS_ACCESSTIME_STAMP(zfsvfs, zp);
 	ZFS_EXIT(zfsvfs);
 
@@ -4775,7 +4776,7 @@ zfs_putpages(struct vnode *vp, vm_page_t *ma, size_t len, int flags,
 	blksz = zp->z_blksz;
 	lo_off = rounddown(off, blksz);
 	lo_len = roundup(len + (off - lo_off), blksz);
-	lr = rangelock_enter(&zp->z_rangelock, lo_off, lo_len, RL_WRITER);
+	lr = zfs_rangelock_enter(&zp->z_rangelock, lo_off, lo_len, RL_WRITER);
 
 	zfs_vmobject_wlock(object);
 	if (len + off > object->un_pager.vnp.vnp_size) {
@@ -4872,7 +4873,7 @@ zfs_putpages(struct vnode *vp, vm_page_t *ma, size_t len, int flags,
 	dmu_tx_commit(tx);
 
 out:
-	rangelock_exit(lr);
+	zfs_rangelock_exit(lr);
 	if ((flags & (zfs_vm_pagerput_sync | zfs_vm_pagerput_inval)) != 0 ||
 	    zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
 		zil_commit(zfsvfs->z_log, zp->z_id);

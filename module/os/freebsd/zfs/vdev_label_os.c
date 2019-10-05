@@ -33,7 +33,7 @@
 #include <sys/zio.h>
 #include <sys/dsl_scan.h>
 #include <sys/abd.h>
-#include <sys/fs/zfs.h
+#include <sys/fs/zfs.h>
 
 int
 vdev_label_write_pad2(vdev_t *vd, const char *buf, size_t size)

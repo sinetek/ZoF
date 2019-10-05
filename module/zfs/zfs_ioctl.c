@@ -3223,19 +3223,6 @@ zfs_fill_zplprops_root(uint64_t spa_vers, nvlist_t *createprops,
 
 /*
  * innvl: {
- *     "snaps" -> { snapshot1, snapshot2 }
- *     (optional boolean) "defer"
- * }
- *
- * outnvl: snapshot -> error code (int32)
- */
-static const zfs_ioc_key_t zfs_keys_destroy_snaps[] = {
-	{"snaps",	DATA_TYPE_NVLIST,	0},
-	{"defer", 	DATA_TYPE_BOOLEAN,	ZK_OPTIONAL},
-};
-
-/*
- * innvl: {
  *     "type" -> dmu_objset_type_t (int32)
  *     (optional) "props" -> { prop -> value }
  *     (optional) "hidden_args" -> { "wkeydata" -> value }

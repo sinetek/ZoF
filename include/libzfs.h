@@ -43,6 +43,7 @@
 #include <sys/avl.h>
 #include <ucred.h>
 #include <libzfs_core.h>
+#include <sys/sysmacros.h>
 
 #ifdef	__cplusplus
 extern "C" {

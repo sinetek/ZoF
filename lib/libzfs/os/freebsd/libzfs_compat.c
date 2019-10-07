@@ -70,7 +70,7 @@ get_zfs_spa_version(void)
  * error is returned zc_nvlist_dst_size won't be updated.
  */
 int
-zcmd_ioctl(int fd, int request, zfs_cmd_t *zc)
+zcmd_ioctl(int fd, unsigned long request, zfs_cmd_t *zc)
 {
 	size_t oldsize;
 	int ret, cflag = ZFS_CMD_COMPAT_NONE;

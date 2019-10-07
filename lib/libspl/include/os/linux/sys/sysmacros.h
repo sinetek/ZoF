@@ -98,6 +98,16 @@
 #define	offsetof(s, m)	((size_t)(&(((s *)0)->m)))
 #endif
 
+#if !defined(_KERNEL)
+#include <sys/ioctl.h>
+
+static inline int
+zcmd_ioctl(int fd, unsigned long req, void *param)
+{
+	return (ioctl(fd, req, param));
+}
+#endif
+
 #define	_NOTE(x)
 
 #endif /* _LIBSPL_SYS_SYSMACROS_H */

@@ -4,8 +4,17 @@ VPATH = \
 	$(top_srcdir)/module/zfs \
 	$(top_srcdir)/module/zcommon \
 	$(top_srcdir)/module/lua \
-	$(top_srcdir)/module/os/linux/zfs \
 	$(top_srcdir)/lib/libzpool
+
+if BUILD_LINUX
+VPATH += \
+	$(top_srcdir)/module/os/linux/zfs
+endif
+
+if BUILD_FREEBSD
+VPATH += \
+	$(top_srcdir)/module/os/freebsd/zfs
+endif
 
 # Suppress unused but set variable warnings often due to ASSERTs
 AM_CFLAGS += $(NO_UNUSED_BUT_SET_VARIABLE)
@@ -105,7 +114,6 @@ KERNEL_C = \
 	space_map.c \
 	space_reftree.c \
 	txg.c \
-	trace.c \
 	uberblock.c \
 	unique.c \
 	vdev.c \
@@ -158,6 +166,11 @@ KERNEL_C = \
 	zle.c \
 	zrlock.c \
 	zthr.c
+
+if BUILD_LINUX
+USER_C += \
+	trace.c
+endif
 
 LUA_C = \
 	lapi.c \

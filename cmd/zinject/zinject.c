@@ -159,11 +159,6 @@
 libzfs_handle_t *g_zfs;
 int zfs_fd;
 
-#ifdef __FreeBSD__
-int zcmd_ioctl(int fd, int request, zfs_cmd_t *zc);
-#define	ioctl(fd, ioc, zc)	zcmd_ioctl((fd), (ioc), (zc))
-#endif
-
 static const char *errtable[TYPE_INVAL] = {
 	"data",
 	"dnode",

@@ -60,6 +60,7 @@
 #include <sys/dsl_crypt.h>
 
 #include <sys/zfs_ioctl_compat.h>
+#include <sys/zfs_ioctl_impl.h>
 
 #include "zfs_namecheck.h"
 #include "zfs_prop.h"
@@ -239,16 +240,17 @@ zfs_allow_log_destroy(void *arg)
 	strfree(poolname);
 }
 
-static void
-zfsdev_init(void)
+int
+zfsdev_attach(void)
 {
 	mutex_init(&zfsdev_state_lock, NULL, MUTEX_DEFAULT, NULL);
 	zfsdev = make_dev(&zfs_cdevsw, 0x0, UID_ROOT, GID_OPERATOR, 0666,
 	    ZFS_DRIVER);
+	return (0);
 }
 
-static void
-zfsdev_fini(void)
+void
+zfsdev_detach(void)
 {
 	if (zfsdev != NULL)
 		destroy_dev(zfsdev);
@@ -258,6 +260,7 @@ zfsdev_fini(void)
 int
 zfs__init(void)
 {
+	int error;
 
 #ifdef __FreeBSD__
 #if KSTACK_PAGES < ZFS_MIN_KSTACK_PAGES
@@ -268,26 +271,18 @@ zfs__init(void)
 #endif
 #endif
 	zfs_root_token = root_mount_hold("ZFS");
+	if ((error = zfs_kmod_init()) != 0) {
+		printf("ZFS: Failed to Load ZFS Filesystem"
+		    ", rc = %d\n", error);
+
+		return (error);
+	}
 
 
-	spa_init(FREAD | FWRITE);
-	zfs_init();
-	zvol_init();
-	zfs_ioctl_init();
-
-	tsd_create(&zfs_fsyncer_key, NULL);
-	tsd_create(&rrw_tsd_key, rrw_tsd_destroy);
-	tsd_create(&zfs_allow_log_key, zfs_allow_log_destroy);
 	tsd_create(&zfs_geom_probe_vdev_key, NULL);
 
 	printf("ZFS storage pool version: features support (" SPA_VERSION_STRING ")\n");
 	root_mount_rel(zfs_root_token);
-
-	zfsdev_init();
-	zcommon_init();
-
-	zfsdev_state_list = kmem_zalloc(sizeof (zfsdev_state_t), KM_SLEEP);
-	zfsdev_state_list->zs_minor = -1;
 
 	return (0);
 }
@@ -299,17 +294,8 @@ zfs__fini(void)
 	    zio_injection_enabled) {
 		return (EBUSY);
 	}
-
-	zcommon_fini();
-	zfsdev_fini();
-	zvol_fini();
-	zfs_fini();
-	spa_fini();
-
-	tsd_destroy(&zfs_fsyncer_key);
-	tsd_destroy(&rrw_tsd_key);
-	tsd_destroy(&zfs_allow_log_key);
-
+	zfs_kmod_fini();
+	tsd_destroy(&zfs_geom_probe_vdev_key);
 	return (0);
 }
 

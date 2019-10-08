@@ -275,7 +275,7 @@ zfs__init(void)
 	if ((error = zfs_kmod_init()) != 0) {
 		printf("ZFS: Failed to Load ZFS Filesystem"
 		    ", rc = %d\n", error);
-
+		root_mount_rel(zfs_root_token);
 		return (error);
 	}
 
@@ -284,7 +284,7 @@ zfs__init(void)
 
 	printf("ZFS storage pool version: features support (" SPA_VERSION_STRING ")\n");
 	root_mount_rel(zfs_root_token);
-
+	zcommon_init();
 	return (0);
 }
 
@@ -297,6 +297,7 @@ zfs__fini(void)
 	}
 	zfs_kmod_fini();
 	tsd_destroy(&zfs_geom_probe_vdev_key);
+	zcommon_fini();
 	return (0);
 }
 

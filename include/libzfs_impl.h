@@ -255,7 +255,7 @@ extern int zpool_relabel_disk(libzfs_handle_t *hdl, const char *path,
     const char *msg);
 extern int find_shares_object(differ_info_t *di);
 extern void libzfs_set_pipe_max(int infd);
-
+extern int execvpe(const char *name, char * const argv[], char * const envp[]);
 #ifdef	__cplusplus
 }
 #endif

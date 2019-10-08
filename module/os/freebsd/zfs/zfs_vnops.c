@@ -84,6 +84,14 @@
 #include <sys/extattr.h>
 #include <sys/priv.h>
 
+#if __FreeBSD_version >= 1300047
+#define vm_page_wire_lock(pp)
+#define vm_page_wire_unlock(pp)
+#else
+#define vm_page_wire_lock(pp) vm_page_lock(pp)
+#define vm_page_wire_unlock(pp) vm_page_unlock(pp)
+#endif
+
 static int
 zfs_u8_validate(const char *u8str, size_t n, char **list, int flag, int *errnum)
 {
@@ -448,13 +456,13 @@ page_hold(vnode_t *vp, int64_t start)
 			}
 
 			ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
-			vm_page_lock(pp);
+			vm_page_wire_lock(pp);
 #if __FreeBSD_version >= 1300035
 			vm_page_wire(pp);
 #else
 			vm_page_hold(pp);
 #endif
-			vm_page_unlock(pp);
+			vm_page_wire_unlock(pp);
 
 		} else
 			pp = NULL;
@@ -467,13 +475,13 @@ static void
 page_unhold(vm_page_t pp)
 {
 
-	vm_page_lock(pp);
+	vm_page_wire_lock(pp);
 #if __FreeBSD_version >= 1300035
 	vm_page_unwire(pp, PQ_ACTIVE);
 #else
 	vm_page_unhold(pp);
 #endif
-	vm_page_unlock(pp);
+	vm_page_wire_unlock(pp);
 }
 
 /*
@@ -572,6 +580,18 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 			zfs_unmap_page(sf);
 			zfs_vmobject_wlock(obj);
 			vm_page_sunbusy(pp);
+#if __FreeBSD_version >= 1300047
+			if (error) {
+				if (!vm_page_busied(pp) && !vm_page_wired(pp) &&
+				    pp->valid == 0)
+					vm_page_free(pp);
+			} else {
+				pp->valid = VM_PAGE_BITS_ALL;
+				vm_page_lock(pp);
+				vm_page_activate(pp);
+				vm_page_unlock(pp);
+			}
+#else
 			vm_page_lock(pp);
 			if (error) {
 				if (pp->wire_count == 0 && pp->valid == 0 &&
@@ -582,6 +602,7 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 				vm_page_activate(pp);
 			}
 			vm_page_unlock(pp);
+#endif
 		} else {
 			ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
 			vm_page_sunbusy(pp);

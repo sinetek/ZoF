@@ -4405,7 +4405,6 @@ zpool_obj_to_path(zpool_handle_t *zhp, uint64_t dsobj, uint64_t obj,
 	free(mntpnt);
 }
 
-#ifndef __FreeBSD__
 /*
  * Wait while the specified activity is in progress in the pool.
  */
@@ -4425,7 +4424,6 @@ zpool_wait(zpool_handle_t *zhp, zpool_wait_activity_t activity)
 		return (error);
 	}
 }
-#endif
 
 /*
  * Wait for the given activity and return the status of the wait (whether or not

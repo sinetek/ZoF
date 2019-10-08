@@ -66,6 +66,13 @@
 #include "zutil_import.h"
 
 void
+update_vdev_config_dev_strs(nvlist_t *nv)
+{
+	/* implement me */
+	abort();
+}
+
+void
 zpool_open_func(void *arg)
 {
 	rdsk_node_t *rn = arg;

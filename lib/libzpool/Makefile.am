@@ -22,6 +22,14 @@ USER_C = \
 	taskq.c \
 	util.c
 
+if BUILD_FREEBSD
+USER_C += os/freebsd/compat.c
+endif
+
+if BUILD_LINUX
+USER_C += os/linux/compat.c
+endif
+
 KERNEL_C = \
 	zfeature_common.c \
 	zfs_comutil.c \

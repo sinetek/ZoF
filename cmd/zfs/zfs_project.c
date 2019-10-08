@@ -105,7 +105,7 @@ zfs_project_load_projid(const char *name, zfs_project_control_t *zpc)
 		return (fd);
 	}
 
-	ret = zcmd_ioctl(fd, ZFS_IOC_FSGETXATTR, &fsx);
+	ret = ioctl(fd, ZFS_IOC_FSGETXATTR, &fsx);
 	if (ret)
 		(void) fprintf(stderr,
 		    gettext("failed to get xattr for %s: %s\n"),
@@ -133,7 +133,7 @@ zfs_project_handle_one(const char *name, zfs_project_control_t *zpc)
 		return (fd);
 	}
 
-	ret = zcmd_ioctl(fd, ZFS_IOC_FSGETXATTR, &fsx);
+	ret = ioctl(fd, ZFS_IOC_FSGETXATTR, &fsx);
 	if (ret) {
 		(void) fprintf(stderr,
 		    gettext("failed to get xattr for %s: %s\n"),
@@ -192,7 +192,7 @@ zfs_project_handle_one(const char *name, zfs_project_control_t *zpc)
 		break;
 	}
 
-	ret = zcmd_ioctl(fd, ZFS_IOC_FSSETXATTR, &fsx);
+	ret = ioctl(fd, ZFS_IOC_FSSETXATTR, &fsx);
 	if (ret)
 		(void) fprintf(stderr,
 		    gettext("failed to set xattr for %s: %s\n"),

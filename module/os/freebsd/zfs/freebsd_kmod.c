@@ -97,7 +97,6 @@ static void zfs_shutdown(void *, int);
 
 static eventhandler_tag zfs_shutdown_event_tag;
 extern zfsdev_state_t *zfsdev_state_list;
-extern kmutex_t zfsdev_state_lock;
 
 #define	ZFS_MIN_KSTACK_PAGES 4
 
@@ -233,17 +232,9 @@ static struct cdevsw zfs_cdevsw = {
 	.d_name =	ZFS_DRIVER
 };
 
-static void
-zfs_allow_log_destroy(void *arg)
-{
-	char *poolname = arg;
-	strfree(poolname);
-}
-
 int
 zfsdev_attach(void)
 {
-	mutex_init(&zfsdev_state_lock, NULL, MUTEX_DEFAULT, NULL);
 	zfsdev = make_dev(&zfs_cdevsw, 0x0, UID_ROOT, GID_OPERATOR, 0666,
 	    ZFS_DRIVER);
 	return (0);
@@ -254,7 +245,6 @@ zfsdev_detach(void)
 {
 	if (zfsdev != NULL)
 		destroy_dev(zfsdev);
-	mutex_destroy(&zfsdev_state_lock);
 }
 
 int

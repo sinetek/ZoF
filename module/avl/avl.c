@@ -103,6 +103,7 @@
 #include <sys/debug.h>
 #include <sys/avl.h>
 #include <sys/cmn_err.h>
+#include <sys/zfs_context.h>
 
 /*
  * Small arrays to translate between balance (or diff) values and child indices.
@@ -992,8 +993,7 @@ done:
 	return (AVL_NODE2DATA(node, off));
 }
 
-#if defined(_KERNEL) && defined(__linux__)
-#include <linux/module.h>
+#if defined(_KERNEL)
 
 static int __init
 avl_init(void)

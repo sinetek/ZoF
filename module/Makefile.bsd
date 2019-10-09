@@ -271,6 +271,7 @@ SRCS+=	aggsum.c \
 	zfs_sa.c \
 	zil.c \
 	zio.c \
+	zio_os.c \
 	zio_checksum.c \
 	zio_compress.c \
 	zio_inject.c \

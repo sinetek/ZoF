@@ -171,190 +171,6 @@ zfs_znode_cache_destructor(void *buf, void *arg)
 	ASSERT(zp->z_acl_cached == NULL);
 }
 
-#ifdef	ZNODE_STATS
-static struct {
-	uint64_t zms_zfsvfs_invalid;
-	uint64_t zms_zfsvfs_recheck1;
-	uint64_t zms_zfsvfs_unmounted;
-	uint64_t zms_zfsvfs_recheck2;
-	uint64_t zms_obj_held;
-	uint64_t zms_vnode_locked;
-	uint64_t zms_not_only_dnlc;
-} znode_move_stats;
-#endif	/* ZNODE_STATS */
-
-#ifdef illumos
-static void
-zfs_znode_move_impl(znode_t *ozp, znode_t *nzp)
-{
-	vnode_t *vp;
-
-	/* Copy fields. */
-	nzp->z_zfsvfs = ozp->z_zfsvfs;
-
-	/* Swap vnodes. */
-	vp = nzp->z_vnode;
-	nzp->z_vnode = ozp->z_vnode;
-	ozp->z_vnode = vp; /* let destructor free the overwritten vnode */
-	ZTOV(ozp)->v_data = ozp;
-	ZTOV(nzp)->v_data = nzp;
-
-	nzp->z_id = ozp->z_id;
-	ASSERT(ozp->z_dirlocks == NULL); /* znode not in use */
-	ASSERT(avl_numnodes(&ozp->z_range_avl) == 0);
-	nzp->z_unlinked = ozp->z_unlinked;
-	nzp->z_atime_dirty = ozp->z_atime_dirty;
-	nzp->z_zn_prefetch = ozp->z_zn_prefetch;
-	nzp->z_blksz = ozp->z_blksz;
-	nzp->z_seq = ozp->z_seq;
-	nzp->z_mapcnt = ozp->z_mapcnt;
-	nzp->z_gen = ozp->z_gen;
-	nzp->z_sync_cnt = ozp->z_sync_cnt;
-	nzp->z_is_sa = ozp->z_is_sa;
-	nzp->z_sa_hdl = ozp->z_sa_hdl;
-	nzp->z_links = ozp->z_links;
-	nzp->z_size = ozp->z_size;
-	nzp->z_pflags = ozp->z_pflags;
-	nzp->z_uid = ozp->z_uid;
-	nzp->z_gid = ozp->z_gid;
-	nzp->z_mode = ozp->z_mode;
-
-	/*
-	 * Since this is just an idle znode and kmem is already dealing with
-	 * memory pressure, release any cached ACL.
-	 */
-	if (ozp->z_acl_cached) {
-		zfs_acl_free(ozp->z_acl_cached);
-		ozp->z_acl_cached = NULL;
-	}
-
-	sa_set_userp(nzp->z_sa_hdl, nzp);
-
-	/*
-	 * Invalidate the original znode by clearing fields that provide a
-	 * pointer back to the znode. Set the low bit of the vfs pointer to
-	 * ensure that zfs_znode_move() recognizes the znode as invalid in any
-	 * subsequent callback.
-	 */
-	ozp->z_sa_hdl = NULL;
-	POINTER_INVALIDATE(&ozp->z_zfsvfs);
-
-	/*
-	 * Mark the znode.
-	 */
-	nzp->z_moved = 1;
-	ozp->z_moved = (uint8_t)-1;
-}
-
-/*ARGSUSED*/
-static kmem_cbrc_t
-zfs_znode_move(void *buf, void *newbuf, size_t size, void *arg)
-{
-	znode_t *ozp = buf, *nzp = newbuf;
-	zfsvfs_t *zfsvfs;
-	vnode_t *vp;
-
-	/*
-	 * The znode is on the file system's list of known znodes if the vfs
-	 * pointer is valid. We set the low bit of the vfs pointer when freeing
-	 * the znode to invalidate it, and the memory patterns written by kmem
-	 * (baddcafe and deadbeef) set at least one of the two low bits. A newly
-	 * created znode sets the vfs pointer last of all to indicate that the
-	 * znode is known and in a valid state to be moved by this function.
-	 */
-	zfsvfs = ozp->z_zfsvfs;
-	if (!POINTER_IS_VALID(zfsvfs)) {
-		ZNODE_STAT_ADD(znode_move_stats.zms_zfsvfs_invalid);
-		return (KMEM_CBRC_DONT_KNOW);
-	}
-
-	/*
-	 * Close a small window in which it's possible that the filesystem could
-	 * be unmounted and freed, and zfsvfs, though valid in the previous
-	 * statement, could point to unrelated memory by the time we try to
-	 * prevent the filesystem from being unmounted.
-	 */
-	rw_enter(&zfsvfs_lock, RW_WRITER);
-	if (zfsvfs != ozp->z_zfsvfs) {
-		rw_exit(&zfsvfs_lock);
-		ZNODE_STAT_ADD(znode_move_stats.zms_zfsvfs_recheck1);
-		return (KMEM_CBRC_DONT_KNOW);
-	}
-
-	/*
-	 * If the znode is still valid, then so is the file system. We know that
-	 * no valid file system can be freed while we hold zfsvfs_lock, so we
-	 * can safely ensure that the filesystem is not and will not be
-	 * unmounted. The next statement is equivalent to ZFS_ENTER().
-	 */
-	rrm_enter(&zfsvfs->z_teardown_lock, RW_READER, FTAG);
-	if (zfsvfs->z_unmounted) {
-		ZFS_EXIT(zfsvfs);
-		rw_exit(&zfsvfs_lock);
-		ZNODE_STAT_ADD(znode_move_stats.zms_zfsvfs_unmounted);
-		return (KMEM_CBRC_DONT_KNOW);
-	}
-	rw_exit(&zfsvfs_lock);
-
-	mutex_enter(&zfsvfs->z_znodes_lock);
-	/*
-	 * Recheck the vfs pointer in case the znode was removed just before
-	 * acquiring the lock.
-	 */
-	if (zfsvfs != ozp->z_zfsvfs) {
-		mutex_exit(&zfsvfs->z_znodes_lock);
-		ZFS_EXIT(zfsvfs);
-		ZNODE_STAT_ADD(znode_move_stats.zms_zfsvfs_recheck2);
-		return (KMEM_CBRC_DONT_KNOW);
-	}
-
-	/*
-	 * At this point we know that as long as we hold z_znodes_lock, the
-	 * znode cannot be freed and fields within the znode can be safely
-	 * accessed. Now, prevent a race with zfs_zget().
-	 */
-	if (ZFS_OBJ_HOLD_TRYENTER(zfsvfs, ozp->z_id) == 0) {
-		mutex_exit(&zfsvfs->z_znodes_lock);
-		ZFS_EXIT(zfsvfs);
-		ZNODE_STAT_ADD(znode_move_stats.zms_obj_held);
-		return (KMEM_CBRC_LATER);
-	}
-
-	vp = ZTOV(ozp);
-	if (mutex_tryenter(&vp->v_lock) == 0) {
-		ZFS_OBJ_HOLD_EXIT(zfsvfs, ozp->z_id);
-		mutex_exit(&zfsvfs->z_znodes_lock);
-		ZFS_EXIT(zfsvfs);
-		ZNODE_STAT_ADD(znode_move_stats.zms_vnode_locked);
-		return (KMEM_CBRC_LATER);
-	}
-
-	/* Only move znodes that are referenced _only_ by the DNLC. */
-	if (vp->v_count != 1 || !vn_in_dnlc(vp)) {
-		mutex_exit(&vp->v_lock);
-		ZFS_OBJ_HOLD_EXIT(zfsvfs, ozp->z_id);
-		mutex_exit(&zfsvfs->z_znodes_lock);
-		ZFS_EXIT(zfsvfs);
-		ZNODE_STAT_ADD(znode_move_stats.zms_not_only_dnlc);
-		return (KMEM_CBRC_LATER);
-	}
-
-	/*
-	 * The znode is known and in a valid state to move. We're holding the
-	 * locks needed to execute the critical section.
-	 */
-	zfs_znode_move_impl(ozp, nzp);
-	mutex_exit(&vp->v_lock);
-	ZFS_OBJ_HOLD_EXIT(zfsvfs, ozp->z_id);
-
-	list_link_replace(&ozp->z_link_node, &nzp->z_link_node);
-	mutex_exit(&zfsvfs->z_znodes_lock);
-	ZFS_EXIT(zfsvfs);
-
-	return (KMEM_CBRC_YES);
-}
-#endif /* illumos */
-
 void
 zfs_znode_init(void)
 {
@@ -372,13 +188,6 @@ zfs_znode_init(void)
 void
 zfs_znode_fini(void)
 {
-#ifdef illumos
-	/*
-	 * Cleanup vfs & vnode ops
-	 */
-	zfs_remove_op_tables();
-#endif
-
 	/*
 	 * Cleanup zcache
 	 */
@@ -388,99 +197,6 @@ zfs_znode_fini(void)
 	rw_destroy(&zfsvfs_lock);
 }
 
-#ifdef illumos
-struct vnodeops *zfs_dvnodeops;
-struct vnodeops *zfs_fvnodeops;
-struct vnodeops *zfs_symvnodeops;
-struct vnodeops *zfs_xdvnodeops;
-struct vnodeops *zfs_evnodeops;
-struct vnodeops *zfs_sharevnodeops;
-
-void
-zfs_remove_op_tables()
-{
-	/*
-	 * Remove vfs ops
-	 */
-	ASSERT(zfsfstype);
-	(void) vfs_freevfsops_by_type(zfsfstype);
-	zfsfstype = 0;
-
-	/*
-	 * Remove vnode ops
-	 */
-	if (zfs_dvnodeops)
-		vn_freevnodeops(zfs_dvnodeops);
-	if (zfs_fvnodeops)
-		vn_freevnodeops(zfs_fvnodeops);
-	if (zfs_symvnodeops)
-		vn_freevnodeops(zfs_symvnodeops);
-	if (zfs_xdvnodeops)
-		vn_freevnodeops(zfs_xdvnodeops);
-	if (zfs_evnodeops)
-		vn_freevnodeops(zfs_evnodeops);
-	if (zfs_sharevnodeops)
-		vn_freevnodeops(zfs_sharevnodeops);
-
-	zfs_dvnodeops = NULL;
-	zfs_fvnodeops = NULL;
-	zfs_symvnodeops = NULL;
-	zfs_xdvnodeops = NULL;
-	zfs_evnodeops = NULL;
-	zfs_sharevnodeops = NULL;
-}
-
-extern const fs_operation_def_t zfs_dvnodeops_template[];
-extern const fs_operation_def_t zfs_fvnodeops_template[];
-extern const fs_operation_def_t zfs_xdvnodeops_template[];
-extern const fs_operation_def_t zfs_symvnodeops_template[];
-extern const fs_operation_def_t zfs_evnodeops_template[];
-extern const fs_operation_def_t zfs_sharevnodeops_template[];
-
-int
-zfs_create_op_tables()
-{
-	int error;
-
-	/*
-	 * zfs_dvnodeops can be set if mod_remove() calls mod_installfs()
-	 * due to a failure to remove the the 2nd modlinkage (zfs_modldrv).
-	 * In this case we just return as the ops vectors are already set up.
-	 */
-	if (zfs_dvnodeops)
-		return (0);
-
-	error = vn_make_ops(MNTTYPE_ZFS, zfs_dvnodeops_template,
-	    &zfs_dvnodeops);
-	if (error)
-		return (error);
-
-	error = vn_make_ops(MNTTYPE_ZFS, zfs_fvnodeops_template,
-	    &zfs_fvnodeops);
-	if (error)
-		return (error);
-
-	error = vn_make_ops(MNTTYPE_ZFS, zfs_symvnodeops_template,
-	    &zfs_symvnodeops);
-	if (error)
-		return (error);
-
-	error = vn_make_ops(MNTTYPE_ZFS, zfs_xdvnodeops_template,
-	    &zfs_xdvnodeops);
-	if (error)
-		return (error);
-
-	error = vn_make_ops(MNTTYPE_ZFS, zfs_evnodeops_template,
-	    &zfs_evnodeops);
-	if (error)
-		return (error);
-
-	error = vn_make_ops(MNTTYPE_ZFS, zfs_sharevnodeops_template,
-	    &zfs_sharevnodeops);
-
-	return (error);
-}
-#endif	/* illumos */
 
 int
 zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
@@ -714,14 +430,8 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz,
 			vp->v_op = &zfs_shareops;
 		}
 		break;
-#ifdef illumos
-	default:
-		vn_setops(vp, zfs_evnodeops);
-		break;
-#else
 	default:
 			break;
-#endif
 	}
 
 	mutex_enter(&zfsvfs->z_znodes_lock);
@@ -742,9 +452,6 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz,
 	if (vp->v_type != VFIFO)
 		VN_LOCK_ASHARE(vp);
 
-#ifdef illumos
-	VFS_HOLD(zfsvfs->z_vfs);
-#endif
 	return (zp);
 }
 
@@ -1473,9 +1180,6 @@ zfs_znode_free(znode_t *zp)
 
 	kmem_cache_free(znode_cache, zp);
 
-#ifdef illumos
-	VFS_RELE(zfsvfs->z_vfs);
-#endif
 }
 
 void

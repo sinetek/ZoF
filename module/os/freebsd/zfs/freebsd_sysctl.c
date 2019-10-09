@@ -226,9 +226,6 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, arc_no_grow_shift, CTLTYPE_U32 | CTLFLAG_RWTUN,
 
 
 /* dmu.c */
-extern int zfs_mdcomp_disable;
-SYSCTL_INT(_vfs_zfs, OID_AUTO, mdcomp_disable, CTLFLAG_RWTUN,
-    &zfs_mdcomp_disable, 0, "Disable metadata compression");
 
 /* dmu_zfetch.c */
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, zfetch, CTLFLAG_RW, 0, "ZFS ZFETCH");

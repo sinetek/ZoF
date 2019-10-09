@@ -63,11 +63,6 @@
 #include <sys/zfs_vfsops.h>
 #endif
 
-#if defined(__FreeBSD__) && defined(_KERNEL)
-#include <sys/buf.h>
-#endif
-
-
 /* Set this tunable to TRUE to replace corrupt data with 0x2f5baddb10c */
 int zfs_send_corrupt_data = B_FALSE;
 /*

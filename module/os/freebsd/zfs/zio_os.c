@@ -20,9 +20,6 @@
  */
 /*
  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
- * Copyright (c) 2011 Nexenta Systems, Inc. All rights reserved.
- * Copyright (c) 2017, Intel Corporation.
  */
 
 #include <sys/sysmacros.h>

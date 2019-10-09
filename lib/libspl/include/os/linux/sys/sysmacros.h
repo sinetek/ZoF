@@ -101,8 +101,10 @@
 #if !defined(_KERNEL)
 #include <sys/ioctl.h>
 
+struct zfs_cmd;
+
 static inline int
-zcmd_ioctl(int fd, unsigned long req, void *param)
+zcmd_ioctl(int fd, unsigned long req, struct zfs_cmd *param)
 {
 	return (ioctl(fd, req, param));
 }

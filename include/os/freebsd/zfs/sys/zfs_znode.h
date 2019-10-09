@@ -277,6 +277,10 @@ VTOZ(vnode_t *vp)
 	ASSERT(zp != NULL && zp->z_vnode == vp);
 	return (zp);
 }
+#define ZTOI(ZP) ZTOV(ZP)
+#define ITOZ(ZP) VTOZ(ZP)
+#define	igrab(vp)	vhold(vp)
+#define	iput(vp)	vrele(vp)
 #else
 #define	ZTOV(ZP)	((ZP)->z_vnode)
 #define	ZTOI(ZP)	((ZP)->z_vnode)

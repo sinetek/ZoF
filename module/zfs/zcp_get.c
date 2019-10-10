@@ -212,7 +212,6 @@ get_dsl_dir_prop(dsl_dataset_t *ds, zfs_prop_t zfs_prop,
 	return (0);
 }
 
-
 /*
  * Check if the property we're looking for is stored at the dsl_dataset or
  * dsl_dir level. If so, push the property value and source onto the lua stack

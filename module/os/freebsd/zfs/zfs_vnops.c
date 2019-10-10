@@ -89,7 +89,7 @@
 #define vm_page_wire_unlock(pp)
 #else
 #define vm_page_wire_lock(pp) vm_page_lock(pp)
-#define vm_page_wire_lock(pp) vm_page_unlock(pp)
+#define vm_page_wire_unlock(pp) vm_page_unlock(pp)
 #endif
 
 static int

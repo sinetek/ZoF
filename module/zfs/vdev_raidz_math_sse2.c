@@ -503,7 +503,7 @@ gf_x2_mul_fns[256] = {
 #define	MUL(c, r...) 							\
 {									\
 	switch (REG_CNT(r)) {						\
-	case 2:				\
+	case 2:								\
 		COPY(r, _mul_x2_in);					\
 		gf_x2_mul_fns[c]();					\
 		COPY(_mul_x2_acc, r);					\

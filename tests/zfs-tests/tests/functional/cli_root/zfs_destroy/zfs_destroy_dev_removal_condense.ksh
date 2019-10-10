@@ -46,7 +46,7 @@ function cleanup
 log_onexit cleanup
 
 ORIGINAL_MAX=$(get_tunable $LIVELIST_MAX_ENTRIES)
-set_tunable64 $LIVELIST_MAX_ENTRIES 0x14
+set_tunable64 $LIVELIST_MAX_ENTRIES 20
 
 VIRTUAL_DISK1=/var/tmp/disk1
 VIRTUAL_DISK2=/var/tmp/disk2

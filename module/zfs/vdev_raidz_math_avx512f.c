@@ -26,6 +26,7 @@
 #include <sys/isa_defs.h>
 
 #if defined(__x86_64) && defined(HAVE_AVX512F)
+
 #include <sys/types.h>
 #include <sys/simd.h>
 #include <sys/debug.h>
@@ -378,8 +379,10 @@ gf_x2_mul_fns[256] = {
 	}								\
 }
 
+
 #define	raidz_math_begin()	kfpu_begin()
 #define	raidz_math_end()	kfpu_end()
+
 
 #define	SYN_STRIDE		4
 

@@ -93,6 +93,7 @@ SRCS+=	nvpair.c \
 
 #os/freebsd/spl
 SRCS+=	acl_common.c \
+	btree.c \
 	callb.c \
 	list.c \
 	opensolaris_acl.c \

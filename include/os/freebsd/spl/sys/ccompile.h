@@ -119,10 +119,7 @@ extern "C" {
 #define	__CONST			__sun_attr__((__const__))
 #define	__PURE			__sun_attr__((__pure__))
 
-#ifndef NDEBUG
-#define DEBUG
-#endif
-#if defined(ZFS_DEBUG) && !defined(DEBUG)
+#if (defined(ZFS_DEBUG) || !defined(NDEBUG))&& !defined(DEBUG)
 #define DEBUG
 #endif
 #define	EXPORT_SYMBOL(x)

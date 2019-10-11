@@ -69,8 +69,8 @@ typedef struct kmem_cache {
 	void		*kc_private;
 } kmem_cache_t;
 
-int kmem_cache_inuse(kmem_cache_t *cache);
-int kmem_cache_entry_size(kmem_cache_t *cache);
+uint64_t spl_kmem_cache_inuse(kmem_cache_t *cache);
+uint64_t spl_kmem_cache_entry_size(kmem_cache_t *cache);
 void *zfs_kmem_alloc(size_t size, int kmflags);
 void zfs_kmem_free(void *buf, size_t size);
 uint64_t kmem_size(void);

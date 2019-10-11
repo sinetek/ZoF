@@ -99,7 +99,7 @@ kmem_asprintf(const char *fmt, ...)
 }
 
 void
-strfree(char *str)
+kmem_strfree(char *str)
 {
 	ASSERT(str != NULL);
 	kmem_free(str, strlen(str) + 1);

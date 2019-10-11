@@ -446,7 +446,8 @@ extern void spa_load_l2cache(spa_t *spa);
 extern sysevent_t *spa_event_create(spa_t *spa, vdev_t *vd, nvlist_t *hist_nvl,
     const char *name);
 extern void spa_event_post(sysevent_t *ev);
-
+extern void spa_import_progress_init(void);
+extern void spa_import_progress_destroy(void);
 
 #ifdef	__cplusplus
 }

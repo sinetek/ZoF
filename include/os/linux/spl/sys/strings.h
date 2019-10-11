@@ -32,6 +32,4 @@
 #define	kstrtoul strict_strtoul
 #endif
 
-#define	spl_strdup(str)		strdup(str)
-
 #endif	/* _SPL_SYS_STRINGS_H */

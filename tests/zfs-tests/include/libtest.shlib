@@ -3759,7 +3759,14 @@ function md5digest
 {
 	typeset file=$1
 
-	md5sum -b $file | awk '{ print $1 }'
+	case "$(uname)" in
+	FreeBSD)
+		md5 -q $file
+		;;
+	*)
+		md5sum -b $file | awk '{ print $1 }'
+		;;
+	esac
 }
 
 #
@@ -3770,5 +3777,12 @@ function sha256digest
 {
 	typeset file=$1
 
-	sha256sum -b $file | awk '{ print $1 }'
+	case "$(uname)" in
+	FreeBSD)
+		sha256 -q $file
+		;;
+	*)
+		sha256sum -b $file | awk '{ print $1 }'
+		;;
+	esac
 }

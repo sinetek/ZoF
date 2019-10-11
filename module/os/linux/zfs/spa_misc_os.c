@@ -251,7 +251,7 @@ spa_import_progress_remove(uint64_t pool_guid)
 	}
 	mutex_exit(&shl->procfs_list.pl_lock);
 }
-
+#ifdef _KERNEL
 #include <linux/mod_compat.h>
 
 static int
@@ -343,3 +343,4 @@ MODULE_PARM_DESC(spa_slop_shift, "Reserved free space in pool");
 module_param_call(zfs_deadman_failmode, param_set_deadman_failmode,
 	param_get_charp, &zfs_deadman_failmode, 0644);
 MODULE_PARM_DESC(zfs_deadman_failmode, "Failmode for deadman timer");
+#endif

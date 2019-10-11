@@ -55,7 +55,7 @@ opensolaris_utsname_init(void *arg)
 }
 
 char *
-spl_strdup(const char *s)
+kmem_strdup(const char *s)
 {
 	char *buf;
 

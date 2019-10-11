@@ -345,16 +345,6 @@ SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, load_pct, CTLFLAG_RWTUN,
     "Percentage of cpus that can be used by the metaslab taskq");
 
 /*
- * Determines how many txgs a metaslab may remain loaded without having any
- * allocations from it. As long as a metaslab continues to be used we will
- * keep it loaded.
- */
-extern int metaslab_unload_delay;
-SYSCTL_INT(_vfs_zfs_metaslab, OID_AUTO, unload_delay, CTLFLAG_RWTUN,
-    &metaslab_unload_delay, 0,
-    "Number of TXGs that an unused metaslab can be kept in memory");
-
-/*
  * Max number of metaslabs per group to preload.
  */
 extern int metaslab_preload_limit;

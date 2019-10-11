@@ -302,14 +302,14 @@ kmem_vasprintf(const char *fmt, va_list adx)
 #error "KMEM_DEBUG not currently supported"
 #endif
 
-int
-kmem_cache_inuse(kmem_cache_t *cache)
+uint64_t
+spl_kmem_cache_inuse(kmem_cache_t *cache)
 {
 	return (uma_zone_get_cur(cache->kc_zone));
 }
 
-int
-kmem_cache_entry_size(kmem_cache_t *cache)
+uint64_t
+spl_kmem_cache_entry_size(kmem_cache_t *cache)
 {
 	return (cache->kc_zone->uz_size);
 }

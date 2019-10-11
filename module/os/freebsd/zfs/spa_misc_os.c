@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> factor out linux specific bits of spa_misc
 /*
  * CDDL HEADER START
  *
@@ -34,8 +30,8 @@
 
 #include <sys/zfs_context.h>
 #include <sys/spa_impl.h>
-#include <sys/spa.h>
 #include <sys/txg.h>
+#include <sys/avl.h>
 #include <sys/unique.h>
 #include <sys/dsl_pool.h>
 #include <sys/dsl_dir.h>
@@ -46,43 +42,60 @@
 #include <sys/kstat.h>
 #include "zfs_prop.h"
 
-int
-param_set_deadman_synctime(const char *val, zfs_kernel_param_t *kp)
+
+/*
+s * ==========================================================================
+ * SPA Import Progress Routines
+ * ==========================================================================
+ */
+
+typedef struct spa_import_progress {
+	uint64_t		pool_guid;	/* unique id for updates */
+	char			*pool_name;
+	spa_load_state_t	spa_load_state;
+	uint64_t		mmp_sec_remaining;	/* MMP activity check */
+	uint64_t		spa_load_max_txg;	/* rewind txg */
+} spa_import_progress_t;
+
+spa_history_list_t *spa_import_progress_list = NULL;
+
+void
+spa_import_progress_init(void)
 {
-	spa_t *spa = NULL;
-	int error;
+}
 
-	error = param_set_ulong(val, kp);
-	if (error < 0)
-		return (SET_ERROR(error));
+void
+spa_import_progress_destroy(void)
+{
+}
 
-	if (spa_mode_global != 0) {
-		mutex_enter(&spa_namespace_lock);
-		while ((spa = spa_next(spa)) != NULL)
-			spa->spa_deadman_synctime =
-			    MSEC2NSEC(zfs_deadman_synctime_ms);
-		mutex_exit(&spa_namespace_lock);
-	}
+void
+spa_import_progress_remove(uint64_t pool_guid)
+{
+}
 
+int
+spa_import_progress_set_state(uint64_t pool_guid,
+    spa_load_state_t load_state)
+{
+	return (0);
+}
+
+void
+spa_import_progress_add(spa_t *spa)
+{
+
+}
+
+int
+spa_import_progress_set_max_txg(uint64_t pool_guid, uint64_t load_max_txg)
+{
 	return (0);
 }
 
 int
-param_set_slop_shift(const char *buf, zfs_kernel_param_t *kp)
+spa_import_progress_set_mmp_check(uint64_t pool_guid,
+    uint64_t mmp_sec_remaining)
 {
-	unsigned long val;
-	int error;
-
-	error = kstrtoul(buf, 0, &val);
-	if (error)
-		return (SET_ERROR(error));
-
-	if (val < 1 || val > 31)
-		return (SET_ERROR(-EINVAL));
-
-	error = param_set_int(buf, kp);
-	if (error < 0)
-		return (SET_ERROR(error));
-
 	return (0);
 }

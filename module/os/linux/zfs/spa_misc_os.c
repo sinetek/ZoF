@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> factor out linux specific bits of spa_misc
 /*
  * CDDL HEADER START
  *

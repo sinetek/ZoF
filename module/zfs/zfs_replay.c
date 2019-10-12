@@ -49,7 +49,7 @@
 #include <sys/cred.h>
 #ifdef __linux__
 #include <sys/zpl.h>
-#define zfs_cmpldev(rdev) (rdev)
+#define	zfs_cmpldev(rdev) (rdev)
 #endif
 
 #ifdef __FreeBSD__

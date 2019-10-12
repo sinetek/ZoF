@@ -27,13 +27,14 @@
 
 #include <sys/stat.h>
 
+#include <libgeom.h>
+
 #include <libzutil.h>
 
 int
 zfs_append_partition(char *path, size_t max_len)
 {
-	/* implement me */
-	abort();
+	return (max_len);
 }
 
 char *
@@ -47,8 +48,13 @@ zfs_get_underlying_path(const char *dev_name)
 boolean_t
 zfs_dev_is_whole_disk(const char *dev_name)
 {
-	/* implement me */
-	abort();
+	int fd;
+
+	fd = g_open(dev_name, 0);
+	if (fd >= 0) {
+		g_close(fd);
+		return (B_TRUE);
+	}
 	return (B_FALSE);
 }
 

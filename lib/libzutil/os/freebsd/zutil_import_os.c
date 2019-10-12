@@ -65,11 +65,23 @@
 
 #include "zutil_import.h"
 
+/*
+ * Update a leaf vdev's persistent device strings
+ *
+ * - only applies for a dedicated leaf vdev (aka whole disk)
+ * - updated during pool create|add|attach|import
+ * - used for matching device matching during auto-{online,expand,replace}
+ * - stored in a leaf disk config label (i.e. alongside 'path' NVP)
+ * - these strings are currently not used in kernel (i.e. for vdev_disk_open)
+ *
+ * On FreeBSD we currently just strip devid and phys_path to avoid confusion.
+ */
 void
 update_vdev_config_dev_strs(nvlist_t *nv)
 {
-	/* implement me */
-	abort();
+	(void) nvlist_remove_all(nv, ZPOOL_CONFIG_DEVID);
+	(void) nvlist_remove_all(nv, ZPOOL_CONFIG_PHYS_PATH);
+	return;
 }
 
 void
@@ -121,11 +133,16 @@ zpool_open_func(void *arg)
 	/* TODO: Reuse labelpaths logic from Linux? */
 }
 
+static const char *
+zpool_default_import_path[] = {
+	"/dev"
+};
+
 const char * const *
 zpool_default_search_paths(size_t *count)
 {
-	*count = 1;
-	return ((const char * const *)&"/dev");
+	*count = nitems(zpool_default_import_path);
+	return (zpool_default_import_path);
 }
 
 int

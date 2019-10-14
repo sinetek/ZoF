@@ -31,6 +31,16 @@
 #include <sys/zfs_ioctl.h>
 #include <sys/zfs_onexit.h>
 
+static int
+zfs_onexit_minor_to_state(minor_t minor, zfs_onexit_t **zo)
+{
+	*zo = zfsdev_get_state(minor, ZST_ONEXIT);
+	if (*zo == NULL)
+		return (SET_ERROR(EBADF));
+
+	return (0);
+}
+
 int
 zfs_onexit_fd_hold(int fd, minor_t *minorp)
 {

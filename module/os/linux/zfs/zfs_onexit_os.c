@@ -48,7 +48,7 @@ zfs_onexit_fd_hold(int fd, minor_t *minorp)
 	if (fp == NULL)
 		return (SET_ERROR(EBADF));
 
-	error = zfsdev_getminor(fp->f_file, minorp);
+	error = zfsdev_getminor(fd, minorp);
 	if (error) {
 		zfs_onexit_fd_rele(fd);
 		return (error);

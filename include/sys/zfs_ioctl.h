@@ -568,7 +568,7 @@ typedef struct zfsdev_state {
 } zfsdev_state_t;
 
 extern void *zfsdev_get_state(minor_t minor, enum zfsdev_state_type which);
-extern int zfsdev_getminor(struct file *filp, minor_t *minorp);
+extern int zfsdev_getminor(int fd, minor_t *minorp);
 extern minor_t zfsdev_minor_alloc(void);
 extern long zfsdev_ioctl_common(uint_t vecnum, unsigned long arg);
 

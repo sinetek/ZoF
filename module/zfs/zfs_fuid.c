@@ -403,9 +403,6 @@ zfs_fuid_map_id(zfsvfs_t *zfsvfs, uint64_t fuid,
 	domain = zfs_fuid_find_by_idx(zfsvfs, index);
 	ASSERT(domain != NULL);
 
-#ifdef __FreeBSD__
-	id = UID_NOBODY;
-#else
 	if (type == ZFS_OWNER || type == ZFS_ACE_USER) {
 		(void) kidmap_getuidbysid(crgetzone(cr), domain,
 		    FUID_RID(fuid), &id);
@@ -413,7 +410,6 @@ zfs_fuid_map_id(zfsvfs_t *zfsvfs, uint64_t fuid,
 		(void) kidmap_getgidbysid(crgetzone(cr), domain,
 		    FUID_RID(fuid), &id);
 	}
-#endif
 	return (id);
 #else
 	/*
@@ -614,7 +610,6 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 		};
 		domain = fuidp->z_domain_table[idx - 1];
 	} else {
-		rid = 0;
 		if (type == ZFS_OWNER || type == ZFS_ACE_USER)
 			status = kidmap_getsidbyuid(crgetzone(cr), id,
 			    &domain, &rid);
@@ -717,10 +712,9 @@ boolean_t
 zfs_groupmember(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr)
 {
 #ifdef HAVE_KSID
-	uid_t		gid;
-#ifndef __FreeBSD__
 	ksid_t		*ksid = crgetsid(cr, KSID_GROUP);
 	ksidlist_t	*ksidlist = crgetsidlist(cr);
+	uid_t		gid;
 
 	if (ksid && ksidlist) {
 		int		i;
@@ -753,7 +747,7 @@ zfs_groupmember(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr)
 			}
 		}
 	}
-#endif
+
 	/*
 	 * Not found in ksidlist, check posix groups
 	 */

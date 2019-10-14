@@ -67,6 +67,12 @@ zfs_vfs_ref(zfsvfs_t **zfvp)
 	return (error);
 }
 
+int
+zfsdev_getminor(int fd, minor_t *minorp)
+{
+	return (ENOTSUP);
+}
+
 static const zfs_ioc_key_t zfs_keys_nextboot[] = {
 	{"command",		DATA_TYPE_STRING,	0},
 	{ ZPOOL_CONFIG_POOL_GUID,		DATA_TYPE_UINT64,	0},

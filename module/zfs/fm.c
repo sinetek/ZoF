@@ -567,7 +567,7 @@ out:
 
 	return (error);
 }
-#if defined(__linux__) || !defined(_KERNEL)
+
 static int
 zfs_zevent_minor_to_state(minor_t minor, zfs_zevent_t **ze)
 {
@@ -592,14 +592,6 @@ zfs_zevent_fd_hold(int fd, minor_t *minorp, zfs_zevent_t **ze)
 
 	return (error);
 }
-#else
-int
-zfs_zevent_fd_hold(int fd, minor_t *minorp, zfs_zevent_t **ze)
-{
-	printf("%s unimplemented\n", __func__);
-	return (ENOTSUP);
-}
-#endif
 
 void
 zfs_zevent_fd_rele(int fd)

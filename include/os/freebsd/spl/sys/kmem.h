@@ -69,8 +69,9 @@ typedef struct kmem_cache {
 	void		*kc_private;
 } kmem_cache_t;
 
-uint64_t spl_kmem_cache_inuse(kmem_cache_t *cache);
-uint64_t spl_kmem_cache_entry_size(kmem_cache_t *cache);
+extern uint64_t spl_kmem_cache_inuse(kmem_cache_t *cache);
+extern uint64_t spl_kmem_cache_entry_size(kmem_cache_t *cache);
+
 void *zfs_kmem_alloc(size_t size, int kmflags);
 void zfs_kmem_free(void *buf, size_t size);
 uint64_t kmem_size(void);
@@ -99,6 +100,5 @@ void *calloc(size_t n, size_t s);
 #define	kmem_free(buf, size)		zfs_kmem_free((buf), (size))
 #define	vmem_qcache_reap(ptr)	((void)0)
 
-#define	kmem_cache_set_move(cache, movefunc)	do { } while (0)
 
 #endif	/* _OPENSOLARIS_SYS_KMEM_H_ */

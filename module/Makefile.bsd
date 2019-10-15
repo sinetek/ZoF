@@ -266,6 +266,7 @@ SRCS+=	aggsum.c \
 	zfs_debug.c \
 	zfs_fm.c \
 	zfs_fuid.c \
+	zfs_fuid_os.c \
 	zfs_ioctl.c \
 	zfs_onexit.c \
 	zfs_onexit_os.c \

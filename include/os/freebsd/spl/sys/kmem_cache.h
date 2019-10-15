@@ -12,4 +12,9 @@ typedef enum kmem_cbrc {
 	KMEM_CBRC_DONT_KNOW	= 4,	/* Object unknown */
 } kmem_cbrc_t;
 
+extern void spl_kmem_cache_set_move(kmem_cache_t *,
+    kmem_cbrc_t (*)(void *, void *, size_t, void *));
+
+#define	kmem_cache_set_move(skc, move)	spl_kmem_cache_set_move(skc, move)
+
 #endif

@@ -33,6 +33,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
+#include <sys/kmem_cache.h>
 #include <sys/debug.h>
 #include <sys/mutex.h>
 #include <sys/vmmeter.h>
@@ -314,6 +315,16 @@ spl_kmem_cache_entry_size(kmem_cache_t *cache)
 	return (cache->kc_zone->uz_size);
 }
 
+/*
+ * Register a move callback for cache defragmentation.
+ * XXX: Unimplemented but harmless to stub out for now.
+ */
+void
+spl_kmem_cache_set_move(kmem_cache_t *skc,
+    kmem_cbrc_t (move)(void *, void *, size_t, void *))
+{
+	ASSERT(move != NULL);
+}
 
 #ifdef KMEM_DEBUG
 void kmem_show(void *);

@@ -143,7 +143,7 @@
  * ability to store the physical data (b_pabd) associated with the DVA of the
  * arc_buf_hdr_t. Since the b_pabd is a copy of the on-disk physical block,
  * it will match its on-disk compression characteristics. This behavior can be
- * disabled by setting 'zfs_arc_compression_enabled' to B_FALSE. When the
+ * disabled by setting 'zfs_compressed_arc_enabled' to B_FALSE. When the
  * compressed ARC functionality is disabled, the b_pabd will point to an
  * uncompressed version of the on-disk data.
  *
@@ -285,7 +285,6 @@
 #include <sys/arc.h>
 #include <sys/refcount.h>
 #include <sys/vdev.h>
-#include <sys/vdev_trim.h>
 #include <sys/vdev_impl.h>
 #include <sys/dsl_pool.h>
 #include <sys/zio_checksum.h>
@@ -371,8 +370,8 @@ int			arc_no_grow_shift = 5;
  * minimum lifespan of a prefetch block in clock ticks
  * (initialized in arc_init())
  */
-int		arc_min_prefetch_ms;
-int		arc_min_prescient_prefetch_ms;
+static int		arc_min_prefetch_ms;
+static int		arc_min_prescient_prefetch_ms;
 
 /*
  * If this percent of memory is free, don't throttle.
@@ -399,8 +398,8 @@ int arc_zio_arena_free_shift = 2;
  */
 unsigned long zfs_arc_max = 0;
 unsigned long zfs_arc_min = 0;
-unsigned long zfs_arc_metadata_limit = 0;
-unsigned long zfs_arc_metadata_min = 0;
+unsigned long zfs_arc_meta_limit = 0;
+unsigned long zfs_arc_meta_min = 0;
 unsigned long zfs_arc_dnode_limit = 0;
 unsigned long zfs_arc_dnode_reduce_percent = 10;
 int zfs_arc_grow_retry = 0;
@@ -418,7 +417,7 @@ unsigned long zfs_arc_pool_dirty_percent = 20;	/* each pool's anon allowance */
 /*
  * Enable or disable compressed arc buffers.
  */
-int zfs_arc_compression_enabled = B_TRUE;
+int zfs_compressed_arc_enabled = B_TRUE;
 
 /*
  * ARC will evict meta buffers that exceed arc_meta_limit. This
@@ -1535,7 +1534,7 @@ arc_hdr_set_compress(arc_buf_hdr_t *hdr, enum zio_compress cmp)
 	 * we ignore the compression of the blkptr and set the
 	 * want to uncompress them. Mark them as uncompressed.
 	 */
-	if (!zfs_arc_compression_enabled || HDR_GET_PSIZE(hdr) == 0) {
+	if (!zfs_compressed_arc_enabled || HDR_GET_PSIZE(hdr) == 0) {
 		arc_hdr_clear_flags(hdr, ARC_FLAG_COMPRESSED_ARC);
 		ASSERT(!HDR_COMPRESSION_ENABLED(hdr));
 	} else {
@@ -6956,10 +6955,10 @@ arc_tuning_update(void)
 	}
 
 	/* Valid range: 16M - <arc_c_max> */
-	if ((zfs_arc_metadata_min) && (zfs_arc_metadata_min != arc_meta_min) &&
-	    (zfs_arc_metadata_min >= 1ULL << SPA_MAXBLOCKSHIFT) &&
-	    (zfs_arc_metadata_min <= arc_c_max)) {
-		arc_meta_min = zfs_arc_metadata_min;
+	if ((zfs_arc_meta_min) && (zfs_arc_meta_min != arc_meta_min) &&
+	    (zfs_arc_meta_min >= 1ULL << SPA_MAXBLOCKSHIFT) &&
+	    (zfs_arc_meta_min <= arc_c_max)) {
+		arc_meta_min = zfs_arc_meta_min;
 		if (arc_meta_limit < arc_meta_min)
 			arc_meta_limit = arc_meta_min;
 		if (arc_dnode_size_limit < arc_meta_min)
@@ -6967,7 +6966,7 @@ arc_tuning_update(void)
 	}
 
 	/* Valid range: <arc_meta_min> - <arc_c_max> */
-	limit = zfs_arc_metadata_limit ? zfs_arc_metadata_limit :
+	limit = zfs_arc_meta_limit ? zfs_arc_meta_limit :
 	    MIN(zfs_arc_meta_limit_percent, 100) * arc_c_max / 100;
 	if ((limit != arc_meta_limit) &&
 	    (limit >= arc_meta_min) &&
@@ -8313,7 +8312,7 @@ l2arc_write_buffers(spa_t *spa, l2arc_dev_t *dev, uint64_t target_sz)
 			hdr = multilist_sublist_tail(mls);
 
 		headroom = target_sz * l2arc_headroom;
-		if (zfs_arc_compression_enabled)
+		if (zfs_compressed_arc_enabled)
 			headroom = (headroom * l2arc_headroom_boost) / 100;
 
 		for (; hdr; hdr = hdr_prev) {
@@ -8826,7 +8825,7 @@ ZFS_MODULE_PARAM_CALL(zfs_arc, zfs_arc_, p_min_shift, param_set_arc_int,
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, average_blocksize, INT, ZMOD_RD,
 	"Target average block size");
 
-ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, compression_enabled, INT, ZMOD_RW,
+ZFS_MODULE_PARAM(zfs, zfs_, compressed_arc_enabled, INT, ZMOD_RW,
 	"Disable compressed arc buffers");
 
 ZFS_MODULE_PARAM_CALL(zfs_arc, zfs_arc_, min_prefetch_ms, param_set_arc_int,

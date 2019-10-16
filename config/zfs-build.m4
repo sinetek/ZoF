@@ -514,7 +514,7 @@ dnl # Default ZFS package configuration
 dnl #
 AC_DEFUN([ZFS_AC_PACKAGE], [
 	ZFS_AC_DEFAULT_PACKAGE
-	AM_COND_IF([test x$VENDOR != xfreebsd], [
+	AS_IF([test x$VENDOR != xfreebsd], [
 		ZFS_AC_RPM
 		ZFS_AC_DPKG
 		ZFS_AC_ALIEN

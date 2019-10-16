@@ -408,7 +408,7 @@ dnl # Using the VENDOR tag from config.guess set the default
 dnl # package type for 'make pkg': (rpm | deb | tgz)
 dnl #
 AC_DEFUN([ZFS_AC_DEFAULT_PACKAGE], [
-	AC_MSG_CHECKING([linux distribution])
+	AC_MSG_CHECKING([os distribution])
 	if test -f /etc/toss-release ; then
 		VENDOR=toss ;
 	elif test -f /etc/fedora-release ; then
@@ -431,6 +431,8 @@ AC_DEFUN([ZFS_AC_DEFAULT_PACKAGE], [
 		VENDOR=debian ;
 	elif test -f /etc/alpine-release ; then
 		VENDOR=alpine ;
+	elif test -f /bin/freebsd-version ; then
+		VENDOR=freebsd ;
 	else
 		VENDOR= ;
 	fi
@@ -450,6 +452,7 @@ AC_DEFUN([ZFS_AC_DEFAULT_PACKAGE], [
 		lunar)      DEFAULT_PACKAGE=tgz  ;;
 		ubuntu)     DEFAULT_PACKAGE=deb  ;;
 		debian)     DEFAULT_PACKAGE=deb  ;;
+		freebsd)    DEFAULT_PACKAGE=pkg  ;;
 		*)          DEFAULT_PACKAGE=rpm  ;;
 	esac
 	AC_MSG_RESULT([$DEFAULT_PACKAGE])
@@ -473,6 +476,7 @@ AC_DEFUN([ZFS_AC_DEFAULT_PACKAGE], [
 		lunar)      DEFAULT_INIT_SCRIPT=lunar  ;;
 		ubuntu)     DEFAULT_INIT_SCRIPT=lsb    ;;
 		debian)     DEFAULT_INIT_SCRIPT=lsb    ;;
+		freebsd)    DEFAULT_INIT_SCRIPT=freebsd;;
 		*)          DEFAULT_INIT_SCRIPT=lsb    ;;
 	esac
 	AC_MSG_RESULT([$DEFAULT_INIT_SCRIPT])
@@ -488,6 +492,7 @@ AC_DEFUN([ZFS_AC_DEFAULT_PACKAGE], [
 		sles)       DEFAULT_INITCONF_DIR=/etc/sysconfig ;;
 		ubuntu)     DEFAULT_INITCONF_DIR=/etc/default   ;;
 		debian)     DEFAULT_INITCONF_DIR=/etc/default   ;;
+		freebsd)    DEFAULT_INITCONF_DIR=${prefix}/etc/rc.conf.d ;;
 		*)          DEFAULT_INITCONF_DIR=/etc/default   ;;
 	esac
 	AC_MSG_RESULT([$DEFAULT_INITCONF_DIR])
@@ -508,8 +513,8 @@ dnl #
 dnl # Default ZFS package configuration
 dnl #
 AC_DEFUN([ZFS_AC_PACKAGE], [
-	AM_COND_IF([BUILD_LINUX], [
-		ZFS_AC_DEFAULT_PACKAGE
+	ZFS_AC_DEFAULT_PACKAGE
+	AM_COND_IF([test x$VENDOR != xfreebsd], [
 		ZFS_AC_RPM
 		ZFS_AC_DPKG
 		ZFS_AC_ALIEN

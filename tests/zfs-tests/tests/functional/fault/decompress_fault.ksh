@@ -32,9 +32,9 @@
 log_assert "Testing that injected decompression errors are handled correctly"
 
 if is_freebsd; then
-	COMPRESSION=arc.compression_enabled
+	COMPRESSION=compressed_arc_enabled
 else
-	COMPRESSION=zfs_arc_compression_enabled
+	COMPRESSION=zfs_compressed_arc_enabled
 fi
 
 function cleanup

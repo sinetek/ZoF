@@ -128,11 +128,11 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_feed_again, CTLFLAG_RW,
     &l2arc_feed_again, 0, "turbo warmup (LEGACY)");
 SYSCTL_INT(_vfs_zfs, OID_AUTO, l2arc_norw, CTLFLAG_RW,
     &l2arc_norw, 0, "no reads during writes (LEGACY)");
-extern int zfs_arc_compression_enabled;
+#if 0
+extern int zfs_compressed_arc_enabled;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, compressed_arc_enabled, CTLFLAG_RW,
-    &zfs_arc_compression_enabled, 1, "compressed arc buffers (LEGACY)");
-
-
+    &zfs_compressed_arc_enabled, 1, "compressed arc buffers (LEGACY)");
+#endif
 
 SYSCTL_UQUAD(_vfs_zfs, OID_AUTO, anon_size, CTLFLAG_RD,
     &ARC_anon.arcs_size.rc_count, 0, "size of anonymous state");

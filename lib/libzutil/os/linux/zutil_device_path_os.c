@@ -394,7 +394,7 @@ zfs_strip_partition(char *path)
  *
  * Returned string must be freed.
  */
-char *
+static char *
 zfs_strip_partition_path(char *path)
 {
 	char *newpath = strdup(path);
@@ -421,6 +421,15 @@ zfs_strip_partition_path(char *path)
 	free(new_sd);
 
 	return (newpath);
+}
+
+/*
+ * Strip the path from a device name.
+ */
+char *
+zfs_strip_path(char *path)
+{
+	return (strrchr(path, '/') + 1);
 }
 
 #ifdef HAVE_LIBUDEV

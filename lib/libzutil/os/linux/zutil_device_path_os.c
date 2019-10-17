@@ -506,6 +506,15 @@ zfs_strip_partition_path(char *path)
 	return (newpath);
 }
 
+/*
+ * Strip the path from a device name.
+ */
+char *
+zfs_strip_path(char *path)
+{
+	return (strrchr(path, '/') + 1);
+}
+
 #ifdef HAVE_LIBUDEV
 
 /*

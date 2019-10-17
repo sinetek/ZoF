@@ -41,12 +41,6 @@ zfs_strip_partition(char *dev)
 	return (dev);
 }
 
-char *
-zfs_strip_partition_path(char *path)
-{
-	return (path);
-}
-
 int
 zfs_append_partition(char *path, size_t max_len)
 {

@@ -1136,6 +1136,7 @@ zvol_free(zvol_state_t *zv)
 	rw_destroy(&zv->zv_suspend_lock);
 	zfs_rangelock_fini(&zv->zv_rangelock);
 	if (zv->zv_zso->zso_volmode == ZFS_VOLMODE_GEOM) {
+		printf("geom_destroy(%p)\n", zv);
 		g_topology_lock();
 		zvol_geom_destroy(zv);
 		g_topology_unlock();
@@ -1235,8 +1236,8 @@ zvol_create_minor(const char *name)
 			mutex_destroy(&zv->zv_state_lock);
 			kmem_free(zv->zv_zso, sizeof (struct zvol_state_os));
 			kmem_free(zv, sizeof (*zv));
-			dmu_objset_disown(os, 1, FTAG);
-			goto out_dmu_objset_disown;
+			dmu_objset_disown(os, B_TRUE, FTAG);
+			goto out_giant;
 		}
 		zv->zv_zso->zso_dev->si_iosize_max = MAXPHYS;
 	}
@@ -1262,7 +1263,7 @@ zvol_create_minor(const char *name)
 
 	zv->zv_objset = NULL;
  out_dmu_objset_disown:
-	dmu_objset_disown(os, 1, FTAG);
+	dmu_objset_disown(os, B_TRUE, FTAG);
 
 	if (zv->zv_zso->zso_volmode == ZFS_VOLMODE_GEOM) {
 		if (error == 0)
@@ -1277,8 +1278,9 @@ zvol_create_minor(const char *name)
 		zvol_minors++;
 		rw_exit(&zvol_state_lock);
 	}
-	PICKUP_GIANT();
 	ZFS_LOG(1, "ZVOL %s created.", name);
+ out_giant:
+	PICKUP_GIANT();
 	return (0);
 }
 

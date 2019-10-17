@@ -21,6 +21,7 @@
 
 #include <ctype.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +49,20 @@ int
 zfs_append_partition(char *path, size_t max_len)
 {
 	return (max_len);
+}
+
+/*
+ * Strip the path from a device name.
+ * On FreeBSD we only want to remove "/dev/" from the beginning of
+ * paths if present.
+ */
+char *
+zfs_strip_path(char *path)
+{
+	if (strncmp(path, _PATH_DEV, sizeof (_PATH_DEV) - 1) == 0)
+		return (path + sizeof (_PATH_DEV) - 1);
+	else
+		return (path);
 }
 
 char *

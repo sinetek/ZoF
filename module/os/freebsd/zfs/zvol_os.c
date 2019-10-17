@@ -734,7 +734,7 @@ zvol_geom_start(struct bio *bp)
 	ASSERT(zv != NULL);
 
 	if (bp->bio_cmd == BIO_GETATTR) {
-		if (!zvol_bio_getattr(bp))
+		if (zvol_bio_getattr(bp))
 			g_io_deliver(bp, EOPNOTSUPP);
 		return;
 	}
@@ -1316,12 +1316,14 @@ zvol_clear_private(zvol_state_t *zv)
 
 	ASSERT(RW_LOCK_HELD(&zvol_state_lock));
 	if (zv->zv_zso->zso_provider) {
+		mtx_lock(&zv->zv_zso->zso_queue_mtx);
 		zv->zv_zso->zso_state = 1;
 		pp = zv->zv_zso->zso_provider;
 		pp->private = NULL;
 		wakeup_one(&zv->zv_zso->zso_queue);
 		while (zv->zv_zso->zso_state != 2)
 			msleep(&zv->zv_zso->zso_state, &zv->zv_zso->zso_queue_mtx, 0, "zvol:w", 0);
+		mtx_unlock(&zv->zv_zso->zso_queue_mtx);
 		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
 }

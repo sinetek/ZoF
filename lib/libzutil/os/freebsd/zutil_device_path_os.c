@@ -35,10 +35,13 @@
  * We don't strip/append partitions on FreeBSD.
  */
 
+/*
+ * Note: The caller must free the returned string.
+ */
 char *
 zfs_strip_partition(char *dev)
 {
-	return (dev);
+	return (strdup(dev));
 }
 
 int

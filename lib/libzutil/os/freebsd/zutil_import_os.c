@@ -149,13 +149,18 @@ int
 zpool_find_import_blkid(libpc_handle_t *hdl, pthread_mutex_t *lock,
     avl_tree_t **slice_cache)
 {
+	char *end, path[MAXPATHLEN];
 	rdsk_node_t *slice;
 	struct gmesh mesh;
 	struct gclass *mp;
 	struct ggeom *gp;
 	struct gprovider *pp;
 	avl_index_t where;
+	size_t pathleft;
 	int error;
+
+	end = stpcpy(path, "/dev/");
+	pathleft = &path[sizeof (path)] - end;
 
 	error = geom_gettree(&mesh);
 	if (error != 0)
@@ -168,8 +173,9 @@ zpool_find_import_blkid(libpc_handle_t *hdl, pthread_mutex_t *lock,
 	LIST_FOREACH(mp, &mesh.lg_class, lg_class) {
 		LIST_FOREACH(gp, &mp->lg_geom, lg_geom) {
 			LIST_FOREACH(pp, &gp->lg_provider, lg_provider) {
+				strlcpy(end, pp->lg_name, pathleft);
 				slice = zutil_alloc(hdl, sizeof (rdsk_node_t));
-				slice->rn_name = zutil_strdup(hdl, pp->lg_name);
+				slice->rn_name = zutil_strdup(hdl, path);
 				slice->rn_vdev_guid = 0;
 				slice->rn_lock = lock;
 				slice->rn_avl = *slice_cache;

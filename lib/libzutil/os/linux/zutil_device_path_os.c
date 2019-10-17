@@ -394,7 +394,7 @@ zfs_strip_partition(char *path)
  *
  * Returned string must be freed.
  */
-char *
+static char *
 zfs_strip_partition_path(char *path)
 {
 	char *newpath = strdup(path);

@@ -3435,7 +3435,7 @@ function zed_rc_restore
 function zed_setup
 {
 	if ! is_linux; then
-		return
+		log_unsupported "No zed on $(uname)"
 	fi
 
 	if [[ ! -d $ZEDLET_DIR ]]; then

@@ -26,6 +26,7 @@
 #include <sys/dmu.h>
 #include <sys/zap.h>
 #include <sys/vdev.h>
+#include <sys/vdev_os.h>
 #include <sys/vdev_impl.h>
 #include <sys/uberblock_impl.h>
 #include <sys/metaslab.h>

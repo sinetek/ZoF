@@ -67,7 +67,6 @@
 #define	JMP_BUF_CNT	1
 #endif
 
-#ifdef __linux__
 typedef	struct _label_t { long long unsigned val[JMP_BUF_CNT]; } label_t;
 
 int setjmp(label_t *) __attribute__ ((__nothrow__));

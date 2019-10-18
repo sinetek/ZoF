@@ -3586,7 +3586,6 @@ zio_vdev_io_start(zio_t *zio)
 	 * If this is not a physical io, make sure that it is properly aligned
 	 * before proceeding.
 	 */
-#if defined(ZFS_DEBUG) && !defined(NDEBUG)
 	if (!(zio->io_flags & ZIO_FLAG_PHYSICAL)) {
 		ASSERT0(P2PHASE(zio->io_offset, align));
 		ASSERT0(P2PHASE(zio->io_size, align));
@@ -3595,12 +3594,11 @@ zio_vdev_io_start(zio_t *zio)
 		 * For physical writes, we allow 512b aligned writes and assume
 		 * the device will perform a read-modify-write as necessary.
 		 */
-		uint64_t log_align =
+		uint64_t log_align __unused =
 		    1ULL << vd->vdev_top->vdev_logical_ashift;
 		ASSERT0(P2PHASE(zio->io_offset, log_align));
 		ASSERT0(P2PHASE(zio->io_size, log_align));
 	}
-#endif
 	VERIFY(zio->io_type != ZIO_TYPE_WRITE || spa_writeable(spa));
 
 	/*

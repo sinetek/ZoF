@@ -6606,7 +6606,7 @@ ztest_resume_thread(void *arg)
 		(void) poll(NULL, 0, 100);
 
 		/*
-		 * Periodically change the zfs_arc_compression_enabled setting.
+		 * Periodically change the zfs_compressed_arc_enabled setting.
 		 */
 		if (ztest_random(10) == 0)
 			zfs_compressed_arc_enabled = ztest_random(2);

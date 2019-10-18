@@ -265,6 +265,43 @@ zfs_dev_is_whole_disk(const char *dev_name)
 }
 
 /*
+ * Same as zfs_strip_partition, but allows "/dev/" to be in the pathname
+ *
+ * path:	/dev/sda1
+ * returns:	/dev/sda
+ *
+ * Returned string must be freed.
+ */
+static char *
+zfs_strip_partition_path(char *path)
+{
+	char *newpath = strdup(path);
+	char *sd_offset;
+	char *new_sd;
+
+	if (!newpath)
+		return (NULL);
+
+	/* Point to "sda1" part of "/dev/sda1" */
+	sd_offset = strrchr(newpath, '/') + 1;
+
+	/* Get our new name "sda" */
+	new_sd = zfs_strip_partition(sd_offset);
+	if (!new_sd) {
+		free(newpath);
+		return (NULL);
+	}
+
+	/* Paste the "sda" where "sda1" was */
+	strlcpy(sd_offset, new_sd, strlen(sd_offset) + 1);
+
+	/* Free temporary "sda" */
+	free(new_sd);
+
+	return (newpath);
+}
+
+/*
  * Lookup the underlying device for a device name
  *
  * Often you'll have a symlink to a device, a partition device,
@@ -467,43 +504,6 @@ zfs_strip_partition(char *path)
 	}
 
 	return (tmp);
-}
-
-/*
- * Same as zfs_strip_partition, but allows "/dev/" to be in the pathname
- *
- * path:	/dev/sda1
- * returns:	/dev/sda
- *
- * Returned string must be freed.
- */
-static char *
-zfs_strip_partition_path(char *path)
-{
-	char *newpath = strdup(path);
-	char *sd_offset;
-	char *new_sd;
-
-	if (!newpath)
-		return (NULL);
-
-	/* Point to "sda1" part of "/dev/sda1" */
-	sd_offset = strrchr(newpath, '/') + 1;
-
-	/* Get our new name "sda" */
-	new_sd = zfs_strip_partition(sd_offset);
-	if (!new_sd) {
-		free(newpath);
-		return (NULL);
-	}
-
-	/* Paste the "sda" where "sda1" was */
-	strlcpy(sd_offset, new_sd, strlen(sd_offset) + 1);
-
-	/* Free temporary "sda" */
-	free(new_sd);
-
-	return (newpath);
 }
 
 /*

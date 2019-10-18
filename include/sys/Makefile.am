@@ -29,12 +29,12 @@ COMMON_H = \
 	$(top_srcdir)/include/sys/dmu_zfetch.h \
 	$(top_srcdir)/include/sys/dnode.h \
 	$(top_srcdir)/include/sys/dsl_bookmark.h \
-	$(top_srcdir)/include/sys/dsl_crypt.h \
 	$(top_srcdir)/include/sys/dsl_dataset.h \
 	$(top_srcdir)/include/sys/dsl_deadlist.h \
 	$(top_srcdir)/include/sys/dsl_deleg.h \
 	$(top_srcdir)/include/sys/dsl_destroy.h \
 	$(top_srcdir)/include/sys/dsl_dir.h \
+	$(top_srcdir)/include/sys/dsl_crypt.h \
 	$(top_srcdir)/include/sys/dsl_pool.h \
 	$(top_srcdir)/include/sys/dsl_prop.h \
 	$(top_srcdir)/include/sys/dsl_scan.h \
@@ -63,14 +63,14 @@ COMMON_H = \
 	$(top_srcdir)/include/sys/sdt.h \
 	$(top_srcdir)/include/sys/sha2.h \
 	$(top_srcdir)/include/sys/skein.h \
-	$(top_srcdir)/include/sys/spa.h \
 	$(top_srcdir)/include/sys/spa_boot.h \
 	$(top_srcdir)/include/sys/spa_checkpoint.h \
 	$(top_srcdir)/include/sys/spa_log_spacemap.h \
-	$(top_srcdir)/include/sys/spa_checksum.h \
-	$(top_srcdir)/include/sys/spa_impl.h \
 	$(top_srcdir)/include/sys/space_map.h \
 	$(top_srcdir)/include/sys/space_reftree.h \
+	$(top_srcdir)/include/sys/spa.h \
+	$(top_srcdir)/include/sys/spa_impl.h \
+	$(top_srcdir)/include/sys/spa_checksum.h \
 	$(top_srcdir)/include/sys/sysevent.h \
 	$(top_srcdir)/include/sys/txg.h \
 	$(top_srcdir)/include/sys/txg_impl.h \
@@ -92,7 +92,6 @@ COMMON_H = \
 	$(top_srcdir)/include/sys/vdev_raidz_impl.h \
 	$(top_srcdir)/include/sys/vdev_removal.h \
 	$(top_srcdir)/include/sys/vdev_trim.h \
-	$(top_srcdir)/include/sys/vfs.h \
 	$(top_srcdir)/include/sys/xvattr.h \
 	$(top_srcdir)/include/sys/zap.h \
 	$(top_srcdir)/include/sys/zap_impl.h \
@@ -116,10 +115,10 @@ COMMON_H = \
 	$(top_srcdir)/include/sys/zfs_znode.h \
 	$(top_srcdir)/include/sys/zil.h \
 	$(top_srcdir)/include/sys/zil_impl.h \
-	$(top_srcdir)/include/sys/zio.h \
 	$(top_srcdir)/include/sys/zio_checksum.h \
 	$(top_srcdir)/include/sys/zio_compress.h \
 	$(top_srcdir)/include/sys/zio_crypt.h \
+	$(top_srcdir)/include/sys/zio.h \
 	$(top_srcdir)/include/sys/zio_impl.h \
 	$(top_srcdir)/include/sys/zio_priority.h \
 	$(top_srcdir)/include/sys/zrlock.h \

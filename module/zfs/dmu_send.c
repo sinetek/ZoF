@@ -936,7 +936,7 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 				zioflags |= ZIO_FLAG_RAW;
 			}
 
-			arc_buf_t *abuf;
+			arc_buf_t *abuf = NULL;
 			zbookmark_phys_t zb;
 			ASSERT3U(range->start_blkid, ==, DMU_SPILL_BLKID);
 			zb.zb_objset = dmu_objset_id(dscp->dsc_os);
@@ -948,11 +948,9 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 			    bp, arc_getbuf_func, &abuf, ZIO_PRIORITY_ASYNC_READ,
 			    zioflags, &aflags, &zb) != 0)
 				return (SET_ERROR(EIO));
-			if (!dscp->dsc_dso->dso_dryrun) {
-				err = dump_spill(dscp, bp, zb.zb_object,
-				    abuf->b_data);
-				arc_buf_destroy(abuf, &abuf);
-			}
+
+			err = dump_spill(dscp, bp, zb.zb_object, abuf->b_data);
+			arc_buf_destroy(abuf, &abuf);
 			return (err);
 		}
 		if (send_do_embed(dscp, bp)) {

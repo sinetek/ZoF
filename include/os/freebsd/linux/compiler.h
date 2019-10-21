@@ -98,4 +98,12 @@
 
 #define	_AT(T, X)	((T)(X))
 
+#if !defined(__debug)
+#ifdef ZFS_DEBUG
+#define __debug
+#else
+#define	__debug	__attribute__((__unused__))
+#endif /* ZFS_DEBUG */
+#endif /* !defined(__debug) */
+
 #endif	/* _LINUX_COMPILER_H_ */

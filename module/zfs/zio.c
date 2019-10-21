@@ -3594,7 +3594,7 @@ zio_vdev_io_start(zio_t *zio)
 		 * For physical writes, we allow 512b aligned writes and assume
 		 * the device will perform a read-modify-write as necessary.
 		 */
-		uint64_t log_align __unused =
+		uint64_t log_align __debug =
 		    1ULL << vd->vdev_top->vdev_logical_ashift;
 		ASSERT0(P2PHASE(zio->io_offset, log_align));
 		ASSERT0(P2PHASE(zio->io_size, log_align));

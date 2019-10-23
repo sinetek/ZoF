@@ -112,6 +112,9 @@ struct vfsops zfs_vfsops = {
 	.vfs_mount =		zfs_mount,
 	.vfs_unmount =		zfs_umount,
 	.vfs_root =		zfs_root,
+#if __FreeBSD_version >= 1300049
+	.vfs_cachedroot = vfs_cache_root,
+#endif
 	.vfs_statfs =		zfs_statfs,
 	.vfs_vget =		zfs_vget,
 	.vfs_sync =		zfs_sync,
@@ -1285,8 +1288,9 @@ zfsvfs_create_impl(zfsvfs_t **zfvp, zfsvfs_t *zfsvfs, objset_t *os)
 	for (int i = 0; i != ZFS_OBJ_MTX_SZ; i++)
 		mutex_init(&zfsvfs->z_hold_mtx[i], NULL, MUTEX_DEFAULT, NULL);
 
+#if __FreeBSD_version < 1300049
 	rm_init(&zfsvfs->z_rootvnodelock, "zfs root vnode lock");
-
+#endif
 	error = zfsvfs_init(zfsvfs, os);
 	if (error != 0) {
 		dmu_objset_disown(os, B_TRUE, zfsvfs);
@@ -1509,7 +1513,9 @@ zfsvfs_free(zfsvfs_t *zfsvfs)
 	rw_enter(&zfsvfs_lock, RW_READER);
 	rw_exit(&zfsvfs_lock);
 
+#if __FreeBSD_version < 1300049
 	rm_destroy(&zfsvfs->z_rootvnodelock);
+#endif
 
 	zfs_fuid_destroy(zfsvfs);
 
@@ -2142,6 +2148,20 @@ zfs_statfs(vfs_t *vfsp, struct statfs *statp)
 	return (0);
 }
 
+#if __FreeBSD_version >= 1300049
+
+static int
+zfs_root_setvnode(zfsvfs_t *zfsvfs)
+{
+	return (0);
+}
+
+static void
+zfs_root_putvnode(zfsvfs_t *zfsvfs)
+{
+}
+
+#else
 static int
 zfs_root_setvnode(zfsvfs_t *zfsvfs)
 {
@@ -2175,14 +2195,16 @@ zfs_root_putvnode(zfsvfs_t *zfsvfs)
 	if (vp != NULL)
 		vrele(vp);
 }
+#endif
 
 static int
 zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp)
 {
-	struct rm_priotracker tracker;
 	zfsvfs_t *zfsvfs = vfsp->vfs_data;
 	znode_t *rootzp;
 	int error;
+#if __FreeBSD_version < 1300049
+	struct rm_priotracker tracker;
 
 	rm_rlock(&zfsvfs->z_rootvnodelock, &tracker);
 	*vpp = zfsvfs->z_rootvnode;
@@ -2200,7 +2222,7 @@ zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp)
 		*vpp = NULL;
 		zfs_root_putvnode(zfsvfs);
 	}
-
+#endif
 	ZFS_ENTER(zfsvfs);
 
 	error = zfs_zget(zfsvfs, zfsvfs->z_root, &rootzp);
@@ -2210,7 +2232,9 @@ zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp)
 	ZFS_EXIT(zfsvfs);
 
 	if (error == 0) {
-lock:
+#if __FreeBSD_version < 1300049
+	lock:
+#endif
 		error = vn_lock(*vpp, flags);
 		if (error != 0) {
 			VN_RELE(*vpp);

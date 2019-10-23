@@ -46,8 +46,10 @@ struct zfsvfs {
 	zfsvfs_t	*z_parent;	/* parent fs */
 	objset_t	*z_os;		/* objset reference */
 	uint64_t	z_root;		/* id of root znode */
+#if __FreeBSD_version < 1300049
 	struct vnode	*z_rootvnode;	/* root vnode */
 	struct rmlock	z_rootvnodelock;/* protection for root vnode */
+#endif
 	uint64_t	z_unlinkedobj;	/* id of unlinked zapobj */
 	uint64_t	z_max_blksz;	/* maximum block size for files */
 	uint64_t	z_fuid_obj;	/* fuid table object number */

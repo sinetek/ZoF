@@ -1586,6 +1586,12 @@ zfs_domount(vfs_t *vfsp, char *osname)
 	 */
 	vfsp->mnt_kern_flag |= MNTK_NO_IOPF;	/* vn_io_fault can be used */
 #endif
+#if __FreeBSD_version >= 1300051
+	vfsp->mnt_kern_flag |= MNTK_NOMSYNC;
+#endif
+#if __FreeBSD_version >= 1300054
+	vfsp->mnt_kern_flag |= MNTK_VMSETSIZE_BUG;
+#endif
 
 	/*
 	 * The fsid is 64 bits, composed of an 8-bit fs type, which

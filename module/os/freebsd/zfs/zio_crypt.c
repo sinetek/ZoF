@@ -84,7 +84,7 @@
  * A secret binary key, generated from an HKDF function used to encrypt and
  * decrypt data.
  *
- * Message Authenication Code (MAC)
+ * Message Authentication Code (MAC)
  * The MAC is an output of authenticated encryption modes such as AES-GCM and
  * AES-CCM. Its purpose is to ensure that an attacker cannot modify encrypted
  * data on disk and return garbage to the application. Effectively, it is a
@@ -124,7 +124,7 @@
  * OBJECT SET AUTHENTICATION:
  * Up to this point, everything we have encrypted and authenticated has been
  * at level 0 (or -2 for the ZIL). If we did not do any further work the
- * on-disk format would be susceptible to attacks that deleted or rearrannged
+ * on-disk format would be susceptible to attacks that deleted or rearranged
  * the order of level 0 blocks. Ideally, the cleanest solution would be to
  * maintain a tree of authentication MACs going up the bp tree. However, this
  * presents a problem for raw sends. Send files do not send information about
@@ -134,11 +134,11 @@
  * for the indirect levels of the bp tree, we use a regular SHA512 of the MACs
  * from the level below. We also include some portable fields from blk_prop such
  * as the lsize and compression algorithm to prevent the data from being
- * misinterpretted.
+ * misinterpreted.
  *
- * At the objset level, we maintain 2 seperate 256 bit MACs in the
+ * At the objset level, we maintain 2 separate 256 bit MACs in the
  * objset_phys_t. The first one is "portable" and is the logical root of the
- * MAC tree maintianed in the metadnode's bps. The second, is "local" and is
+ * MAC tree maintained in the metadnode's bps. The second, is "local" and is
  * used as the root MAC for the user accounting objects, which are also not
  * transferred via "zfs send". The portable MAC is sent in the DRR_BEGIN payload
  * of the send file. The useraccounting code ensures that the useraccounting
@@ -151,13 +151,13 @@
  * need to use the same IV and encryption key, so that they will have the same
  * ciphertext. Normally, one should never reuse an IV with the same encryption
  * key or else AES-GCM and AES-CCM can both actually leak the plaintext of both
- * blocks. In this case, however, since we are using the same plaindata as
+ * blocks. In this case, however, since we are using the same plaintext as
  * well all that we end up with is a duplicate of the original ciphertext we
  * already had. As a result, an attacker with read access to the raw disk will
  * be able to tell which blocks are the same but this information is given away
  * by dedup anyway. In order to get the same IVs and encryption keys for
- * equivalent blocks of data we use an HMAC of the plaindata. We use an HMAC
- * here so that a reproducible checksum of the plaindata is never available to
+ * equivalent blocks of data we use an HMAC of the plaintext. We use an HMAC
+ * here so that a reproducible checksum of the plaintext is never available to
  * the attacker. The HMAC key is kept alongside the master key, encrypted on
  * disk. The first 64 bits of the HMAC are used in place of the random salt, and
  * the next 96 bits are used as the IV. As a result of this mechanism, dedup
@@ -421,7 +421,7 @@ int failed_decrypt_size;
 /*
  * This function handles all encryption and decryption in zfs. When
  * encrypting it expects puio to reference the plaintext and cuio to
- * reference the cphertext. cuio must have enough space for the
+ * reference the ciphertext. cuio must have enough space for the
  * ciphertext + room for a MAC. datalen should be the length of the
  * plaintext / ciphertext alone.
  */
@@ -575,7 +575,7 @@ error:
 #endif
 
 int
-zio_crypt_key_wrap(spa_t *spa, crypto_key_t *cwkey, zio_crypt_key_t *key, uint8_t *iv,
+zio_crypt_key_wrap(crypto_key_t *cwkey, zio_crypt_key_t *key, uint8_t *iv,
     uint8_t *mac, uint8_t *keydata_out, uint8_t *hmac_keydata_out)
 {
 	int ret;
@@ -687,7 +687,7 @@ error:
 }
 
 int
-zio_crypt_key_unwrap(spa_t *spa, crypto_key_t *cwkey, uint64_t crypt, uint64_t version,
+zio_crypt_key_unwrap(crypto_key_t *cwkey, uint64_t crypt, uint64_t version,
     uint64_t guid, uint8_t *keydata, uint8_t *hmac_keydata, uint8_t *iv,
     uint8_t *mac, zio_crypt_key_t *key)
 {
@@ -780,6 +780,7 @@ zio_crypt_key_unwrap(spa_t *spa, crypto_key_t *cwkey, uint64_t crypt, uint64_t v
 	cuio.uio_iovcnt = 3;
 	cuio.uio_segflg = UIO_SYSSPACE;
 #endif
+
 	/* decrypt the keys and store the result in the output buffers */
 #ifdef __FreeBSD__
 	ret = zio_do_crypt_uio_opencrypto(B_FALSE, NULL, crypt, cwkey,
@@ -910,6 +911,7 @@ zio_crypt_do_hmac(zio_crypt_key_t *key, uint8_t *data, uint_t datalen,
 #endif
 
 	bcopy(raw_digestbuf, digestbuf, digestlen);
+
 	return (0);
 
 #ifndef __FreeBSD__
@@ -1141,7 +1143,7 @@ zio_crypt_bp_zero_nonportable_blkprop(blkptr_t *bp, uint64_t version)
 
 	/*
 	 * At L0 we want to verify these fields to ensure that data blocks
-	 * can not be reinterpretted. For instance, we do not want an attacker
+	 * can not be reinterpreted. For instance, we do not want an attacker
 	 * to trick us into returning raw lz4 compressed data to the user
 	 * by modifying the compression bits. At higher levels, we cannot
 	 * enforce this policy since raw sends do not convey any information
@@ -1319,9 +1321,9 @@ error:
 
 /*
  * objset_phys_t blocks introduce a number of exceptions to the normal
- * authentication process. objset_phys_t's contain 2 seperate HMACS for
+ * authentication process. objset_phys_t's contain 2 separate HMACS for
  * protecting the integrity of their data. The portable_mac protects the
- * the metadnode. This MAC can be sent with a raw send and protects against
+ * metadnode. This MAC can be sent with a raw send and protects against
  * reordering of data within the metadnode. The local_mac protects the user
  * accounting objects which are not sent from one system to another.
  *
@@ -1445,10 +1447,15 @@ zio_crypt_do_objset_hmacs(zio_crypt_key_t *key, void *data, uint_t datalen,
 	bcopy(raw_portable_mac, portable_mac, ZIO_OBJSET_MAC_LEN);
 
 	/*
-	 * The local MAC protects the user and group accounting. If these
-	 * objects are not present, the local MAC is zeroed out.
+	 * The local MAC protects the user, group and project accounting.
+	 * If these objects are not present, the local MAC is zeroed out.
 	 */
-	if ((osp->os_userused_dnode.dn_type == DMU_OT_NONE &&
+	if ((datalen >= OBJSET_PHYS_SIZE_V3 &&
+	    osp->os_userused_dnode.dn_type == DMU_OT_NONE &&
+	    osp->os_groupused_dnode.dn_type == DMU_OT_NONE &&
+	    osp->os_projectused_dnode.dn_type == DMU_OT_NONE) ||
+	    (datalen >= OBJSET_PHYS_SIZE_V2 &&
+	    osp->os_userused_dnode.dn_type == DMU_OT_NONE &&
 	    osp->os_groupused_dnode.dn_type == DMU_OT_NONE) ||
 	    (datalen <= OBJSET_PHYS_SIZE_V1)) {
 		bzero(local_mac, ZIO_OBJSET_MAC_LEN);
@@ -1489,6 +1496,7 @@ zio_crypt_do_objset_hmacs(zio_crypt_key_t *key, void *data, uint_t datalen,
 	}
 #endif
 
+	/* XXX check dnode type ... */
 	/* add in fields from the user accounting dnodes */
 	ret = zio_crypt_do_dnode_hmac_updates(ctx, key->zk_version,
 	    should_bswap, &osp->os_userused_dnode);
@@ -1970,8 +1978,10 @@ zio_crypt_init_uios_dnode(boolean_t encrypt, uint64_t version,
 	 */
 	for (i = 0; i < max_dnp; i += sdnp[i].dn_extra_slots + 1) {
 		dnp = &sdnp[i];
+
 		/* copy over the core fields and blkptrs (kept as plaintext) */
 		bcopy(dnp, &ddnp[i], (uint8_t *)DN_BONUS(dnp) - (uint8_t *)dnp);
+
 		if (dnp->dn_flags & DNODE_FLAG_SPILL_BLKPTR) {
 			bcopy(DN_SPILL_BLKPTR(dnp), DN_SPILL_BLKPTR(&ddnp[i]),
 			    sizeof (blkptr_t));
@@ -2065,6 +2075,7 @@ zio_crypt_init_uios_dnode(boolean_t encrypt, uint64_t version,
 		cuio->uio_iovcnt = nr_src;
 	}
 #endif
+
 	return (0);
 
 error:
@@ -2184,7 +2195,6 @@ error:
  * authbuf is used by these special cases to store additional authenticated
  * data (AAD) for the encryption modes.
  */
-/* ARGSUSED */
 static int
 zio_crypt_init_uios(boolean_t encrypt, uint64_t version, dmu_object_type_t ot,
     uint8_t *plainbuf, uint8_t *cipherbuf, uint_t datalen, boolean_t byteswap,
@@ -2243,7 +2253,7 @@ int faile_decrypt_size;
  * Primary encryption / decryption entrypoint for zio data.
  */
 int
-zio_do_crypt_data(spa_t *spa, boolean_t encrypt, zio_crypt_key_t *key,
+zio_do_crypt_data(boolean_t encrypt, zio_crypt_key_t *key,
     dmu_object_type_t ot, boolean_t byteswap, uint8_t *salt, uint8_t *iv,
     uint8_t *mac, uint_t datalen, uint8_t *plainbuf, uint8_t *cipherbuf,
     boolean_t *no_crypt)
@@ -2369,7 +2379,7 @@ error:
  * linear buffers.
  */
 int
-zio_do_crypt_abd(spa_t *spa, boolean_t encrypt, zio_crypt_key_t *key, dmu_object_type_t ot,
+zio_do_crypt_abd(boolean_t encrypt, zio_crypt_key_t *key, dmu_object_type_t ot,
     boolean_t byteswap, uint8_t *salt, uint8_t *iv, uint8_t *mac,
     uint_t datalen, abd_t *pabd, abd_t *cabd, boolean_t *no_crypt)
 {
@@ -2384,7 +2394,7 @@ zio_do_crypt_abd(spa_t *spa, boolean_t encrypt, zio_crypt_key_t *key, dmu_object
 		ctmp = abd_borrow_buf_copy(cabd, datalen);
 	}
 
-	ret = zio_do_crypt_data(spa, encrypt, key, ot, byteswap, salt, iv, mac,
+	ret = zio_do_crypt_data(encrypt, key, ot, byteswap, salt, iv, mac,
 	    datalen, ptmp, ctmp, no_crypt);
 	if (ret != 0)
 		goto error;

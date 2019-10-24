@@ -8,6 +8,8 @@
 #include <x86/specialreg.h>
 #endif
 
+#define	kfpu_init()		(0)
+#define	kfpu_fini()		do {} while (0)
 #ifdef _KERNEL
 #define	kfpu_allowed()		1
 #define	kfpu_initialize(tsk)	do {} while (0)

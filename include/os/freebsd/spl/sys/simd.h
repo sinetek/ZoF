@@ -8,6 +8,7 @@
 #define	kfpu_initialize(tsk)	do {} while (0)
 #define	kfpu_begin()		do {} while (0)
 #define	kfpu_end()		do {} while (0)
-
+#define	kfpu_init()		(0)
+#define	kfpu_fini()		do {} while (0)
 #endif
 #endif

@@ -56,6 +56,7 @@
 #include <libzutil.h>
 #include <sys/zfs_sysfs.h>
 
+
 int
 libzfs_errno(libzfs_handle_t *hdl)
 {

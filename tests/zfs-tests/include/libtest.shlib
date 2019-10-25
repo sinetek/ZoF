@@ -413,12 +413,6 @@ function create_recv_clone
 	typeset incr="$sendfs@snap2"
 	typeset mountpoint="$TESTDIR/create_recv_clone"
 	typeset sendfile="$TESTDIR/create_recv_clone.zsnap"
-	if is_linux; then
-		# Extra protection against short reads from pipe
-		typeset fullblock="iflag=fullblock"
-	else
-		typeset fullblock=""
-	fi
 
 	[[ -z $recvfs ]] && log_fail "Recv filesystem's name is undefined."
 
@@ -431,7 +425,7 @@ function create_recv_clone
 	log_must mkfile 1m "$mountpoint/data"
 	log_must zfs snapshot $incr
 	log_must eval "zfs send -i $snap $incr | dd bs=10K count=1 \
-	    $fullblock > $sendfile"
+	    iflag=fullblock > $sendfile"
 	log_mustnot eval "zfs recv -su $recvfs < $sendfile"
 	destroy_dataset "$sendfs" "-r"
 	log_must rm -f "$sendfile"

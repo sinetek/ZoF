@@ -19,7 +19,6 @@
 #
 
 import os
-import platform
 import re
 import sys
 
@@ -143,13 +142,6 @@ trim_reason = 'DISKS must support discard (TRIM/UNMAP)'
 #
 na_reason = "N/A on Linux"
 
-#
-# Some tests are not applicable to FreeBSD or need to be updated to operate
-# in the manor required by Linux.  Any tests which are skipped for this
-# reason will be suppressed in the final analysis output.
-#
-na_reason_freebsd = "N/A on FreeBSD"
-
 summary = {
     'total': float(0),
     'passed': float(0),
@@ -197,6 +189,7 @@ known = {
     'removal/removal_with_zdb': ['SKIP', known_reason],
     'rootpool/setup': ['SKIP', na_reason],
     'rsend/rsend_008_pos': ['SKIP', '6066'],
+    'snapshot/rollback_003_pos': ['SKIP', '6143'],
     'vdev_zaps/vdev_zaps_007_pos': ['FAIL', known_reason],
     'xattr/xattr_008_pos': ['SKIP', na_reason],
     'xattr/xattr_009_neg': ['SKIP', na_reason],
@@ -210,50 +203,6 @@ known = {
     'zvol/zvol_swap/zvol_swap_005_pos': ['SKIP', na_reason],
     'zvol/zvol_swap/zvol_swap_006_pos': ['SKIP', na_reason],
 }
-
-# Add list of tests known to not run on FreeBSD
-if platform.system() == "FreeBSD":
-    known_freebsd = {
-        'cli_root/zfs_sysfs/setup': ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/zfeature_set_unsupported':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/zfs_get_unsupported': ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/zfs_set_unsupported': ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/zfs_sysfs_live': ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/zpool_get_unsupported':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/zpool_set_unsupported':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zfs_sysfs/cleanup': ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/setup': ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_001_pos':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_002_pos':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_003_pos':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_004_pos':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_005_pos':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_006_neg':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/zpool_reopen_007_pos':
-            ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_reopen/cleanup': ['SKIP', na_reason_freebsd],
-        'cli_root/zpool_split/zpool_split_wholedisk':
-            ['SKIP', na_reason_freebsd],
-        'fault/auto_offline_001_pos': ['SKIP', na_reason_freebsd],
-        'fault/auto_spare_shared': ['SKIP', na_reason_freebsd],
-    }
-    known.update(known_freebsd)
-
-# Add lists of tests known to not run on Linux
-elif platform.system() == "Linux":
-    known_linux = {
-        'snapshot/rollback_003_pos': ['SKIP', '6143'],
-    }
-    known.update(known_linux)
 
 #
 # These tests may occasionally fail or be skipped.  We want there failures

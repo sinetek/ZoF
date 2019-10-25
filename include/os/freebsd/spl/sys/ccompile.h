@@ -139,6 +139,17 @@ extern "C" {
 #undef NDEBUG
 #endif
 
+		/* XXX change us */
+#define	ECKSUM	EBADMSG
+#define	EFRAGS	EFTYPE
+
+/* Similar for ENOACTIVE */
+#define	ENOTACTIVE	ECANCELED
+
+#define	EREMOTEIO EREMOTE
+#define	ECHRNG ENXIO
+#define	ETIME ETIMEDOUT
+	
 #ifdef _KERNEL
 #include <linux/types.h>
 typedef	void zfs_kernel_param_t;
@@ -251,16 +262,6 @@ typedef int enum_t;
 #define	ENOSTR ENOTCONN
 #define	ENODATA EINVAL
 
-		/* XXX change us */
-#define	ECKSUM	EBADMSG
-#define	EFRAGS	EFTYPE
-
-/* Similar for ENOACTIVE */
-#define	ENOTACTIVE	ECANCELED
-
-#define	EREMOTEIO EREMOTE
-#define	ECHRNG ENXIO
-#define	ETIME ETIMEDOUT
 
 #define	__XSI_VISIBLE 1000
 #define	__BSD_VISIBLE 1

@@ -114,6 +114,7 @@ SRCS+=	acl_common.c \
 	opensolaris_zone.c \
 	sha256c.c \
 	sha512c.c \
+	spl_procfs_list.c \
 	spl_zlib.c
 
 
@@ -226,7 +227,6 @@ SRCS+=	aggsum.c \
 	spa_history.c \
 	spa_log_spacemap.c \
 	spa_misc.c \
-	spa_misc_os.c \
 	spa_stats.c \
 	space_map.c \
 	space_reftree.c \

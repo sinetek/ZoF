@@ -900,9 +900,7 @@ typedef struct spa_history_kstat {
 
 typedef struct spa_history_list {
 	uint64_t		size;
-#if defined(__linux__) || !defined(_KERNEL)
 	procfs_list_t		procfs_list;
-#endif
 } spa_history_list_t;
 
 typedef struct spa_stats {
@@ -1189,6 +1187,7 @@ extern void spa_wake_waiters(spa_t *spa);
 int param_set_deadman_ziotime(const char *val, zfs_kernel_param_t *kp);
 int param_set_deadman_synctime(const char *val, zfs_kernel_param_t *kp);
 int param_set_slop_shift(const char *buf, zfs_kernel_param_t *kp);
+int param_set_deadman_failmode(const char *val, zfs_kernel_param_t *kp);;
 
 #ifdef ZFS_DEBUG
 #define	dprintf_bp(bp, fmt, ...) do {				\

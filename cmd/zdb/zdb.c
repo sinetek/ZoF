@@ -3448,7 +3448,6 @@ dump_label(const char *dev)
 		(void) printf("failed to invalidate cache '%s' : %s\n", path,
 		    strerror(errno));
 
-#endif
 	avl_create(&config_tree, cksum_record_compare,
 	    sizeof (cksum_record_t), offsetof(cksum_record_t, link));
 	avl_create(&uberblock_tree, cksum_record_compare,

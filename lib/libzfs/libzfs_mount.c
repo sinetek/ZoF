@@ -121,7 +121,8 @@ zfs_share_proto_t share_all_proto[] = {
 	PROTO_END
 };
 
-#ifdef __linux__
+
+
 static boolean_t
 dir_is_empty_stat(const char *dirname)
 {
@@ -212,7 +213,6 @@ dir_is_empty(const char *dirname)
 	 */
 	return (dir_is_empty_stat(dirname));
 }
-#endif
 
 /*
  * Checks to see if the mount is active.  If the filesystem is mounted, we fill
@@ -293,7 +293,7 @@ zfs_is_mountable(zfs_handle_t *zhp, char *buf, size_t buflen,
  *
  * http://www.kernel.org/pub/linux/utils/util-linux/libmount-docs/index.html
  */
-#ifdef __linux__
+
 static int
 zfs_add_option(zfs_handle_t *zhp, char *options, int len,
     zfs_prop_t prop, char *on, char *off)
@@ -512,166 +512,6 @@ zfs_mount(zfs_handle_t *zhp, const char *options, int flags)
 	libzfs_mnttab_add(hdl, zfs_get_name(zhp), mountpoint, mntopts);
 	return (0);
 }
-#else
-extern int zmount(const char *spec, const char *dir, int mflag, char *fstype,
-    char *dataptr, int datalen, char *optptr, int optlen);
-
-
-/*
- * Mount the given filesystem.
- */
-int
-zfs_mount(zfs_handle_t *zhp, const char *options, int flags)
-{
-	struct stat buf;
-	char mountpoint[ZFS_MAXPROPLEN];
-	char mntopts[MNT_LINE_MAX];
-	libzfs_handle_t *hdl = zhp->zfs_hdl;
-	uint64_t keystatus;
-	int rc;
-
-	if (options == NULL)
-		mntopts[0] = '\0';
-	else
-		(void) strlcpy(mntopts, options, sizeof (mntopts));
-
-	/*
-	 * If the pool is imported read-only then all mounts must be read-only
-	 */
-	if (zpool_get_prop_int(zhp->zpool_hdl, ZPOOL_PROP_READONLY, NULL))
-		flags |= MS_RDONLY;
-
-	if (!zfs_is_mountable(zhp, mountpoint, sizeof (mountpoint), NULL,
-	    flags))
-		return (0);
-
-	/*
-	 * If the filesystem is encrypted the key must be loaded  in order to
-	 * mount. If the key isn't loaded, the MS_CRYPT flag decides whether
-	 * or not we attempt to load the keys. Note: we must call
-	 * zfs_refresh_properties() here since some callers of this function
-	 * (most notably zpool_enable_datasets()) may implicitly load our key
-	 * by loading the parent's key first.
-	 */
-	if (zfs_prop_get_int(zhp, ZFS_PROP_ENCRYPTION) != ZIO_CRYPT_OFF) {
-		zfs_refresh_properties(zhp);
-		keystatus = zfs_prop_get_int(zhp, ZFS_PROP_KEYSTATUS);
-
-		/*
-		 * If the key is unavailable and MS_CRYPT is set give the
-		 * user a chance to enter the key. Otherwise just fail
-		 * immediately.
-		 */
-		if (keystatus == ZFS_KEYSTATUS_UNAVAILABLE) {
-#ifdef MS_CRYPT
-			if (flags & MS_CRYPT) {
-				rc = zfs_crypto_load_key(zhp, B_FALSE, NULL);
-				if (rc != 0)
-					return (rc);
-			} else
-#endif
-			{
-				zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-				    "encryption key not loaded"));
-				return (zfs_error_fmt(hdl, EZFS_MOUNTFAILED,
-				    dgettext(TEXT_DOMAIN, "cannot mount '%s'"),
-				    mountpoint));
-			}
-		}
-
-	}
-
-	/*
-	 * If the filesystem is encrypted the key must be loaded  in order to
-	 * mount. If the key isn't loaded, the MS_CRYPT flag decides whether
-	 * or not we attempt to load the keys. Note: we must call
-	 * zfs_refresh_properties() here since some callers of this function
-	 * (most notably zpool_enable_datasets()) may implicitly load our key
-	 * by loading the parent's key first.
-	 */
-	if (zfs_prop_get_int(zhp, ZFS_PROP_ENCRYPTION) != ZIO_CRYPT_OFF) {
-		zfs_refresh_properties(zhp);
-		keystatus = zfs_prop_get_int(zhp, ZFS_PROP_KEYSTATUS);
-
-		/*
-		 * If the key is unavailable and MS_CRYPT is set give the
-		 * user a chance to enter the key. Otherwise just fail
-		 * immediately.
-		 */
-		if (keystatus == ZFS_KEYSTATUS_UNAVAILABLE) {
-#ifdef MS_CRYPT
-			if (flags & MS_CRYPT) {
-				rc = zfs_crypto_load_key(zhp, B_FALSE, NULL);
-				if (rc != 0)
-					return (rc);
-			} else
-#endif
-			{
-				zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-				    "encryption key not loaded"));
-				return (zfs_error_fmt(hdl, EZFS_MOUNTFAILED,
-				    dgettext(TEXT_DOMAIN, "cannot mount '%s'"),
-				    mountpoint));
-			}
-		}
-
-	}
-
-	/* Create the directory if it doesn't already exist */
-	if (lstat(mountpoint, &buf) != 0) {
-		if (mkdirp(mountpoint, 0755) != 0) {
-			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-			    "failed to create mountpoint"));
-			return (zfs_error_fmt(hdl, EZFS_MOUNTFAILED,
-			    dgettext(TEXT_DOMAIN, "cannot mount '%s'"),
-			    mountpoint));
-		}
-	}
-
-	/* perform the mount */
-	if (zmount(zfs_get_name(zhp), mountpoint, flags,
-	    MNTTYPE_ZFS, NULL, 0, mntopts, sizeof (mntopts)) != 0) {
-		/*
-		 * Generic errors are nasty, but there are just way too many
-		 * from mount(), and they're well-understood.  We pick a few
-		 * common ones to improve upon.
-		 */
-		if (errno == EBUSY) {
-			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-			    "mountpoint or dataset is busy"));
-		} else if (errno == EPERM) {
-			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-			    "Insufficient privileges"));
-		} else if (errno == ENOTSUP) {
-			char buf[256];
-			int spa_version;
-
-			VERIFY(zfs_spa_version(zhp, &spa_version) == 0);
-			(void) snprintf(buf, sizeof (buf),
-			    dgettext(TEXT_DOMAIN, "Can't mount a version %lld "
-			    "file system on a version %d pool. Pool must be"
-			    " upgraded to mount this file system."),
-			    (u_longlong_t)zfs_prop_get_int(zhp,
-			    ZFS_PROP_VERSION), spa_version);
-			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN, buf));
-		} else {
-			zfs_error_aux(hdl, strerror(errno));
-		}
-		return (zfs_error_fmt(hdl, EZFS_MOUNTFAILED,
-		    dgettext(TEXT_DOMAIN, "cannot mount '%s'"),
-		    zhp->zfs_name));
-	}
-
-	/* add the mounted entry into our cache */
-	libzfs_mnttab_add(hdl, zfs_get_name(zhp), mountpoint,
-	    mntopts);
-	return (0);
-}
-#endif
-
-#ifdef __FreeBSD__
-#define	do_unmount unmount
-#endif
 
 /*
  * Unmount a single filesystem.
@@ -861,12 +701,10 @@ zfs_is_shared_smb(zfs_handle_t *zhp, char **where)
 void
 zfs_uninit_libshare(libzfs_handle_t *zhandle)
 {
-#ifndef __FreeBSD__
 	if (zhandle != NULL && zhandle->libzfs_sharehdl != NULL) {
 		sa_fini(zhandle->libzfs_sharehdl);
 		zhandle->libzfs_sharehdl = NULL;
 	}
-#endif
 }
 
 /*
@@ -878,12 +716,8 @@ zfs_uninit_libshare(libzfs_handle_t *zhandle)
 int
 zfs_parse_options(char *options, zfs_share_proto_t proto)
 {
-#ifdef __FreeBSD__
-	return (SA_OK);
-#else
 	return (sa_parse_legacy_options(NULL, options,
 	    proto_table[proto].p_name));
-#endif
 }
 
 int

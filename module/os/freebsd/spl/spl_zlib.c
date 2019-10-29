@@ -9,39 +9,20 @@
 #include <sys/kobj.h>
 
 
-struct zchdr {
-	uint_t zch_magic;
-	uint_t zch_size;
-};
-
-#define	ZCH_MAGIC	0x3cc13cc1
-
 /*ARGSUSED*/
 static void *
 zcalloc(void *opaque, uint_t items, uint_t size)
 {
-	size_t nbytes = sizeof (struct zchdr) + items * size;
-	struct zchdr *z = kobj_zalloc(nbytes, KM_NOWAIT|KM_TMP);
 
-	if (z == NULL)
-		return (NULL);
-
-	z->zch_magic = ZCH_MAGIC;
-	z->zch_size = nbytes;
-
-	return (z + 1);
+	return malloc((size_t)items*size, M_SOLARIS, M_NOWAIT);
 }
 
 /*ARGSUSED*/
 static void
 zcfree(void *opaque, void *ptr)
 {
-	struct zchdr *z = ((struct zchdr *)ptr) - 1;
 
-	if (z->zch_magic != ZCH_MAGIC)
-		panic("zcfree region corrupt: hdr=%p ptr=%p", (void *)z, ptr);
-
-	kobj_free(z, z->zch_size);
+	free(ptr, M_SOLARIS);
 }
 
 static int

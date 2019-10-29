@@ -66,7 +66,6 @@ extern "C" {
  * Callers must never attempt to read or write any of the fields
  * in this structure directly.
  */
-#if defined(__FreeBSD__) && defined(_KERNEL)
 #include <crypto/sha2/sha256.h>
 #include <crypto/sha2/sha384.h>
 #include <crypto/sha2/sha512.h>
@@ -79,32 +78,6 @@ typedef struct 	{
 		SHA512_CTX SHA512_ctx;
 	};
 } SHA2_CTX;
-
-#else
-typedef struct 	{
-	uint32_t algotype;		/* Algorithm Type */
-
-	/* state (ABCDEFGH) */
-	union {
-		uint32_t s32[8];	/* for SHA256 */
-		uint64_t s64[8];	/* for SHA384/512 */
-	} state;
-	/* number of bits */
-	union {
-		uint32_t c32[2];	/* for SHA256 , modulo 2^64 */
-		uint64_t c64[2];	/* for SHA384/512, modulo 2^128 */
-	} count;
-	union {
-		uint8_t		buf8[128];	/* undigested input */
-		uint32_t	buf32[32];	/* realigned input */
-		uint64_t	buf64[16];	/* realigned input */
-	} buf_un;
-} SHA2_CTX;
-
-typedef SHA2_CTX SHA256_CTX;
-typedef SHA2_CTX SHA384_CTX;
-typedef SHA2_CTX SHA512_CTX;
-#endif
 
 extern void SHA256Init(SHA256_CTX *);
 
@@ -123,8 +96,6 @@ extern void SHA512Init(SHA512_CTX *);
 extern void SHA512Update(SHA512_CTX *, const void *, size_t);
 
 extern void SHA512Final(void *, SHA512_CTX *);
-
-#if defined(__FreeBSD__) && defined(_KERNEL)
 
 static inline void
 SHA2Init(uint64_t mech, SHA2_CTX *c)
@@ -189,14 +160,6 @@ SHA2Final(void *p, SHA2_CTX *c)
 			panic("unknown mechanism %d", c->algotype);
 	}
 }
-
-#else
-extern void SHA2Init(uint64_t mech, SHA2_CTX *);
-
-extern void SHA2Update(SHA2_CTX *, const void *, size_t);
-
-extern void SHA2Final(void *, SHA2_CTX *);
-#endif
 
 #ifdef _SHA2_IMPL
 /*

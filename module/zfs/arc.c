@@ -441,8 +441,6 @@ int zfs_arc_meta_prune = 10000;
 int zfs_arc_meta_strategy = ARC_STRATEGY_META_BALANCED;
 int zfs_arc_meta_adjust_restarts = 4096;
 int zfs_arc_lotsfree_percent = 10;
-#define	ARC_BALANCED_MIN 8*1024UL*1024UL*1024UL
-
 
 /* The 6 states: */
 arc_state_t ARC_anon;
@@ -4191,16 +4189,10 @@ arc_adjust_meta_only(uint64_t meta_used)
 static uint64_t
 arc_adjust_meta(uint64_t meta_used)
 {
-	/* BEGIN CSTYLED */
-	if (zfs_arc_meta_strategy == ARC_STRATEGY_META_ONLY
-#ifdef __FreeBSD__
-		|| (zfs_arc_max && (zfs_arc_max < ARC_BALANCED_MIN))
-#endif
-		)
+	if (zfs_arc_meta_strategy == ARC_STRATEGY_META_ONLY)
 		return (arc_adjust_meta_only(meta_used));
 	else
 		return (arc_adjust_meta_balanced(meta_used));
-	/* END CSTYLED */
 }
 
 /*
@@ -7196,8 +7188,8 @@ arc_init(void)
 		kstat_install(arc_ksp);
 	}
 
-	arc_adjust_zthr = zthr_create_timer(arc_adjust_cb_check,
-	    arc_adjust_cb, NULL, SEC2NSEC(1));
+	arc_adjust_zthr = zthr_create(arc_adjust_cb_check,
+	    arc_adjust_cb, NULL);
 	arc_reap_zthr = zthr_create_timer(arc_reap_cb_check,
 	    arc_reap_cb, NULL, SEC2NSEC(1));
 

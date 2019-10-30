@@ -6081,6 +6081,7 @@ spa_import(char *pool, nvlist_t *config, nvlist_t *props, uint64_t flags)
 	spa_history_log_version(spa, "import", NULL);
 
 	spa_event_notify(spa, NULL, NULL, ESC_ZFS_POOL_IMPORT);
+
 	mutex_exit(&spa_namespace_lock);
 
 	zvol_create_minors(spa, pool, B_TRUE);
@@ -7478,11 +7479,8 @@ spa_vdev_split_mirror(spa_t *spa, char *newname, nvlist_t *config,
 
 	newspa->spa_config_source = SPA_CONFIG_SRC_SPLIT;
 
-	/* FreeBSD XXX */
-	newspa->spa_splitting_newspa = B_TRUE;
 	/* create the new pool from the disks of the original pool */
 	error = spa_load(newspa, SPA_LOAD_IMPORT, SPA_IMPORT_ASSEMBLE);
-	newspa->spa_splitting_newspa = B_FALSE;
 	if (error)
 		goto out;
 

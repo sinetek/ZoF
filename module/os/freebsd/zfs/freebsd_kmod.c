@@ -282,7 +282,7 @@ zfs__init(void)
 int
 zfs__fini(void)
 {
-	if (spa_busy() || zfs_busy() || zvol_busy() ||
+	if (zfs_busy() || zvol_busy() ||
 	    zio_injection_enabled) {
 		return (EBUSY);
 	}

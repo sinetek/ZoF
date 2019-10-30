@@ -234,7 +234,6 @@
 static avl_tree_t spa_namespace_avl;
 kmutex_t spa_namespace_lock;
 static kcondvar_t spa_namespace_cv;
-static int spa_active_count;
 int spa_max_replication_override = SPA_DVAS_PER_BP;
 
 static kmutex_t spa_spare_lock;
@@ -689,10 +688,8 @@ spa_add(const char *name, nvlist_t *config, const char *altroot)
 	/*
 	 * Set the alternate root, if there is one.
 	 */
-	if (altroot) {
+	if (altroot)
 		spa->spa_root = spa_strdup(altroot);
-		spa_active_count++;
-	}
 
 	spa->spa_alloc_count = spa_allocators;
 	spa->spa_alloc_locks = kmem_zalloc(spa->spa_alloc_count *
@@ -782,10 +779,9 @@ spa_remove(spa_t *spa)
 	avl_remove(&spa_namespace_avl, spa);
 	cv_broadcast(&spa_namespace_cv);
 
-	if (spa->spa_root) {
+	if (spa->spa_root)
 		spa_strfree(spa->spa_root);
-		spa_active_count--;
-	}
+
 	while ((dp = list_head(&spa->spa_config_list)) != NULL) {
 		list_remove(&spa->spa_config_list, dp);
 		if (dp->scd_path != NULL)
@@ -2279,12 +2275,6 @@ spa_name_compare(const void *a1, const void *a2)
 	return (TREE_ISIGN(s));
 }
 
-int
-spa_busy(void)
-{
-	return (spa_active_count);
-}
-
 void
 spa_boot_init(void)
 {
@@ -2373,6 +2363,7 @@ spa_fini(void)
 	scan_fini();
 	qat_fini();
 	spa_import_progress_destroy();
+
 	avl_destroy(&spa_namespace_avl);
 	avl_destroy(&spa_spare_avl);
 	avl_destroy(&spa_l2cache_avl);

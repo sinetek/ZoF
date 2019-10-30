@@ -136,6 +136,7 @@ arc_prune_task(void *arg)
 {
 	int64_t nr_scan = *(int64_t *)arg;
 
+	arc_reduce_target_size(ptob(nr_scan));
 	free(arg, M_TEMP);
 	vnlru_free(nr_scan, &zfs_vfsops);
 }

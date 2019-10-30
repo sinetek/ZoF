@@ -81,19 +81,6 @@ static void vdev_geom_detach(struct g_consumer *cp, boolean_t open_for_read);
 uint_t zfs_geom_probe_vdev_key;
 
 static void
-vdev_geom_set_rotation_rate(vdev_t *vd, struct g_consumer *cp)
-{ 
-	int error;
-	uint16_t rate;
-
-	error = g_getattr("GEOM::rotation_rate", cp, &rate);
-	if (error == 0)
-		vd->vdev_rotation_rate = rate;
-	else
-		vd->vdev_rotation_rate = VDEV_RATE_UNKNOWN;
-}
-
-static void
 vdev_geom_set_physpath(vdev_t *vd, struct g_consumer *cp,
 		       boolean_t do_null_update)
 {
@@ -143,10 +130,6 @@ vdev_geom_attrchanged(struct g_consumer *cp, const char *attr)
 
 	SLIST_FOREACH(elem, priv, elems) {
 		vdev_t *vd = elem->vd;
-		if (strcmp(attr, "GEOM::rotation_rate") == 0) {
-			vdev_geom_set_rotation_rate(vd, cp);
-			return;
-		}
 		if (strcmp(attr, "GEOM::physpath") == 0) {
 			vdev_geom_set_physpath(vd, cp, /*null_update*/B_TRUE);
 			return;
@@ -777,11 +760,11 @@ vdev_geom_open_by_path(vdev_t *vd, int check_guid)
 
 static int
 vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
-    uint64_t *logical_ashift, uint64_t *physical_ashift)
+    uint64_t *logical_ashift)
 {
 	struct g_provider *pp;
 	struct g_consumer *cp;
-	int error, has_trim;
+	int error, has_trim, rate;
 
 	/* Set the TLS to indicate downstack that we should not access zvols*/
 	VERIFY(tsd_set(zfs_geom_probe_vdev_key, vd) == 0);
@@ -896,7 +879,6 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	
 		/* Set other GEOM characteristics */
 		vdev_geom_set_physpath(vd, cp, /*do_null_update*/B_FALSE);
-		vdev_geom_set_rotation_rate(vd, cp);
 	}
 
 	g_topology_unlock();
@@ -920,10 +902,11 @@ skip_open:
 	 * transfer size.
 	 */
 	*logical_ashift = highbit(MAX(pp->sectorsize, SPA_MINBLOCKSIZE)) - 1;
-	*physical_ashift = 0;
+#ifdef notyet
 	if (pp->stripesize > (1 << *logical_ashift) && ISP2(pp->stripesize) &&
 	    pp->stripesize <= (1 << ASHIFT_MAX) && pp->stripeoffset == 0)
 		*physical_ashift = highbit(pp->stripesize) - 1;
+#endif
 	/*
 	 * Clear the nowritecache settings, so that on a vdev_reopen()
 	 * we will try again.
@@ -931,7 +914,7 @@ skip_open:
 	vd->vdev_nowritecache = B_FALSE;
 
 	/* Inform the ZIO pipeline that we are non-rotational */
-	vd->vdev_nonrot = (vd->vdev_rotation_rate == VDEV_RATE_UNKNOWN);
+	vd->vdev_nonrot = (g_getattr("GEOM::rotation_rate", cp, &rate) == 0);
 
 	/* Set when device reports it supports TRIM. */
 	error = g_getattr("GEOM::candelete", cp, &has_trim);

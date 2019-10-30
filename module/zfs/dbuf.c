@@ -117,10 +117,8 @@ dbuf_stats_t dbuf_stats = {
 	{ "cache_lowater_bytes",		KSTAT_DATA_UINT64 },
 	{ "cache_hiwater_bytes",		KSTAT_DATA_UINT64 },
 	{ "cache_total_evicts",			KSTAT_DATA_UINT64 },
-#ifndef __FreeBSD__
 	{ { "cache_levels_N",			KSTAT_DATA_UINT64 } },
 	{ { "cache_levels_bytes_N",		KSTAT_DATA_UINT64 } },
-#endif
 	{ "hash_hits",				KSTAT_DATA_UINT64 },
 	{ "hash_misses",			KSTAT_DATA_UINT64 },
 	{ "hash_collisions",			KSTAT_DATA_UINT64 },

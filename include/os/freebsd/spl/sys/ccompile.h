@@ -156,7 +156,9 @@ typedef	void zfs_kernel_param_t;
 #define	param_set_charp(a, b) (0)
 #define ATTR_UID AT_UID
 #define ATTR_GID AT_GID
+#define ATTR_MODE AT_MODE
 #define	ATTR_XVATTR	AT_XVATTR
+#define	ATTR_CTIME	AT_CTIME
 #define	vmem_free zfs_kmem_free
 /* XXX */
 #define	vmem_zalloc(size, flags) zfs_kmem_alloc(size, flags | M_ZERO)

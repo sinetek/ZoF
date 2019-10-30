@@ -3548,25 +3548,6 @@ zio_vdev_io_start(zio_t *zio)
 		}
 	}
 
-	/*
-	 * We keep track of time-sensitive I/Os so that the scan thread
-	 * can quickly react to certain workloads.  In particular, we care
-	 * about non-scrubbing, top-level reads and writes with the following
-	 * characteristics:
-	 *      - synchronous writes of user data to non-slog devices
-	 *      - any reads of user data
-	 * When these conditions are met, adjust the timestamp of spa_last_io
-	 * which allows the scan thread to adjust its workload accordingly.
-	 */
-	if (!(zio->io_flags & ZIO_FLAG_SCAN_THREAD) && zio->io_bp != NULL &&
-	    vd == vd->vdev_top && !vd->vdev_islog &&
-	    zio->io_bookmark.zb_objset != DMU_META_OBJSET &&
-	    zio->io_txg != spa_syncing_txg(spa)) {
-		uint64_t old = spa->spa_last_io;
-		uint64_t new = ddi_get_lbolt64();
-		if (old != new)
-			(void) atomic_cas_64(&spa->spa_last_io, old, new);
-	}
 	align = 1ULL << vd->vdev_top->vdev_ashift;
 
 	if (!(zio->io_flags & ZIO_FLAG_PHYSICAL) &&
@@ -3594,11 +3575,10 @@ zio_vdev_io_start(zio_t *zio)
 		 * For physical writes, we allow 512b aligned writes and assume
 		 * the device will perform a read-modify-write as necessary.
 		 */
-		uint64_t log_align __debug =
-		    1ULL << vd->vdev_top->vdev_logical_ashift;
-		ASSERT0(P2PHASE(zio->io_offset, log_align));
-		ASSERT0(P2PHASE(zio->io_size, log_align));
+		ASSERT0(P2PHASE(zio->io_offset, SPA_MINBLOCKSIZE));
+		ASSERT0(P2PHASE(zio->io_size, SPA_MINBLOCKSIZE));
 	}
+
 	VERIFY(zio->io_type != ZIO_TYPE_WRITE || spa_writeable(spa));
 
 	/*

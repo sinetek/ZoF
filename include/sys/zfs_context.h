@@ -94,6 +94,8 @@
 	SYSCTL_DECL(_vfs_ ## scope_prefix);	 \
 	SYSCTL_##type(_vfs_ ## scope_prefix, OID_AUTO, name, perm,	\
 		&name_prefix ## name, 0, desc)
+#define	ZFS_MODULE_PARAM_CALL(scope_prefix, name_prefix, name, setfunc, \
+	getfunc, perm, desc)
 
 #define	taskq_create_sysdc(a, b, d, e, p, dc, f) \
 	    (taskq_create(a, b, maxclsyspri, d, e, f))

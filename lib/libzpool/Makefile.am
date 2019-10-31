@@ -110,7 +110,6 @@ KERNEL_C = \
 	spa_history.c \
 	spa_log_spacemap.c \
 	spa_misc.c \
-	spa_misc_os.c \
 	spa_stats.c \
 	space_map.c \
 	space_reftree.c \

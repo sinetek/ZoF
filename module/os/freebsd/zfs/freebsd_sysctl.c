@@ -445,6 +445,7 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, space_map_ibs, CTLFLAG_RWTUN,
 
 
 /* vdev.c */
+#ifdef notyet
 extern uint64_t zfs_max_auto_ashift;
 extern uint64_t zfs_min_auto_ashift;
 
@@ -493,6 +494,7 @@ SYSCTL_PROC(_vfs_zfs, OID_AUTO, min_auto_ashift,
     CTLTYPE_U64 | CTLFLAG_MPSAFE | CTLFLAG_RW, 0, sizeof (uint64_t),
     sysctl_vfs_zfs_min_auto_ashift, "QU",
     "Min ashift used when creating new top-level vdevs.");
+#endif
 
 /*
  * Since the DTL space map of a vdev is not expected to have a lot of

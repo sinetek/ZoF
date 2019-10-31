@@ -1173,10 +1173,6 @@ zpool_do_labelclear(int argc, char **argv)
 		return (1);
 	}
 
-#ifdef __linux__
-	/*
-	 * XXX freebsd equivalent?
-	 */
 	/*
 	 * Flush all dirty pages for the block device.  This should not be
 	 * fatal when the device does not support BLKFLSBUF as would be the
@@ -1185,7 +1181,6 @@ zpool_do_labelclear(int argc, char **argv)
 	if ((zfs_dev_flush(fd) != 0) && (errno != ENOTTY))
 		(void) fprintf(stderr, gettext("failed to invalidate "
 		    "cache for %s: %s\n"), vdev, strerror(errno));
-#endif
 
 	if (zpool_read_label(fd, &config, NULL) != 0) {
 		(void) fprintf(stderr,

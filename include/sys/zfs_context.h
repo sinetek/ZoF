@@ -94,8 +94,6 @@
 	SYSCTL_##type(_vfs_ ## scope_prefix, OID_AUTO, name, perm,	\
 		&name_prefix ## name, 0, desc)
 
-#define	ZFS_MODULE_PARAM_CALL(scope_prefix, name_prefix, name, func, type, perm, desc)
-
 #define	taskq_create_sysdc(a, b, d, e, p, dc, f) \
 	    (taskq_create(a, b, maxclsyspri, d, e, f))
 
@@ -218,7 +216,7 @@ extern int spa_import_rootpool(const char *name);
 #define	likely(x)	__builtin_expect((x), 1)
 #define	unlikely(x)	__builtin_expect((x), 0)
 #ifdef ZFS_DEBUG
-#define __debug
+#define	__debug
 #else
 #define	__debug	__attribute__((__unused__))
 #endif /* ZFS_DEBUG */

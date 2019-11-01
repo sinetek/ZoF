@@ -43,11 +43,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_BSD_FETCH
-#include <dlfcn.h>
-typedef void (*free_url_t)(void *);
-typedef void *(*parse_url_t)(const char *);
-#endif
 #endif
 
 static zprop_desc_t zfs_prop_table[ZFS_NUM_PROPS];
@@ -831,38 +826,10 @@ zfs_prop_encryption_key_param(zfs_prop_t prop)
 boolean_t
 zfs_prop_valid_keylocation(const char *str, boolean_t encrypted)
 {
-#if !defined(_KERNEL) && defined(HAVE_BSD_FETCH)
-	void *libfetch;
-#endif
 	if (strcmp("none", str) == 0)
 		return (!encrypted);
 	else if (strcmp("prompt", str) == 0)
 		return (B_TRUE);
-#if !defined(_KERNEL) && defined(HAVE_BSD_FETCH)
-	else if ((libfetch = dlopen("libfetch.so", RTLD_LAZY)) != NULL) {
-		parse_url_t parse_url = NULL;
-		free_url_t free_url = NULL;
-		void *url = NULL;
-
-		parse_url = (parse_url_t)dlfunc(libfetch, "fetchParseURL");
-		if (parse_url != NULL) {
-			free_url = (free_url_t)dlfunc(libfetch,
-			    "fetchFreeURL");
-			if (free_url != NULL) {
-				url = (*parse_url)(str);
-				if (url != NULL)
-					(*free_url)(url);
-				dlclose(libfetch);
-				return (url != NULL);
-			}
-		}
-		dlclose(libfetch);
-		return (B_FALSE);
-	}
-#elif defined(_KERNEL) && defined(__FreeBSD__)
-	else if (strlen(str) > 0)
-		return (B_TRUE);
-#endif
 	else if (strlen(str) > 8 && strncmp("file:///", str, 8) == 0)
 		return (B_TRUE);
 
@@ -945,11 +912,8 @@ zcommon_fini(void)
 	fletcher_4_fini();
 	kfpu_fini();
 }
-
-#if defined(__linux__)
 module_init(zcommon_init);
 module_exit(zcommon_fini);
-
 #endif
 
 ZFS_MODULE_DESCRIPTION("Generic ZFS support");

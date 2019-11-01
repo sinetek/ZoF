@@ -700,7 +700,7 @@ zfs_read(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 	zfsvfs_t	*zfsvfs = zp->z_zfsvfs;
 	ssize_t		n, nbytes;
 	int		error = 0;
-	locked_range_t		*lr;
+	zfs_locked_range_t		*lr;
 
 	ZFS_ENTER(zfsvfs);
 	ZFS_VERIFY_ZP(zp);
@@ -813,7 +813,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 	zilog_t		*zilog;
 	offset_t	woff;
 	ssize_t		n, nbytes;
-	locked_range_t		*lr;
+	zfs_locked_range_t		*lr;
 	int		max_blksz = zfsvfs->z_max_blksz;
 	int		error = 0;
 	arc_buf_t	*abuf;
@@ -4645,7 +4645,7 @@ zfs_getpages(struct vnode *vp, vm_page_t *ma, int count, int *rbehind,
 	znode_t *zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	objset_t *os = zp->z_zfsvfs->z_os;
-	locked_range_t *lr;
+	zfs_locked_range_t *lr;
 	vm_object_t object;
 	off_t start, end, obj_size;
 	uint_t blksz;
@@ -4764,7 +4764,7 @@ zfs_putpages(struct vnode *vp, vm_page_t *ma, size_t len, int flags,
 {
 	znode_t		*zp = VTOZ(vp);
 	zfsvfs_t	*zfsvfs = zp->z_zfsvfs;
-	locked_range_t		*lr;
+	zfs_locked_range_t		*lr;
 	dmu_tx_t	*tx;
 	struct sf_buf	*sf;
 	vm_object_t	object;

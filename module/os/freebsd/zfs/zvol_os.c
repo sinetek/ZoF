@@ -366,7 +366,7 @@ zvol_strategy(struct bio *bp)
 	size_t resid;
 	char *addr;
 	objset_t *os;
-	locked_range_t *lr;
+	zfs_locked_range_t *lr;
 	int error = 0;
 	boolean_t doread = 0;
 	boolean_t is_dumpified;
@@ -489,7 +489,7 @@ zvol_read(struct cdev *dev, struct uio *uio, int ioflag)
 {
 	zvol_state_t *zv;
 	uint64_t volsize;
-	locked_range_t *lr;
+	zfs_locked_range_t *lr;
 	int error = 0;
 
 	zv = dev->si_drv2;
@@ -526,7 +526,7 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 {
 	zvol_state_t *zv;
 	uint64_t volsize;
-	locked_range_t *lr;
+	zfs_locked_range_t *lr;
 	int error = 0;
 	boolean_t sync;
 
@@ -948,7 +948,7 @@ static int
 zvol_d_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int fflag, struct thread *td)
 {
 	zvol_state_t *zv;
-	locked_range_t *lr;
+	zfs_locked_range_t *lr;
 	off_t offset, length;
 	int i, error;
 	boolean_t sync;

@@ -64,10 +64,10 @@
 #include <sys/disp.h>
 #include <sys/trace.h>
 #include <sys/procfs_list.h>
+#include <sys/mod.h>
 #if defined(__linux__)
 #include <linux/dcache_compat.h>
 #include <linux/utsname_compat.h>
-#include <sys/mod.h>
 #include <sys/sysmacros.h>
 
 #elif defined(__FreeBSD__)

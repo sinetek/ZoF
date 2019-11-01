@@ -790,8 +790,7 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	g_topology_lock();
 	error = 0;
 
-	if (vd->vdev_spa->spa_splitting_newspa ||
-	    ((vd->vdev_prevstate == VDEV_STATE_UNKNOWN &&
+	if (((vd->vdev_prevstate == VDEV_STATE_UNKNOWN &&
 		 (vd->vdev_spa->spa_load_state == SPA_LOAD_NONE ||
 		 vd->vdev_spa->spa_load_state == SPA_LOAD_CREATE)))) {
 		/*

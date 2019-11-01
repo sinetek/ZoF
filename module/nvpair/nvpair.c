@@ -3588,7 +3588,7 @@ nvs_xdr(nvstream_t *nvs, nvlist_t *nvl, char *buf, size_t *buflen)
 	return (err);
 }
 
-#if defined(_KERNEL) && defined(__linux__)
+#if defined(_KERNEL)
 static int __init
 nvpair_init(void)
 {

@@ -293,5 +293,4 @@ extern int zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx);
 }
 #endif
 
-#endif /* defined(__linux__) || !defined(_KERNEL) */
 #endif	/* _SYS_FS_ZFS_ZNODE_H */

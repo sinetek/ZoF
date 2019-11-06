@@ -183,14 +183,14 @@ VTOZ(vnode_t *vp)
 	(tp)->tv_nsec = (long)(stmp)[1];		\
 }
 
-extern void	zfs_tstamp_update_setup_ext(znode_t *, uint_t, uint64_t [2],
+extern void	zfs_tstamp_update_setup_ext(struct znode *, uint_t, uint64_t [2],
     uint64_t [2], boolean_t have_tx);
 
 extern zil_get_data_t zfs_get_data;
 extern zil_replay_func_t *zfs_replay_vector[TX_MAX_TYPE];
 extern int zfsfstype;
 
-extern int zfs_znode_parent_and_name(znode_t *zp, znode_t **dzpp, char *buf);
+extern int zfs_znode_parent_and_name(struct znode *zp, struct znode **dzpp, char *buf);
 
 #endif /* _KERNEL */
 

@@ -99,31 +99,12 @@ extern minor_t zfsdev_minor_alloc(void);
 /*
  * Convert between znode pointers and vnode pointers
  */
-#ifdef DEBUG
-static __inline vnode_t *
-ZTOV(znode_t *zp)
-{
-	vnode_t *vp = zp->z_vnode;
-
-	ASSERT(vp != NULL && vp->v_data == zp);
-	return (vp);
-}
-static __inline znode_t *
-VTOZ(vnode_t *vp)
-{
-	znode_t *zp = (znode_t *)vp->v_data;
-
-	ASSERT(zp != NULL && zp->z_vnode == vp);
-	return (zp);
-}
-#else
 #define	ZTOV(ZP)	((ZP)->z_vnode)
 #define	ZTOI(ZP)	((ZP)->z_vnode)
-#define	VTOZ(VP)	((znode_t *)(VP)->v_data)
-#define	ITOZ(VP)	((znode_t *)(VP)->v_data)
+#define	VTOZ(VP)	((struct znode *)(VP)->v_data)
+#define	ITOZ(VP)	((struct znode *)(VP)->v_data)
 #define	igrab(vp)	vhold(vp)
 #define	iput(vp)	vput(vp)
-#endif
 
 #define	ZTOZSB(zp) ((zp)->z_zfsvfs)
 #define	ITOZSB(vp) (VTOZ(vp)->z_zfsvfs)

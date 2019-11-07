@@ -182,9 +182,13 @@ VTOZ(vnode_t *vp)
 	(tp)->tv_sec = (time_t)(stmp)[0];		\
 	(tp)->tv_nsec = (long)(stmp)[1];		\
 }
+#define	ZFS_ACCESSTIME_STAMP(zfsvfs, zp) \
+	if ((zfsvfs)->z_atime && !((zfsvfs)->z_vfs->vfs_flag & VFS_RDONLY)) \
+		zfs_tstamp_update_setup_ext(zp, ACCESSED, NULL, NULL, B_FALSE);
 
 extern void	zfs_tstamp_update_setup_ext(struct znode *, uint_t, uint64_t [2],
     uint64_t [2], boolean_t have_tx);
+extern void zfs_znode_free(struct znode *);
 
 extern zil_get_data_t zfs_get_data;
 extern zil_replay_func_t *zfs_replay_vector[TX_MAX_TYPE];

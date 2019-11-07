@@ -123,17 +123,13 @@ extern "C" {
 #define DEBUG
 #endif
 #define	EXPORT_SYMBOL(x)
-#define ZFS_MODULE_VERSION(s)
 #define MODULE_AUTHOR(s)
 #define MODULE_DESCRIPTION(s)
 #define MODULE_LICENSE(s)
-#define ZFS_MODULE_VERSION(s)
 #define	module_param(a, b, c)
 #define	module_param_call(a, b, c, d, e)
 #define	module_param_named(a, b, c, d)
 #define	MODULE_PARM_DESC(a, b)
-#define module_init(sym)
-#define module_exit(sym)
 #define	asm __asm
 #ifdef ZFS_DEBUG
 #undef NDEBUG
@@ -159,6 +155,8 @@ typedef	void zfs_kernel_param_t;
 #define ATTR_MODE AT_MODE
 #define	ATTR_XVATTR	AT_XVATTR
 #define	ATTR_CTIME	AT_CTIME
+#define	ATTR_MTIME	AT_MTIME
+#define	ATTR_ATIME	AT_ATIME
 #define	vmem_free zfs_kmem_free
 /* XXX */
 #define	vmem_zalloc(size, flags) zfs_kmem_alloc(size, flags | M_ZERO)

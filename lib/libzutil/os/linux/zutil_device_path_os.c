@@ -265,43 +265,6 @@ zfs_dev_is_whole_disk(const char *dev_name)
 }
 
 /*
- * Same as zfs_strip_partition, but allows "/dev/" to be in the pathname
- *
- * path:	/dev/sda1
- * returns:	/dev/sda
- *
- * Returned string must be freed.
- */
-static char *
-zfs_strip_partition_path(char *path)
-{
-	char *newpath = strdup(path);
-	char *sd_offset;
-	char *new_sd;
-
-	if (!newpath)
-		return (NULL);
-
-	/* Point to "sda1" part of "/dev/sda1" */
-	sd_offset = strrchr(newpath, '/') + 1;
-
-	/* Get our new name "sda" */
-	new_sd = zfs_strip_partition(sd_offset);
-	if (!new_sd) {
-		free(newpath);
-		return (NULL);
-	}
-
-	/* Paste the "sda" where "sda1" was */
-	strlcpy(sd_offset, new_sd, strlen(sd_offset) + 1);
-
-	/* Free temporary "sda" */
-	free(new_sd);
-
-	return (newpath);
-}
-
-/*
  * Lookup the underlying device for a device name
  *
  * Often you'll have a symlink to a device, a partition device,
@@ -467,52 +430,6 @@ end:
 		closedir(dp);
 
 	return (path);
-}
-
-/*
- * Remove partition suffix from a vdev path.  Partition suffixes may take three
- * forms: "-partX", "pX", or "X", where X is a string of digits.  The second
- * case only occurs when the suffix is preceded by a digit, i.e. "md0p0" The
- * third case only occurs when preceded by a string matching the regular
- * expression "^([hsv]|xv)d[a-z]+", i.e. a scsi, ide, virtio or xen disk.
- *
- * caller must free the returned string
- */
-char *
-zfs_strip_partition(char *path)
-{
-	char *tmp = strdup(path);
-	char *part = NULL, *d = NULL;
-	if (!tmp)
-		return (NULL);
-
-	if ((part = strstr(tmp, "-part")) && part != tmp) {
-		d = part + 5;
-	} else if ((part = strrchr(tmp, 'p')) &&
-	    part > tmp + 1 && isdigit(*(part-1))) {
-		d = part + 1;
-	} else if ((tmp[0] == 'h' || tmp[0] == 's' || tmp[0] == 'v') &&
-	    tmp[1] == 'd') {
-		for (d = &tmp[2]; isalpha(*d); part = ++d) { }
-	} else if (strncmp("xvd", tmp, 3) == 0) {
-		for (d = &tmp[3]; isalpha(*d); part = ++d) { }
-	}
-	if (part && d && *d != '\0') {
-		for (; isdigit(*d); d++) { }
-		if (*d == '\0')
-			*part = '\0';
-	}
-
-	return (tmp);
-}
-
-/*
- * Strip the path from a device name.
- */
-char *
-zfs_strip_path(char *path)
-{
-	return (strrchr(path, '/') + 1);
 }
 
 #ifdef HAVE_LIBUDEV

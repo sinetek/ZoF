@@ -49,9 +49,8 @@ zfs_onexit_fd_hold(int fd, minor_t *minorp)
 	void *data;
 	int error;
 
-	fp = getf(fd);
-	if (fp == NULL)
-		return (SET_ERROR(EBADF));
+	if ((error = zfs_file_get(fd, &fp)))
+		return (error);
 
 	tmpfp = curthread->td_fpop;
 	curthread->td_fpop = fp;
@@ -67,5 +66,6 @@ zfs_onexit_fd_hold(int fd, minor_t *minorp)
 void
 zfs_onexit_fd_rele(int fd)
 {
-	releasef(fd);
+	zfs_file_put(fd);
 }
+

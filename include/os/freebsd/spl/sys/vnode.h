@@ -189,114 +189,7 @@ vattr_init_mask(vattr_t *vap)
 		vap->va_mask |= AT_XVATTR;
 }
 
-static __inline int
-vn_openat(char *pnamep, enum uio_seg seg, int filemode, int createmode,
-    vnode_t **vpp, enum create crwhy, mode_t umask, struct vnode *startvp,
-    int fd)
-{
-	struct thread *td = curthread;
-	struct nameidata nd;
-	int error, operation;
-
-	ASSERT(seg == UIO_SYSSPACE);
-	if ((filemode & FCREAT) != 0) {
-		ASSERT(filemode == (FWRITE | FCREAT | FTRUNC | FOFFMAX));
-		ASSERT(crwhy == CRCREAT);
-		operation = CREATE;
-	} else {
-		ASSERT(filemode == (FREAD | FOFFMAX) ||
-		    filemode == (FREAD | FWRITE | FOFFMAX));
-		ASSERT(crwhy == 0);
-		operation = LOOKUP;
-	}
-	ASSERT(umask == 0);
-
-	pwd_ensure_dirs();
-
-	if (startvp != NULL)
-		vref(startvp);
-	NDINIT_ATVP(&nd, operation, 0, UIO_SYSSPACE, pnamep, startvp, td);
-	filemode |= O_NOFOLLOW;
-	error = vn_open_cred(&nd, &filemode, createmode, 0, td->td_ucred, NULL);
-	NDFREE(&nd, NDF_ONLY_PNBUF);
-	if (error == 0) {
-		/* We just unlock so we hold a reference. */
-		VOP_UNLOCK(nd.ni_vp, 0);
-		*vpp = nd.ni_vp;
-	}
-	return (error);
-}
-
-static __inline int
-zfs_vn_open(char *pnamep, enum uio_seg seg, int filemode, int createmode,
-    vnode_t **vpp, enum create crwhy, mode_t umask)
-{
-
-	return (vn_openat(pnamep, seg, filemode, createmode, vpp, crwhy,
-	    umask, NULL, -1));
-}
-#define	vn_open(pnamep, seg, filemode, createmode, vpp, crwhy, umask)	\
-	zfs_vn_open((pnamep), (seg), (filemode), (createmode), (vpp), (crwhy), (umask))
-
-#define	RLIM64_INFINITY	0
-static __inline int
-zfs_vn_rdwr(enum uio_rw rw, vnode_t *vp, caddr_t base, ssize_t len,
-    offset_t offset, enum uio_seg seg, int ioflag, int ulimit, cred_t *cr,
-    ssize_t *residp)
-{
-	struct thread *td = curthread;
-	int error;
-	ssize_t resid;
-
-	ASSERT(ioflag == 0);
-	ASSERT(ulimit == RLIM64_INFINITY);
-
-	if (rw == UIO_WRITE) {
-		ioflag = IO_SYNC;
-	} else {
-		ioflag = IO_DIRECT;
-	}
-	error = vn_rdwr(rw, vp, base, len, offset, seg, ioflag, cr, NOCRED,
-	    &resid, td);
-	if (residp != NULL)
-		*residp = (ssize_t)resid;
-	return (error);
-}
-#define	vn_rdwr(rw, vp, base, len, offset, seg, ioflag, ulimit, cr, residp) \
-	zfs_vn_rdwr((rw), (vp), (base), (len), (offset), (seg), (ioflag), (ulimit), (cr), (residp))
-
-static __inline int
-zfs_vop_fsync(vnode_t *vp, int flag, cred_t *cr)
-{
-	struct mount *mp;
-	int error;
-
-	ASSERT(flag == FSYNC);
-
-	if ((error = vn_start_write(vp, &mp, V_WAIT | PCATCH)) != 0)
-		goto drop;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, MNT_WAIT, curthread);
-	VOP_UNLOCK(vp, 0);
-	vn_finished_write(mp);
-drop:
-	return (error);
-}
-#define	VOP_FSYNC(vp, flag, cr, ct)	zfs_vop_fsync((vp), (flag), (cr))
-
-static __inline int
-zfs_vop_close(vnode_t *vp, int flag, int count, offset_t offset, cred_t *cr)
-{
-	int error;
-
-	ASSERT(count == 1);
-	ASSERT(offset == 0);
-
-	error = vn_close(vp, flag, cr, curthread);
-	return (error);
-}
-#define	VOP_CLOSE(vp, oflags, count, offset, cr, ct)			\
-	zfs_vop_close((vp), (oflags), (count), (offset), (cr))
+#define        RLIM64_INFINITY 0
 
 static __inline int
 vn_rename(char *from, char *to, enum uio_seg seg)
@@ -305,26 +198,6 @@ vn_rename(char *from, char *to, enum uio_seg seg)
 	ASSERT(seg == UIO_SYSSPACE);
 
 	return (kern_renameat(curthread, AT_FDCWD, from, AT_FDCWD, to, seg));
-}
-
-static __inline int
-vn_remove(char *fnamep, enum uio_seg seg, enum rm dirflag)
-{
-	int rc;
-
-	ASSERT(seg == UIO_SYSSPACE);
-	ASSERT(dirflag == RMFILE);
-
-#if __FreeBSD_version >= 1300018
-	rc = kern_funlinkat(curthread, AT_FDCWD, fnamep, FD_NONE, seg, 0, 0);
-#else
-#ifdef AT_BENEATH
-	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0, 0);
-#else
-	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0);
-#endif
-#endif
-	return (rc);
 }
 
 #include <sys/vfs.h>

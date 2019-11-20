@@ -737,7 +737,7 @@ zfs_replay_write(void *arg1, void *arg2, boolean_t byteswap)
 #ifdef __FreeBSD__
 	ssize_t resid;
 	error = vn_rdwr(UIO_WRITE, ZTOV(zp), data, length, offset,
-	    UIO_SYSSPACE, 0, RLIM64_INFINITY, kcred, &resid);
+	    UIO_SYSSPACE, IO_SYNC, kcred, NOCRED, &resid, curthread);
 #else
 	int written = zpl_write_common(ZTOI(zp), data, length, &offset,
 	    UIO_SYSSPACE, 0, kcred);

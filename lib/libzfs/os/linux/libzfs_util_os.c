@@ -45,13 +45,6 @@
 #define	ZDIFF_SHARESDIR		"/.zfs/shares/"
 
 int
-zcmd_ioctl(int fd, unsigned long request, zfs_cmd_t *zc)
-{
-
-	return (ioctl(fd, request, zc));
-}
-
-int
 zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
 {
 	return (ioctl(hdl->libzfs_fd, request, zc));

@@ -24,7 +24,8 @@ endif
 if BUILD_FREEBSD
 USER_C += \
 	os/freebsd/zutil_device_path_os.c \
-	os/freebsd/zutil_import_os.c
+	os/freebsd/zutil_import_os.c \
+	os/freebsd/zutil_compat.c
 endif
 
 nodist_libzutil_la_SOURCES = $(USER_C)

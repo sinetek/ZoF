@@ -25,6 +25,7 @@
 #include <os/freebsd/zfs/sys/zfs_ioctl_compat.h>
 #include <libzfs_impl.h>
 #include <libzfs.h>
+#include <libzutil.h>
 #include <sys/sysctl.h>
 #include <libintl.h>
 #include <sys/linker.h>
@@ -206,27 +207,6 @@ get_zfs_spa_version(void)
 	return (ver);
 }
 #endif
-/*
- * This is FreeBSD version of ioctl, because Solaris' ioctl() updates
- * zc_nvlist_dst_size even if an error is returned, on FreeBSD if an
- * error is returned zc_nvlist_dst_size won't be updated.
- */
-int
-zcmd_ioctl(int fd, unsigned long request, zfs_cmd_t *zc)
-{
-	size_t oldsize;
-	int ret, cflag = ZFS_CMD_COMPAT_NONE;
-
-	oldsize = zc->zc_nvlist_dst_size;
-	ret = zcmd_ioctl_compat(fd, request, zc, cflag);
-
-	if (ret == 0 && oldsize < zc->zc_nvlist_dst_size) {
-		ret = -1;
-		errno = ENOMEM;
-	}
-
-	return (ret);
-}
 
 const char *
 libzfs_error_init(int error)
@@ -238,7 +218,7 @@ libzfs_error_init(int error)
 int
 zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
 {
-	return (zcmd_ioctl(hdl->libzfs_fd, request, zc));
+	return (zfs_ioctl_fd(hdl->libzfs_fd, request, zc));
 }
 
 /*

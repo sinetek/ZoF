@@ -22,6 +22,7 @@
 #include <string.h>
 #include <strings.h>
 #include <libzfs_core.h>
+#include <libzutil.h>
 
 #include <sys/nvpair.h>
 #include <sys/zfs_ioctl.h>
@@ -162,7 +163,7 @@ lzc_ioctl_run(zfs_ioc_t ioc, const char *name, nvlist_t *innvl, int expected)
 	zc.zc_nvlist_dst_size = MAX(size * 2, 128 * 1024);
 	zc.zc_nvlist_dst = (uint64_t)(uintptr_t)malloc(zc.zc_nvlist_dst_size);
 
-	if (zcmd_ioctl(zfs_fd, ioc, &zc) != 0)
+	if (zfs_ioctl_fd(zfs_fd, ioc, &zc) != 0)
 		error = errno;
 
 	if (error != expected) {
@@ -693,7 +694,7 @@ zfs_destroy(const char *dataset)
 
 	(void) strlcpy(zc.zc_name, dataset, sizeof (zc.zc_name));
 	zc.zc_name[sizeof (zc.zc_name) - 1] = '\0';
-	err = zcmd_ioctl(zfs_fd, ZFS_IOC_DESTROY, &zc);
+	err = zfs_ioctl_fd(zfs_fd, ZFS_IOC_DESTROY, &zc);
 
 	return (err == 0 ? 0 : errno);
 }
@@ -866,7 +867,7 @@ zfs_ioc_input_tests(const char *pool)
 		if (ioc_tested[cmd])
 			continue;
 
-		if (zcmd_ioctl(zfs_fd, ioc, &zc) != 0 &&
+		if (zfs_ioctl_fd(zfs_fd, ioc, &zc) != 0 &&
 		    errno != ZFS_ERR_IOC_CMD_UNAVAIL) {
 			(void) fprintf(stderr, "cmd %d is missing a test case "
 			    "(%d)\n", cmd, errno);

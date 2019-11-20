@@ -100,7 +100,6 @@ SRCS+=	acl_common.c \
 	opensolaris_cmn_err.c \
 	opensolaris_dtrace.c \
 	opensolaris_kmem.c \
-	opensolaris_kobj.c \
 	opensolaris_kstat.c \
 	opensolaris_lookup.c \
 	opensolaris_misc.c \
@@ -265,6 +264,7 @@ SRCS+=	aggsum.c \
 	zfeature.c \
 	zfs_byteswap.c \
 	zfs_debug.c \
+	zfs_file_os.c \
 	zfs_fm.c \
 	zfs_fuid.c \
 	zfs_fuid_os.c \

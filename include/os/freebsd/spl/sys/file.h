@@ -49,27 +49,6 @@ getf_caps(int fd, cap_rights_t *rightsp)
 }
 
 
-static __inline file_t *
-getf(int fd)
-{
-	struct file *fp;
-
-	if (fget(curthread, fd, &cap_no_rights, &fp) == 0)
-		return (fp);
-	return (NULL);
-}
-
-static __inline void
-releasef(int fd)
-{
-	struct file *fp;
-
-	/* No CAP_ rights required, as we're only releasing. */
-	if (fget(curthread, fd, &cap_no_rights, &fp) == 0) {
-		fdrop(fp, curthread);
-		fdrop(fp, curthread);
-	}
-}
 #endif	/* _KERNEL */
 
 #endif	/* !_OPENSOLARIS_SYS_FILE_H_ */

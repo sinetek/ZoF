@@ -31,6 +31,7 @@
 #include <sys/fs/zfs.h>
 #include <sys/fm/fs/zfs.h>
 #include <sys/abd.h>
+#include <sys/stat.h>
 
 /*
  * Virtual device vector for files.
@@ -63,13 +64,29 @@ vdev_file_rele(vdev_t *vd)
 	ASSERT(vd->vdev_path != NULL);
 }
 
+static mode_t
+vdev_file_open_mode(spa_mode_t spa_mode)
+{
+	mode_t mode = 0;
+
+	if ((spa_mode & SPA_MODE_READ) && (spa_mode & SPA_MODE_WRITE)) {
+		mode = O_RDWR;
+	} else if (spa_mode & SPA_MODE_READ) {
+		mode = O_RDONLY;
+	} else if (spa_mode & SPA_MODE_WRITE) {
+		mode = O_WRONLY;
+	}
+
+	return (mode | O_LARGEFILE);
+}
+
 static int
 vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
     uint64_t *ashift)
 {
 	vdev_file_t *vf;
-	vnode_t *vp;
-	vattr_t vattr;
+	zfs_file_t *fp;
+	zfs_file_attr_t zfa;
 	int error;
 
 	/*
@@ -77,14 +94,13 @@ vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	 */
 	vd->vdev_nonrot = B_TRUE;
 
-#ifdef notyet
 	/*
 	 * Allow TRIM on file based vdevs.  This may not always be supported,
 	 * since it depends on your kernel version and underlying filesystem
 	 * type but it is always safe to attempt.
 	 */
 	vd->vdev_has_trim = B_TRUE;
-#endif
+
 	/*
 	 * Disable secure TRIM on file based vdevs.  There is no way to
 	 * request this behavior from the underlying filesystem.
@@ -106,7 +122,6 @@ vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	if (vd->vdev_tsd != NULL) {
 		ASSERT(vd->vdev_reopening);
 		vf = vd->vdev_tsd;
-		vp = vf->vf_vnode;
 		goto skip_open;
 	}
 
@@ -119,52 +134,38 @@ vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	 * to local zone users, so the underlying devices should be as well.
 	 */
 	ASSERT(vd->vdev_path != NULL && vd->vdev_path[0] == '/');
-	error = vn_openat(vd->vdev_path + 1, UIO_SYSSPACE,
-	    spa_mode(vd->vdev_spa) | FOFFMAX, 0, &vp, 0, 0, rootdir, -1);
 
+	error = zfs_file_open(vd->vdev_path,
+	    vdev_file_open_mode(spa_mode(vd->vdev_spa)), 0, &fp);
 	if (error) {
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
-		kmem_free(vd->vdev_tsd, sizeof (vdev_file_t));
-		vd->vdev_tsd = NULL;
 		return (error);
 	}
 
-	vf->vf_vnode = vp;
+	vf->vf_file = fp;
 
 #ifdef _KERNEL
 	/*
 	 * Make sure it's a regular file.
 	 */
-	if (vp->v_type != VREG) {
-#ifdef __FreeBSD__
-		(void) VOP_CLOSE(vp, spa_mode(vd->vdev_spa), 1, 0, kcred, NULL);
-#endif
-		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
-#ifdef __FreeBSD__
-		kmem_free(vd->vdev_tsd, sizeof (vdev_file_t));
-		vd->vdev_tsd = NULL;
-#endif
+	if (zfs_file_getattr(fp, &zfa)) {
 		return (SET_ERROR(ENODEV));
 	}
-#endif	/* _KERNEL */
+	if (!S_ISREG(zfa.zfa_mode)) {
+		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
+		return (SET_ERROR(ENODEV));
+	}
+#endif
 
 skip_open:
-	/*
-	 * Determine the physical size of the file.
-	 */
-	vattr.va_mask = AT_SIZE;
-	vn_lock(vp, LK_SHARED | LK_RETRY);
-	error = VOP_GETATTR(vp, &vattr, kcred);
-	VOP_UNLOCK(vp, 0);
+
+	error =  zfs_file_getattr(vf->vf_file, &zfa);
 	if (error) {
-		(void) VOP_CLOSE(vp, spa_mode(vd->vdev_spa), 1, 0, kcred, NULL);
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
-		kmem_free(vd->vdev_tsd, sizeof (vdev_file_t));
-		vd->vdev_tsd = NULL;
 		return (error);
 	}
 
-	*max_psize = *psize = vattr.va_size;
+	*max_psize = *psize = zfa.zfa_size;
 	*ashift = SPA_MINBLOCKSHIFT;
 
 	return (0);
@@ -178,9 +179,8 @@ vdev_file_close(vdev_t *vd)
 	if (vd->vdev_reopening || vf == NULL)
 		return;
 
-	if (vf->vf_vnode != NULL) {
-		(void) VOP_CLOSE(vf->vf_vnode, spa_mode(vd->vdev_spa), 1, 0,
-		    kcred, NULL);
+	if (vf->vf_file != NULL) {
+		zfs_file_close(vf->vf_file);
 	}
 
 	vd->vdev_delayed_close = B_FALSE;
@@ -206,30 +206,28 @@ vdev_file_io_strategy(void *arg)
 	zio_t *zio = arg;
 	vdev_t *vd = zio->io_vd;
 	vdev_file_t *vf;
-	vnode_t *vp;
-	void *addr;
+	void *buf;
 	ssize_t resid;
+	loff_t off;
+	ssize_t size;
+	int err;
+
+	off = zio->io_offset;
+	size = zio->io_size;
+	resid = 0;
 
 	vf = vd->vdev_tsd;
-	vp = vf->vf_vnode;
 
 	ASSERT(zio->io_type == ZIO_TYPE_READ || zio->io_type == ZIO_TYPE_WRITE);
 	if (zio->io_type == ZIO_TYPE_READ) {
-		addr = abd_borrow_buf(zio->io_abd, zio->io_size);
+		buf = abd_borrow_buf(zio->io_abd, zio->io_size);
+		err = zfs_file_pread(vf->vf_file, buf, size, off, &resid);
+		abd_return_buf_copy(zio->io_abd, buf, size);
 	} else {
-		addr = abd_borrow_buf_copy(zio->io_abd, zio->io_size);
+		buf = abd_borrow_buf_copy(zio->io_abd, zio->io_size);
+		err = zfs_file_pwrite(vf->vf_file, buf, size, off, &resid);
+		abd_return_buf(zio->io_abd, buf, size);
 	}
-
-	zio->io_error = vn_rdwr(zio->io_type == ZIO_TYPE_READ ?
-	    UIO_READ : UIO_WRITE, vp, addr, zio->io_size,
-	    zio->io_offset, UIO_SYSSPACE, 0, RLIM64_INFINITY, kcred, &resid);
-
-	if (zio->io_type == ZIO_TYPE_READ) {
-		abd_return_buf_copy(zio->io_abd, addr, zio->io_size);
-	} else {
-		abd_return_buf(zio->io_abd, addr, zio->io_size);
-	}
-
 	if (resid != 0 && zio->io_error == 0)
 		zio->io_error = ENOSPC;
 
@@ -252,8 +250,7 @@ vdev_file_io_start(zio_t *zio)
 
 		switch (zio->io_cmd) {
 		case DKIOCFLUSHWRITECACHE:
-			zio->io_error = VOP_FSYNC(vf->vf_vnode, FSYNC | FDSYNC,
-			    kcred, NULL);
+			zio->io_error = zfs_file_fsync(vf->vf_file, O_SYNC|O_DSYNC);
 			break;
 		default:
 			zio->io_error = SET_ERROR(ENOTSUP);

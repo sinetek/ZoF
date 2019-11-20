@@ -198,34 +198,7 @@ zfs_ioctl_compat_pool_get_props(zfs_cmd_t *zc)
 }
 #endif
 
-#ifndef _KERNEL
-int
-zcmd_ioctl_compat(int fd, int request, zfs_cmd_t *zc, const int cflag)
-{
-	int ret;
-	void *zc_c;
-	unsigned long ncmd;
-	zfs_iocparm_t zp;
-
-	switch (cflag) {
-	case ZFS_CMD_COMPAT_NONE:
-		ncmd = _IOWR('Z', request, zfs_iocparm_t);
-		zp.zfs_cmd = (uint64_t)zc;
-		zp.zfs_cmd_size = sizeof (zfs_cmd_t);
-		zp.zfs_ioctl_version = ZFS_IOCVER_ZOF;
-		return (ioctl(fd, ncmd, &zp));
-	default:
-		abort();
-		return (EINVAL);
-	}
-
-	ret = ioctl(fd, ncmd, zc_c);
-	zfs_cmd_compat_get(zc, (caddr_t)zc_c, cflag);
-	free(zc_c);
-
-	return (ret);
-}
-#else /* _KERNEL */
+#ifdef _KERNEL
 int
 zfs_ioctl_compat_pre(zfs_cmd_t *zc, int *vec, const int cflag)
 {

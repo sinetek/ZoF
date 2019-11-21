@@ -1195,6 +1195,9 @@ zfsctl_snapshot_vptocnp(struct vop_vptocnp_args *ap)
 static struct vop_vector zfsctl_ops_snapshot = {
 	.vop_default =		NULL, /* ensure very restricted access */
 	.vop_inactive =		zfsctl_snapshot_inactive,
+#if __FreeBSD_version >= 1300045
+	.vop_need_inactive = vop_stdneed_inactive,
+#endif
 	.vop_reclaim =		zfsctl_snapshot_reclaim,
 	.vop_vptocnp =		zfsctl_snapshot_vptocnp,
 	.vop_lock1 =		vop_stdlock,

@@ -62,8 +62,9 @@ zfs_file_open(const char *path, int flags, int mode, zfs_file_t **fpp)
 	td = curthread;
 	rc = kern_openat(td, AT_FDCWD, path, UIO_SYSSPACE, flags, mode);
 	if (rc)
-		return (rc);
+		return SET_ERROR(rc);
 	fd = td->td_retval[0];
+	td->td_retval[0] = 0;
 	if (fget(curthread, fd, &cap_no_rights, fpp)) 
 		kern_close(td, fd);
 	return (0);
@@ -99,10 +100,12 @@ zfs_file_write_impl(zfs_file_t *fp, const void *buf, size_t count, loff_t *offp,
 		bwillwrite();
 
 	rc = fo_write(fp, &auio, td->td_ucred, FOF_OFFSET, td);
+	if (rc)
+		return SET_ERROR(rc);
 	if (resid)
 		*resid = auio.uio_resid;
 	else if (auio.uio_resid)
-		return (EIO);
+		return SET_ERROR(EIO);
 	*offp += count - auio.uio_resid;
 	return (rc);
 }
@@ -117,7 +120,7 @@ zfs_file_write(zfs_file_t *fp, const void *buf, size_t count, ssize_t *resid)
 	if (rc == 0)
 		fp->f_offset = off;
 
-	return (rc);
+	return SET_ERROR(rc);
 }
 
 int
@@ -149,9 +152,11 @@ zfs_file_read_impl(zfs_file_t *fp, void *buf, size_t count, loff_t *offp,
 	auio.uio_offset = *offp;
 
 	rc = fo_read(fp, &auio, td->td_ucred, FOF_OFFSET, td);
+	if (rc)
+		return SET_ERROR(rc);
 	*resid = auio.uio_resid;
 	*offp += count - auio.uio_resid;
-	return (rc);
+	return SET_ERROR(0);
 }
 
 int
@@ -181,11 +186,11 @@ zfs_file_seek(zfs_file_t *fp, loff_t *offp, int whence)
 
 	td = curthread;
 	if ((fp->f_ops->fo_flags & DFLAG_SEEKABLE) == 0)
-		return (ESPIPE);
+		return SET_ERROR(ESPIPE);
 	rc = fo_seek(fp, *offp, whence, td);
 	if (rc == 0)
 		*offp = td->td_uretoff.tdu_off;
-	return (rc);
+	return SET_ERROR(rc);
 }
 
 int
@@ -199,7 +204,7 @@ zfs_file_getattr(zfs_file_t *fp, zfs_file_attr_t *zfattr)
 
 	rc = fo_stat(fp, &sb, td->td_ucred, td);
 	if (rc)
-		return (rc);
+		return SET_ERROR(rc);
 	zfattr->zfa_size = sb.st_size;
 	zfattr->zfa_mode = sb.st_mode;
 
@@ -219,7 +224,7 @@ zfs_vop_fsync(vnode_t *vp)
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp);
 drop:
-	return (error);
+	return SET_ERROR(error);
 }
 
 int
@@ -240,7 +245,7 @@ zfs_file_get(int fd, zfs_file_t **fpp)
 	struct file *fp;
 
 	if (fget(curthread, fd, &cap_no_rights, &fp))
-		return (EBADF);
+		return SET_ERROR(EBADF);
 
 	*fpp = fp;
 	return (0);
@@ -279,6 +284,6 @@ zfs_file_unlink(const char *fnamep)
 	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0);
 #endif
 #endif
-	return (rc);
+	return SET_ERROR(rc);
 }
 

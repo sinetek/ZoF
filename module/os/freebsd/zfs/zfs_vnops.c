@@ -5501,6 +5501,21 @@ zfs_freebsd_inactive(ap)
 	return (0);
 }
 
+#if __FreeBSD_version >= 1300042
+static int
+zfs_freebsd_need_inactive(ap)
+	struct vop_need_inactive_args /* {
+		struct vnode *a_vp;
+		struct thread *a_td;
+	} */ *ap;
+{
+	vnode_t *vp = ap->a_vp;
+	znode_t	*zp = VTOZ(vp);
+
+	return (zp->z_atime_dirty && zp->z_unlinked == 0);
+}
+#endif
+
 static int
 zfs_freebsd_reclaim(ap)
 	struct vop_reclaim_args /* {
@@ -6146,6 +6161,9 @@ struct vop_vector zfs_shareops;
 struct vop_vector zfs_vnodeops = {
 	.vop_default =		&default_vnodeops,
 	.vop_inactive =		zfs_freebsd_inactive,
+#if __FreeBSD_version >= 1300042
+	.vop_need_inactive =	zfs_freebsd_need_inactive,
+#endif
 	.vop_reclaim =		zfs_freebsd_reclaim,
 	.vop_access =		zfs_freebsd_access,
 	.vop_allocate =		VOP_EINVAL,

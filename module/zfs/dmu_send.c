@@ -948,6 +948,7 @@ do_dump(dmu_send_cookie_t *dscp, struct send_range *range)
 			    bp, arc_getbuf_func, &abuf, ZIO_PRIORITY_ASYNC_READ,
 			    zioflags, &aflags, &zb) != 0)
 				return (SET_ERROR(EIO));
+
 			err = dump_spill(dscp, bp, zb.zb_object,
 			    (abuf == NULL ? NULL : abuf->b_data));
 			if (abuf != NULL)

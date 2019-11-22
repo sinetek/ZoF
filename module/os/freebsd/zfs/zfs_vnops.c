@@ -382,7 +382,7 @@ page_busy(vnode_t *vp, int64_t start, int64_t off, int64_t nbytes)
 
 	obj = vp->v_object;
 	zfs_vmobject_assert_wlocked(obj);
-
+#if __FreeBSD_version < 1300050
 	for (;;) {
 		if ((pp = vm_page_lookup(obj, OFF_TO_IDX(start))) != NULL &&
 		    pp->valid) {
@@ -404,7 +404,6 @@ page_busy(vnode_t *vp, int64_t start, int64_t off, int64_t nbytes)
 			ASSERT(!pp->valid);
 			pp = NULL;
 		}
-
 		if (pp != NULL) {
 			ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
 			vm_object_pip_add(obj, 1);
@@ -414,6 +413,17 @@ page_busy(vnode_t *vp, int64_t start, int64_t off, int64_t nbytes)
 		}
 		break;
 	}
+#else
+	vm_page_grab_valid(&pp, obj, OFF_TO_IDX(start), VM_ALLOC_NOCREAT |
+	    VM_ALLOC_SBUSY | VM_ALLOC_NORMAL | VM_ALLOC_IGN_SBUSY);
+	if (pp != NULL) {
+		ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
+		vm_object_pip_add(obj, 1);
+		pmap_remove_write(pp);
+		if (nbytes != 0)
+			vm_page_clear_dirty(pp, off, nbytes);
+	}
+#endif
 	return (pp);
 }
 
@@ -429,6 +439,21 @@ page_unbusy(vm_page_t pp)
 #endif
 }
 
+#if __FreeBSD_version > 1300051
+static vm_page_t
+page_hold(vnode_t *vp, int64_t start)
+{
+	vm_object_t obj;
+	vm_page_t m;
+
+	obj = vp->v_object;
+	zfs_vmobject_assert_wlocked(obj);
+
+	vm_page_grab_valid(&m, obj, OFF_TO_IDX(start), VM_ALLOC_NOCREAT |
+	    VM_ALLOC_WIRED | VM_ALLOC_IGN_SBUSY | VM_ALLOC_NOBUSY);
+	return (m);
+}
+#else
 static vm_page_t
 page_hold(vnode_t *vp, int64_t start)
 {
@@ -457,11 +482,7 @@ page_hold(vnode_t *vp, int64_t start)
 
 			ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
 			vm_page_wire_lock(pp);
-#if __FreeBSD_version >= 1300035
-			vm_page_wire(pp);
-#else
 			vm_page_hold(pp);
-#endif
 			vm_page_wire_unlock(pp);
 
 		} else
@@ -470,6 +491,7 @@ page_hold(vnode_t *vp, int64_t start)
 	}
 	return (pp);
 }
+#endif
 
 static void
 page_unhold(vm_page_t pp)

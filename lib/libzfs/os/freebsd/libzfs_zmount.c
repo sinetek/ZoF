@@ -40,6 +40,7 @@ __FBSDID("$FreeBSD$");
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mnttab.h>
+#include <sys/errno.h>
 
 static void
 build_iovec(struct iovec **iov, int *iovlen, const char *name, void *val,
@@ -102,6 +103,8 @@ zmount(const char *spec, const char *dir, int mflag, char *fstype,
 		build_iovec(&iov, &iovlen, p, NULL, (size_t)-1);
 	rv = nmount(iov, iovlen, 0);
 	free(tofree);
+	if (rv < 0)
+		return (errno);
 	return (rv);
 }
 

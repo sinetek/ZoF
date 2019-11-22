@@ -65,7 +65,6 @@
 #include <sys/spa_boot.h>
 #include <sys/jail.h>
 #include <ufs/ufs/quota.h>
-#include <sys/rmlock.h>
 #include <sys/refstr.h>
 
 #include "zfs_comutil.h"
@@ -94,8 +93,6 @@ static int zfs_version_zpl = ZPL_VERSION;
 SYSCTL_INT(_vfs_zfs_version, OID_AUTO, zpl, CTLFLAG_RD, &zfs_version_zpl, 0,
     "ZPL_VERSION");
 
-static int zfs_root_setvnode(zfsvfs_t *zfsvfs);
-
 static int zfs_quotactl(vfs_t *vfsp, int cmds, uid_t id, void *arg);
 static int zfs_mount(vfs_t *vfsp);
 static int zfs_umount(vfs_t *vfsp, int fflag);
@@ -111,9 +108,11 @@ static void zfs_freevfs(vfs_t *vfsp);
 struct vfsops zfs_vfsops = {
 	.vfs_mount =		zfs_mount,
 	.vfs_unmount =		zfs_umount,
-	.vfs_root =		zfs_root,
 #if __FreeBSD_version >= 1300049
-	.vfs_cachedroot = vfs_cache_root,
+	.vfs_root =		vfs_cache_root,
+	.vfs_cachedroot = zfs_root,
+#else
+	.vfs_root =		zfs_root,
 #endif
 	.vfs_statfs =		zfs_statfs,
 	.vfs_vget =		zfs_vget,
@@ -1286,9 +1285,6 @@ zfsvfs_create_impl(zfsvfs_t **zfvp, zfsvfs_t *zfsvfs, objset_t *os)
 	for (int i = 0; i != ZFS_OBJ_MTX_SZ; i++)
 		mutex_init(&zfsvfs->z_hold_mtx[i], NULL, MUTEX_DEFAULT, NULL);
 
-#if __FreeBSD_version < 1300049
-	rm_init(&zfsvfs->z_rootvnodelock, "zfs root vnode lock");
-#endif
 	error = zfsvfs_init(zfsvfs, os);
 	if (error != 0) {
 		dmu_objset_disown(os, B_TRUE, zfsvfs);
@@ -1510,10 +1506,6 @@ zfsvfs_free(zfsvfs_t *zfsvfs)
 	 */
 	rw_enter(&zfsvfs_lock, RW_READER);
 	rw_exit(&zfsvfs_lock);
-
-#if __FreeBSD_version < 1300049
-	rm_destroy(&zfsvfs->z_rootvnodelock);
-#endif
 
 	zfs_fuid_destroy(zfsvfs);
 
@@ -2088,8 +2080,6 @@ zfs_mount(vfs_t *vfsp)
 	error = zfs_domount(vfsp, osname);
 	PICKUP_GIANT();
 
-	if (error == 0)
-		zfs_root_setvnode((zfsvfs_t *)vfsp->vfs_data);
 out:
 	return (error);
 }
@@ -2152,81 +2142,13 @@ zfs_statfs(vfs_t *vfsp, struct statfs *statp)
 	return (0);
 }
 
-#if __FreeBSD_version >= 1300049
-
-static int
-zfs_root_setvnode(zfsvfs_t *zfsvfs)
-{
-	return (0);
-}
-
-static void
-zfs_root_putvnode(zfsvfs_t *zfsvfs)
-{
-}
-
-#else
-static int
-zfs_root_setvnode(zfsvfs_t *zfsvfs)
-{
-	znode_t *rootzp;
-	int error;
-
-	ZFS_ENTER(zfsvfs);
-	error = zfs_zget(zfsvfs, zfsvfs->z_root, &rootzp);
-	if (error != 0)
-		panic("could not zfs_zget for root vnode");
-	ZFS_EXIT(zfsvfs);
-
-	rm_wlock(&zfsvfs->z_rootvnodelock);
-	if (zfsvfs->z_rootvnode != NULL)
-		panic("zfs mount point already has a root vnode: %p\n",
-		    zfsvfs->z_rootvnode);
-	zfsvfs->z_rootvnode = ZTOV(rootzp);
-	rm_wunlock(&zfsvfs->z_rootvnodelock);
-	return (0);
-}
-
-static void
-zfs_root_putvnode(zfsvfs_t *zfsvfs)
-{
-	struct vnode *vp;
-
-	rm_wlock(&zfsvfs->z_rootvnodelock);
-	vp = zfsvfs->z_rootvnode;
-	zfsvfs->z_rootvnode = NULL;
-	rm_wunlock(&zfsvfs->z_rootvnodelock);
-	if (vp != NULL)
-		vrele(vp);
-}
-#endif
-
 static int
 zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp)
 {
 	zfsvfs_t *zfsvfs = vfsp->vfs_data;
 	znode_t *rootzp;
 	int error;
-#if __FreeBSD_version < 1300049
-	struct rm_priotracker tracker;
 
-	rm_rlock(&zfsvfs->z_rootvnodelock, &tracker);
-	*vpp = zfsvfs->z_rootvnode;
-	if (*vpp != NULL && (((*vpp)->v_iflag & VI_DOOMED) == 0)) {
-		vrefact(*vpp);
-		rm_runlock(&zfsvfs->z_rootvnodelock, &tracker);
-		goto lock;
-	}
-	rm_runlock(&zfsvfs->z_rootvnodelock, &tracker);
-
-	/*
-	 * We found the vnode but did not like it.
-	 */
-	if (*vpp != NULL) {
-		*vpp = NULL;
-		zfs_root_putvnode(zfsvfs);
-	}
-#endif
 	ZFS_ENTER(zfsvfs);
 
 	error = zfs_zget(zfsvfs, zfsvfs->z_root, &rootzp);
@@ -2236,9 +2158,6 @@ zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp)
 	ZFS_EXIT(zfsvfs);
 
 	if (error == 0) {
-#if __FreeBSD_version < 1300049
-	lock:
-#endif
 		error = vn_lock(*vpp, flags);
 		if (error != 0) {
 			VN_RELE(*vpp);
@@ -2355,8 +2274,6 @@ zfs_umount(vfs_t *vfsp, int fflag)
 	objset_t *os;
 	cred_t *cr = td->td_ucred;
 	int ret;
-
-	zfs_root_putvnode(zfsvfs);
 
 	ret = secpolicy_fs_unmount(cr, vfsp);
 	if (ret) {

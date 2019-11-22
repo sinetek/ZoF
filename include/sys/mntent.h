@@ -73,8 +73,14 @@
 #define	MNTOPT_STRICTATIME "strictatime" /* strict access time updates */
 #define	MNTOPT_NOSTRICTATIME "nostrictatime" /* No strict access time updates */
 #define	MNTOPT_LAZYTIME "lazytime"	/* Defer access time writing */
+#ifdef __linux__
 #define	MNTOPT_SETUID	"suid"		/* Both setuid and devices allowed */
 #define	MNTOPT_NOSETUID	"nosuid"	/* Neither setuid nor devices allowed */
+#else
+#define	MNTOPT_NOSUID	"nosuid"	/* Neither setuid nor devices allowed */
+#define	MNTOPT_SETUID	"setuid"	/* Set uid allowed */
+#define	MNTOPT_NOSETUID	"nosetuid"	/* Set uid not allowed */
+#endif
 #define	MNTOPT_OWNER	"owner"		/* allow owner mount */
 #define	MNTOPT_NOOWNER	"noowner"	/* do not allow owner mount */
 #define	MNTOPT_REMOUNT	"remount"	/* change mount options */

@@ -272,7 +272,7 @@ dmu_read_pages(objset_t *os, uint64_t object, vm_page_t *ma, int count,
 		    VM_ALLOC_NORMAL | VM_ALLOC_NOWAIT | VM_ALLOC_BUSY_FLAGS);
 		if (m == NULL)
 			break;
-		if (vm_page_none_valid(m)) {
+		if (!vm_page_none_valid(m)) {
 			ASSERT3U(m->valid, ==, VM_PAGE_BITS_ALL);
 			vm_page_sunbusy(m);
 			break;

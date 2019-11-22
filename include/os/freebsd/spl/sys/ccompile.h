@@ -169,6 +169,12 @@ typedef	void zfs_kernel_param_t;
 #define	RW_NOLOCKDEP 0
 
 
+#if  __FreeBSD_version < 1300051
+#define vm_page_valid(m) (m)->valid = VM_PAGE_BITS_ALL
+#define vm_page_sunbusy(m)
+#define vm_page_none_valid(m) ((m)->valid == 0)
+#endif
+
 struct hlist_node {
         struct hlist_node *next, **pprev;
 };

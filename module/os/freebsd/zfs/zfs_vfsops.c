@@ -682,7 +682,7 @@ zfs_register_callbacks(vfs_t *vfsp)
 		readonly = B_FALSE;
 		do_readonly = B_TRUE;
 	}
-	if (vfs_optionisset(vfsp, MNTOPT_NOSETUID, NULL)) {
+	if (vfs_optionisset(vfsp, MNTOPT_NOSUID, NULL)) {
 		setuid = B_FALSE;
 		do_setuid = B_TRUE;
 	} else {
@@ -1213,7 +1213,6 @@ zfsvfs_init(zfsvfs_t *zfsvfs, objset_t *os)
 	return (0);
 }
 
-#if defined(__FreeBSD__)
 taskq_t *zfsvfs_taskq;
 
 static void
@@ -1222,7 +1221,6 @@ zfsvfs_task_unlinked_drain(void *context, int pending __unused)
 
 	zfs_unlinked_drain((zfsvfs_t *)context);
 }
-#endif
 
 int
 zfsvfs_create(const char *osname, boolean_t readonly, zfsvfs_t **zfvp)
@@ -1511,6 +1509,7 @@ zfsvfs_free(zfsvfs_t *zfsvfs)
 
 	mutex_destroy(&zfsvfs->z_znodes_lock);
 	mutex_destroy(&zfsvfs->z_lock);
+	ASSERT(zfsvfs->z_nr_znodes == 0);
 	list_destroy(&zfsvfs->z_all_znodes);
 	rrm_destroy(&zfsvfs->z_teardown_lock);
 	rw_destroy(&zfsvfs->z_teardown_inactive_lock);
@@ -1626,7 +1625,8 @@ zfs_domount(vfs_t *vfsp, char *osname)
 		dmu_objset_set_user(zfsvfs->z_os, zfsvfs);
 		mutex_exit(&zfsvfs->z_os->os_user_ptr_lock);
 	} else {
-		error = zfsvfs_setup(zfsvfs, B_TRUE);
+		if ((error = zfsvfs_setup(zfsvfs, B_TRUE)))
+			goto out;
 	}
 
 	vfs_mountedfrom(vfsp, osname);
@@ -2178,6 +2178,33 @@ zfsvfs_teardown(zfsvfs_t *zfsvfs, boolean_t unmounting)
 {
 	znode_t	*zp;
 
+	/*
+	 * If someone has not already unmounted this file system,
+	 * drain the iput_taskq to ensure all active references to the
+	 * zfsvfs_t have been handled only then can it be safely destroyed.
+	 */
+	if (zfsvfs->z_os) {
+		/*
+		 * If we're unmounting we have to wait for the list to
+		 * drain completely.
+		 *
+		 * If we're not unmounting there's no guarantee the list
+		 * will drain completely, but iputs run from the taskq
+		 * may add the parents of dir-based xattrs to the taskq
+		 * so we want to wait for these.
+		 *
+		 * We can safely read z_nr_znodes without locking because the
+		 * VFS has already blocked operations which add to the
+		 * z_all_znodes list and thus increment z_nr_znodes.
+		 */
+		int round = 0;
+		while (zfsvfs->z_nr_znodes > 0) {
+			taskq_wait_outstanding(dsl_pool_iput_taskq(
+			    dmu_objset_pool(zfsvfs->z_os)), 0);
+			if (++round > 1 && !unmounting)
+				break;
+		}
+	}
 	rrm_enter(&zfsvfs->z_teardown_lock, RW_WRITER, FTAG);
 
 	if (!unmounting) {

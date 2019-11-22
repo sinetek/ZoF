@@ -436,6 +436,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz,
 
 	mutex_enter(&zfsvfs->z_znodes_lock);
 	list_insert_tail(&zfsvfs->z_all_znodes, zp);
+	zfsvfs->z_nr_znodes++;
 	membar_producer();
 	/*
 	 * Everything else must be valid before assigning z_zfsvfs makes the
@@ -1171,6 +1172,7 @@ zfs_znode_free(znode_t *zp)
 	mutex_enter(&zfsvfs->z_znodes_lock);
 	POINTER_INVALIDATE(&zp->z_zfsvfs);
 	list_remove(&zfsvfs->z_all_znodes, zp);
+	zfsvfs->z_nr_znodes--;
 	mutex_exit(&zfsvfs->z_znodes_lock);
 
 	if (zp->z_acl_cached) {

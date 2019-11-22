@@ -1274,10 +1274,8 @@ zfsvfs_create_impl(zfsvfs_t **zfvp, zfsvfs_t *zfsvfs, objset_t *os)
 	mutex_init(&zfsvfs->z_lock, NULL, MUTEX_DEFAULT, NULL);
 	list_create(&zfsvfs->z_all_znodes, sizeof (znode_t),
 	    offsetof(znode_t, z_link_node));
-#if defined(__FreeBSD__)
 	TASK_INIT(&zfsvfs->z_unlinked_drain_task, 0,
 	    zfsvfs_task_unlinked_drain, zfsvfs);
-#endif
 #ifdef DIAGNOSTIC
 	rrm_init(&zfsvfs->z_teardown_lock, B_TRUE);
 #else

@@ -506,10 +506,10 @@ update_pages(vnode_t *vp, int64_t start, int len, objset_t *os, uint64_t oid,
 	ASSERT(obj != NULL);
 
 	off = start & PAGEOFFSET;
+	zfs_vmobject_wlock(obj);
 #if __FreeBSD_version >= 1300041
 	vm_object_pip_add(obj, 1);
 #endif
-	zfs_vmobject_wlock(obj);
 	for (start &= PAGEMASK; len > 0; start += PAGESIZE) {
 		vm_page_t pp;
 		int nbytes = imin(PAGESIZE - off, len);
@@ -570,7 +570,7 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 
 		pp = vm_page_grab(obj, OFF_TO_IDX(start), VM_ALLOC_SBUSY |
 		    VM_ALLOC_NORMAL | VM_ALLOC_IGN_SBUSY);
-		if (pp->valid == 0) {
+		if (vm_page_none_valid(pp)) {
 			zfs_vmobject_wunlock(obj);
 			va = zfs_map_page(pp, &sf);
 			error = dmu_read(os, zp->z_id, start, bytes, va,
@@ -580,17 +580,19 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 			zfs_unmap_page(sf);
 			zfs_vmobject_wlock(obj);
 			vm_page_sunbusy(pp);
-#if __FreeBSD_version >= 1300047
-			if (error) {
-				if (!vm_page_busied(pp) && !vm_page_wired(pp) &&
-				    pp->valid == 0)
-					vm_page_free(pp);
-			} else {
-				pp->valid = VM_PAGE_BITS_ALL;
+#if __FreeBSD_version >= 1300047 &&  __FreeBSD_version < 1300051
+#error "unsupported version window"
+#elif  __FreeBSD_version >= 1300051
+			if (error == 0) {
+				vm_page_valid(pp);
 				vm_page_lock(pp);
 				vm_page_activate(pp);
 				vm_page_unlock(pp);
 			}
+			vm_page_sunbusy(pp);
+			if (error != 0 && !vm_page_wired(pp) == 0 &&
+				pp->valid == 0 && vm_page_tryxbusy(pp))
+				vm_page_free(pp);
 #else
 			vm_page_lock(pp);
 			if (error) {

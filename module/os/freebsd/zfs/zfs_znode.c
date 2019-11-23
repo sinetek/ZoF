@@ -198,7 +198,7 @@ zfs_znode_fini(void)
 }
 
 
-int
+static int
 zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 {
 	zfs_acl_ids_t acl_ids;

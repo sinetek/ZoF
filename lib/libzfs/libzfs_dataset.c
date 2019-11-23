@@ -2039,6 +2039,7 @@ zfs_prop_set_list(zfs_handle_t *zhp, nvlist_t *props)
 			 * value is reflected.
 			 */
 			(void) get_stats(zhp);
+
 #ifndef __FreeBSD__
 			/*
 			 * Remount the filesystem to propagate the change
@@ -4513,14 +4514,14 @@ zfs_rollback(zfs_handle_t *zhp, zfs_handle_t *snap, boolean_t force)
  * Renames the given dataset.
  */
 int
-zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
+zfs_rename(zfs_handle_t *zhp, const char *target, boolean_t recursive,
+    boolean_t force_unmount)
 {
 	int ret = 0;
 	zfs_cmd_t zc = {"\0"};
 	char *delim;
 	prop_changelist_t *cl = NULL;
 	char parent[ZFS_MAX_DATASET_NAME_LEN];
-	char property[ZFS_MAXPROPLEN];
 	libzfs_handle_t *hdl = zhp->zfs_hdl;
 	char errbuf[1024];
 
@@ -4572,7 +4573,7 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 		if (!zfs_validate_name(hdl, target, zhp->zfs_type, B_TRUE))
 			return (zfs_error(hdl, EZFS_INVALIDNAME, errbuf));
 	} else {
-		if (flags.recursive) {
+		if (recursive) {
 			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
 			    "recursive rename must be a snapshot"));
 			return (zfs_error(hdl, EZFS_BADTYPE, errbuf));
@@ -4613,19 +4614,8 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 		return (zfs_error(hdl, EZFS_ZONED, errbuf));
 	}
 
-	/*
-	 * Avoid unmounting file systems with mountpoint property set to
-	 * 'legacy' or 'none' even if -u option is not given.
-	 */
-	if (zhp->zfs_type == ZFS_TYPE_FILESYSTEM &&
-	    !flags.recursive && !flags.nounmount &&
-	    zfs_prop_get(zhp, ZFS_PROP_MOUNTPOINT, property,
-	    sizeof (property), NULL, NULL, 0, B_FALSE) == 0 &&
-	    (strcmp(property, "legacy") == 0 ||
-	    strcmp(property, "none") == 0)) {
-		flags.nounmount = B_TRUE;
-	}
-	if (flags.recursive) {
+	if (recursive) {
+		zfs_handle_t *zhrp;
 		char *parentname = zfs_strdup(zhp->zfs_hdl, zhp->zfs_name);
 		if (parentname == NULL) {
 			ret = -1;
@@ -4633,8 +4623,7 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 		}
 		delim = strchr(parentname, '@');
 		*delim = '\0';
-		zfs_handle_t *zhrp = zfs_open(zhp->zfs_hdl, parentname,
-		    ZFS_TYPE_DATASET);
+		zhrp = zfs_open(zhp->zfs_hdl, parentname, ZFS_TYPE_DATASET);
 		free(parentname);
 		if (zhrp == NULL) {
 			ret = -1;
@@ -4643,9 +4632,8 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 		zfs_close(zhrp);
 	} else if (zhp->zfs_type != ZFS_TYPE_SNAPSHOT) {
 		if ((cl = changelist_gather(zhp, ZFS_PROP_NAME,
-		    flags.nounmount ? CL_GATHER_DONT_UNMOUNT :
 		    CL_GATHER_ITER_MOUNTED,
-		    flags.forceunmount ? MS_FORCE : 0)) == NULL)
+		    force_unmount ? MS_FORCE : 0)) == NULL)
 			return (-1);
 
 		if (changelist_haszonedchild(cl)) {
@@ -4669,8 +4657,7 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 	(void) strlcpy(zc.zc_name, zhp->zfs_name, sizeof (zc.zc_name));
 	(void) strlcpy(zc.zc_value, target, sizeof (zc.zc_value));
 
-	zc.zc_cookie = !!flags.recursive;
-	zc.zc_cookie |= (!!flags.nounmount) << 1;
+	zc.zc_cookie = recursive;
 
 	if ((ret = zfs_ioctl(zhp->zfs_hdl, ZFS_IOC_RENAME, &zc)) != 0) {
 		/*
@@ -4680,7 +4667,7 @@ zfs_rename(zfs_handle_t *zhp, const char *target, renameflags_t flags)
 		(void) snprintf(errbuf, sizeof (errbuf), dgettext(TEXT_DOMAIN,
 		    "cannot rename '%s'"), zc.zc_name);
 
-		if (flags.recursive && errno == EEXIST) {
+		if (recursive && errno == EEXIST) {
 			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
 			    "a child dataset already has a snapshot "
 			    "with the new name"));
@@ -4922,7 +4909,7 @@ zfs_smb_acl_mgmt(libzfs_handle_t *hdl, char *dataset, char *path,
 	default:
 		return (-1);
 	}
-	error = zfs_ioctl(hdl, ZFS_IOC_SMB_ACL, &zc);
+	error = ioctl(hdl->libzfs_fd, ZFS_IOC_SMB_ACL, &zc);
 	nvlist_free(nvlist);
 	return (error);
 }

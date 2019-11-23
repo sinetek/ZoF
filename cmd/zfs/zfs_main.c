@@ -3586,26 +3586,23 @@ static int
 zfs_do_rename(int argc, char **argv)
 {
 	zfs_handle_t *zhp;
-	renameflags_t flags = { 0 };
 	int c;
 	int ret = 0;
-	int types;
+	boolean_t recurse = B_FALSE;
 	boolean_t parents = B_FALSE;
+	boolean_t force_unmount = B_FALSE;
 
 	/* check options */
-	while ((c = getopt(argc, argv, "pruf")) != -1) {
+	while ((c = getopt(argc, argv, "prf")) != -1) {
 		switch (c) {
 		case 'p':
 			parents = B_TRUE;
 			break;
 		case 'r':
-			flags.recursive = B_TRUE;
-			break;
-		case 'u':
-			flags.nounmount = B_TRUE;
+			recurse = B_TRUE;
 			break;
 		case 'f':
-			flags.forceunmount = B_TRUE;
+			force_unmount = B_TRUE;
 			break;
 		case '?':
 		default:
@@ -3634,32 +3631,20 @@ zfs_do_rename(int argc, char **argv)
 		usage(B_FALSE);
 	}
 
-	if (flags.recursive && parents) {
+	if (recurse && parents) {
 		(void) fprintf(stderr, gettext("-p and -r options are mutually "
 		    "exclusive\n"));
 		usage(B_FALSE);
 	}
 
-	if (flags.nounmount && parents) {
-		(void) fprintf(stderr, gettext("-u and -p options are mutually "
-		    "exclusive\n"));
-		usage(B_FALSE);
-	}
-
-	if (flags.recursive && strchr(argv[0], '@') == 0) {
+	if (recurse && strchr(argv[0], '@') == 0) {
 		(void) fprintf(stderr, gettext("source dataset for recursive "
 		    "rename must be a snapshot\n"));
 		usage(B_FALSE);
 	}
 
-	if (flags.nounmount)
-		types = ZFS_TYPE_FILESYSTEM;
-	else if (parents)
-		types = ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME;
-	else
-		types = ZFS_TYPE_DATASET;
-
-	if ((zhp = zfs_open(g_zfs, argv[0], types)) == NULL)
+	if ((zhp = zfs_open(g_zfs, argv[0], parents ? ZFS_TYPE_FILESYSTEM |
+	    ZFS_TYPE_VOLUME : ZFS_TYPE_DATASET)) == NULL)
 		return (1);
 
 	/* If we were asked and the name looks good, try to create ancestors. */
@@ -3669,7 +3654,7 @@ zfs_do_rename(int argc, char **argv)
 		return (1);
 	}
 
-	ret = (zfs_rename(zhp, argv[1], flags) != 0);
+	ret = (zfs_rename(zhp, argv[1], recurse, force_unmount) != 0);
 
 	zfs_close(zhp);
 	return (ret);
@@ -7004,6 +6989,10 @@ unshare_unmount_path(int op, char *path, int flags, boolean_t is_manual)
 	struct extmnttab entry;
 	const char *cmdname = (op == OP_SHARE) ? "unshare" : "unmount";
 	ino_t path_inode;
+
+	/*
+	 * Search for the given (major,minor) pair in the mount table.
+	 */
 
 	/* Reopen MNTTAB to prevent reading stale data from open file */
 	if (freopen(MNTTAB, "r", mnttab_file) == NULL)

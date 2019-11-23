@@ -153,16 +153,11 @@ int zprop_expand_list(libzfs_handle_t *hdl, zprop_list_t **plp,
  * on each change node regardless of whether or not it is currently
  * mounted.
  */
-#define	CL_GATHER_MOUNT_ALWAYS	0x01
+#define	CL_GATHER_MOUNT_ALWAYS	1
 /*
  * changelist_gather() flag to force it to iterate on mounted datasets only
  */
-#define	CL_GATHER_ITER_MOUNTED	0x02
-
-/*
- * Use this changelist_gather() flag to prevent unmounting of file systems.
- */
-#define	CL_GATHER_DONT_UNMOUNT	0x04
+#define	CL_GATHER_ITER_MOUNTED	2
 
 typedef struct prop_changelist prop_changelist_t;
 
@@ -255,7 +250,7 @@ extern int zpool_relabel_disk(libzfs_handle_t *hdl, const char *path,
     const char *msg);
 extern int find_shares_object(differ_info_t *di);
 extern void libzfs_set_pipe_max(int infd);
-extern int execvpe(const char *name, char * const argv[], char * const envp[]);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -402,6 +402,59 @@ typedef struct zfs_cmd_inlanes {
 } zfs_cmd_inlanes_t;
 
 #ifdef _KERNEL
+/*
+ * Note: this struct must have the same layout in 32-bit and 64-bit, so
+ * that 32-bit processes (like /sbin/zfs) can pass it to the 64-bit
+ * kernel.  Therefore, we add padding to it so that no "hidden" padding
+ * is automatically added on 64-bit (but not on 32-bit).
+ */
+typedef struct zfs_cmd_legacy {
+	char		zc_name[MAXPATHLEN];	/* name of pool or dataset */
+	uint64_t	zc_nvlist_src;		/* really (char *) */
+	uint64_t	zc_nvlist_src_size;
+	uint64_t	zc_nvlist_dst;		/* really (char *) */
+	uint64_t	zc_nvlist_dst_size;
+	boolean_t	zc_nvlist_dst_filled;	/* put an nvlist in dst? */
+	int		zc_pad2;
+
+	/*
+	 * The following members are for legacy ioctls which haven't been
+	 * converted to the new method.
+	 */
+	uint64_t	zc_history;		/* really (char *) */
+	char		zc_value[MAXPATHLEN * 2];
+	char		zc_string[MAXNAMELEN];
+	uint64_t	zc_guid;
+	uint64_t	zc_nvlist_conf;		/* really (char *) */
+	uint64_t	zc_nvlist_conf_size;
+	uint64_t	zc_cookie;
+	uint64_t	zc_objset_type;
+	uint64_t	zc_perm_action;
+	uint64_t	zc_history_len;
+	uint64_t	zc_history_offset;
+	uint64_t	zc_obj;
+	uint64_t	zc_iflags;		/* internal to zfs(7fs) */
+	zfs_share_t	zc_share;
+	uint64_t	zc_jailid;
+
+	dmu_objset_stats_t zc_objset_stats;
+	uint64_t	zc_freebsd_drr_pad;
+	struct drr_begin zc_begin_record;
+	zinject_record_t zc_inject_record;
+	uint32_t	zc_defer_destroy;
+	uint32_t	zc_flags;
+	uint64_t	zc_action_handle;
+	int		zc_cleanup_fd;
+	uint8_t		zc_simple;
+	uint8_t		zc_pad3[3];
+	boolean_t	zc_resumable;
+	uint32_t	zc_pad4;
+	uint64_t	zc_sendobj;
+	uint64_t	zc_fromobj;
+	uint64_t	zc_createtxg;
+	zfs_stat_t	zc_stat;
+} zfs_cmd_legacy_t;
+
 unsigned static long zfs_ioctl_bsd12_to_zof[] = {
 	ZFS_IOC_POOL_CREATE,			/* 0x00 */
 	ZFS_IOC_POOL_DESTROY,			/* 0x01 */

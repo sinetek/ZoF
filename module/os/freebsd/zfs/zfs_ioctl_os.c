@@ -85,7 +85,7 @@ zfs_ioc_jail(zfs_cmd_t *zc)
 {
 
 	return (zone_dataset_attach(curthread->td_ucred, zc->zc_name,
-	    (int)zc->zc_jailid));
+	    (int)zc->zc_zoneid));
 }
 
 static int
@@ -93,7 +93,7 @@ zfs_ioc_unjail(zfs_cmd_t *zc)
 {
 
 	return (zone_dataset_detach(curthread->td_ucred, zc->zc_name,
-	    (int)zc->zc_jailid));
+	    (int)zc->zc_zoneid));
 }
 
 static int

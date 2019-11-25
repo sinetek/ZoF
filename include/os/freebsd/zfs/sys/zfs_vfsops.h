@@ -166,7 +166,7 @@ extern int zfs_check_global_label(const char *dsname, const char *hexsl);
 extern boolean_t zfs_is_readonly(zfsvfs_t *zfsvfs);
 extern int zfs_get_temporary_prop(struct dsl_dataset *ds, zfs_prop_t zfs_prop, uint64_t *val,
     char *setpoint);
-	
+extern int zfs_busy(void);
 #ifdef _KERNEL
 extern void zfsvfs_update_fromname(const char *oldname, const char *newname);
 #endif

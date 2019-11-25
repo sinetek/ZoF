@@ -302,7 +302,7 @@ zfs_jail(zfs_handle_t *zhp, int jailid, int attach)
 
 	(void) strlcpy(zc.zc_name, zhp->zfs_name, sizeof (zc.zc_name));
 	zc.zc_objset_type = DMU_OST_ZFS;
-	zc.zc_jailid = jailid;
+	zc.zc_zoneid = jailid;
 
 	cmd = attach ? ZFS_IOC_JAIL : ZFS_IOC_UNJAIL;
 	if ((ret = ioctl(hdl->libzfs_fd, cmd, &zc)) != 0)

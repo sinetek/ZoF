@@ -1,6 +1,3 @@
-
-#undef MODULE_VERSION
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,32 +116,90 @@ dataset_name_hidden(const char *name)
 	return (B_FALSE);
 }
 
+static void
+zfs_cmd_bsd12_to_zof(zfs_cmd_legacy_t *src, zfs_cmd_t *dst)
+{
+	memcpy(dst, src, offsetof(zfs_cmd_t, zc_objset_stats));
+	*&dst->zc_objset_stats = *&src->zc_objset_stats;
+	memcpy(&dst->zc_begin_record, &src->zc_begin_record,
+	    offsetof(zfs_cmd_t, zc_sendobj) -
+	    offsetof(zfs_cmd_t, zc_begin_record));
+	memcpy(&dst->zc_sendobj, &src->zc_sendobj,
+	    sizeof(zfs_cmd_t) - 8 - offsetof(zfs_cmd_t, zc_sendobj));
+	dst->zc_zoneid = src->zc_jailid;
+}
+
+static void
+zfs_cmd_zof_to_bsd12(zfs_cmd_t *src, zfs_cmd_legacy_t *dst)
+{
+	memcpy(dst, src, offsetof(zfs_cmd_t, zc_objset_stats));
+	*&dst->zc_objset_stats = *&src->zc_objset_stats;
+	memcpy(&dst->zc_begin_record, &src->zc_begin_record,
+	    offsetof(zfs_cmd_t, zc_sendobj) -
+	    offsetof(zfs_cmd_t, zc_begin_record));
+	memcpy(&dst->zc_sendobj, &src->zc_sendobj,
+	    sizeof(zfs_cmd_t) - 8 - offsetof(zfs_cmd_t, zc_sendobj));
+	dst->zc_jailid = src->zc_zoneid;
+}
+
 static int
 zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
     struct thread *td)
 {
 	uint_t len, vecnum;
 	zfs_iocparm_t *zp;
-	int rc;
+	zfs_cmd_t *zc;
+	zfs_cmd_legacy_t *zcl;
+	int error;
+	void *uaddr;
 
 	len = IOCPARM_LEN(zcmd);
 	vecnum = zcmd & 0xff;
 	zp = (void *)arg;
-	/*
-	 * Remap ioctl code for legacy user binaries
-	 */
-	if (zp->zfs_ioctl_version == ZFS_IOCVER_FREEBSD) {
-		if (vecnum >= sizeof (zfs_ioctl_bsd12_to_zof)/sizeof (long))
-			return (ENOTSUP);
-		vecnum = zfs_ioctl_bsd12_to_zof[vecnum];
-	}
+	uaddr = (void *)zp->zfs_cmd;
+	error = 0;
+	zcl = NULL;
+
 	if (len != sizeof (zfs_iocparm_t)) {
 		printf("len %d vecnum: %d sizeof (zfs_cmd_t) %lu\n",
 			   len, vecnum, sizeof (zfs_cmd_t));
 		return (EINVAL);
 	}
-	rc = zfsdev_ioctl_common(vecnum, (unsigned long) zp->zfs_cmd);
-	return (-rc);
+
+	zc = kmem_zalloc(sizeof (zfs_cmd_t), KM_SLEEP);
+	/*
+	 * Remap ioctl code for legacy user binaries
+	 */
+	if (zp->zfs_ioctl_version == ZFS_IOCVER_FREEBSD) {
+		if (vecnum >= sizeof (zfs_ioctl_bsd12_to_zof)/sizeof (long)) {
+			kmem_free(zc, sizeof (zfs_cmd_t));
+			return (ENOTSUP);
+		}
+		zcl = kmem_zalloc(sizeof (zfs_cmd_legacy_t), KM_SLEEP);
+		vecnum = zfs_ioctl_bsd12_to_zof[vecnum];
+		if (copyin(uaddr, zcl, sizeof(zfs_cmd_legacy_t))) {
+			error = SET_ERROR(EFAULT);
+			goto out;
+		}
+		zfs_cmd_bsd12_to_zof(zcl, zc);
+	} else if (copyin(uaddr, zc, sizeof(zfs_cmd_t))) {
+		error = SET_ERROR(EFAULT);
+		goto out;
+	}
+	error = zfsdev_ioctl_common(vecnum, zc);
+	if (error)
+		goto out;
+	if (zcl) {
+		zfs_cmd_zof_to_bsd12(zc, zcl);
+		error = copyout(zcl, uaddr, sizeof(*zcl));
+	} else {
+		error = copyout(zc, uaddr, sizeof(*zc));
+	}
+out:
+	if (zcl)
+		kmem_free(zcl, sizeof (zfs_cmd_legacy_t));
+	kmem_free(zc, sizeof (zfs_cmd_t));
+	return (error);
 }
 
 static void

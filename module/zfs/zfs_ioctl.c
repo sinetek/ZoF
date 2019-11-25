@@ -7282,6 +7282,7 @@ zfsdev_ioctl_common(uint_t vecnum, zfs_cmd_t *zc)
 	fstrans_cookie_t cookie;
 
 	cmd = vecnum;
+	error = 0;
 	if (vecnum >= sizeof (zfs_ioc_vec) / sizeof (zfs_ioc_vec[0]))
 		return (SET_ERROR(ZFS_ERR_IOC_CMD_UNAVAIL));
 

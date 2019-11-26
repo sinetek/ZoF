@@ -31,6 +31,7 @@
 #include <sys/linker.h>
 #include <sys/module.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 
 #define	ZFS_MODULE "openzfs"
 

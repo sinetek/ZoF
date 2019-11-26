@@ -150,7 +150,7 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 	zfs_iocparm_t *zp;
 	zfs_cmd_t *zc;
 	zfs_cmd_legacy_t *zcl;
-	int error;
+	int rc, error;
 	void *uaddr;
 
 	len = IOCPARM_LEN(zcmd);
@@ -187,15 +187,15 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 		goto out;
 	}
 	error = zfsdev_ioctl_common(vecnum, zc);
-	if (error)
-		goto out;
 	if (zcl) {
 		zfs_cmd_zof_to_bsd12(zc, zcl);
-		error = copyout(zcl, uaddr, sizeof(*zcl));
+		rc = copyout(zcl, uaddr, sizeof(*zcl));
 	} else {
-		error = copyout(zc, uaddr, sizeof(*zc));
+		rc = copyout(zc, uaddr, sizeof(*zc));
 	}
-out:
+	if (error == 0 && rc != 0)
+		error = SET_ERROR(EFAULT);
+ out:
 	if (zcl)
 		kmem_free(zcl, sizeof (zfs_cmd_legacy_t));
 	kmem_free(zc, sizeof (zfs_cmd_t));

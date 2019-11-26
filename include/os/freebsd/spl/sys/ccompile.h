@@ -171,8 +171,10 @@ typedef	void zfs_kernel_param_t;
 
 #if  __FreeBSD_version < 1300051
 #define vm_page_valid(m) (m)->valid = VM_PAGE_BITS_ALL
-#define vm_page_sunbusy(m)
+#define vm_page_do_sunbusy(m)
 #define vm_page_none_valid(m) ((m)->valid == 0)
+#else
+#define vm_page_do_sunbusy(m) vm_page_sunbusy(m)
 #endif
 
 struct hlist_node {

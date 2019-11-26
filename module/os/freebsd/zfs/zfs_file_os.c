@@ -60,7 +60,8 @@ zfs_file_open(const char *path, int flags, int mode, zfs_file_t **fpp)
 	int rc, fd;
 
 	td = curthread;
-	rc = kern_openat(td, AT_FDCWD, path, UIO_SYSSPACE, flags, mode);
+	/* 12.x doesn't take a const char * */
+	rc = kern_openat(td, AT_FDCWD, __DECONST(char *, path), UIO_SYSSPACE, flags, mode);
 	if (rc)
 		return SET_ERROR(rc);
 	fd = td->td_retval[0];
@@ -281,7 +282,7 @@ zfs_file_unlink(const char *fnamep)
 #ifdef AT_BENEATH
 	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0, 0);
 #else
-	rc = kern_unlinkat(curthread, AT_FDCWD, fnamep, seg, 0);
+	rc = kern_unlinkat(curthread, AT_FDCWD, __DECONST(char *, fnamep), seg, 0);
 #endif
 #endif
 	return SET_ERROR(rc);

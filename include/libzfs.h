@@ -812,11 +812,6 @@ extern int zfs_unshareall(zfs_handle_t *);
 extern int zfs_deleg_share_nfs(libzfs_handle_t *, char *, char *, char *,
     void *, void *, int, zfs_share_op_t);
 
-/*
- * FreeBSD-specific jail support function.
- */
-extern int zfs_jail(zfs_handle_t *, int, int);
-
 extern int zfs_nicestrtonum(libzfs_handle_t *, const char *, uint64_t *);
 
 /*

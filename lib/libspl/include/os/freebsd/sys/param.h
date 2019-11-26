@@ -43,14 +43,6 @@
  * Note that the blocked devices are assumed to have DEV_BSIZE
  * "sectors" and that fragments must be some multiple of this size.
  */
-#ifndef __FreeBSD__
-#define	MAXBSIZE	8192
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-
-#define	MAXOFFSET_T	LLONG_MAX
-#endif
-
 #define	MAXNAMELEN	256
 
 #define	UID_NOBODY	60001		/* user ID no body */
@@ -68,5 +60,10 @@ extern size_t spl_pagesize(void);
 #define	PAGESIZE	(spl_pagesize())
 
 extern int execvpe(const char *name, char * const argv[], char * const envp[]);
+
+/*
+ * Attach/detach the given filesystem to/from the given jail.
+ */
+extern int zfs_jail(zfs_handle_t *zhp, int jailid, int attach);
 
 #endif

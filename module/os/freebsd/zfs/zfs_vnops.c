@@ -431,7 +431,7 @@ static void
 page_unbusy(vm_page_t pp)
 {
 
-	vm_page_sunbusy(pp);
+	vm_page_do_sunbusy(pp);
 #if __FreeBSD_version >= 1300041
 	vm_object_pip_wakeup(pp->object);
 #else
@@ -601,7 +601,7 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 				bzero(va + bytes, PAGESIZE - bytes);
 			zfs_unmap_page(sf);
 			zfs_vmobject_wlock(obj);
-			vm_page_sunbusy(pp);
+			vm_page_do_sunbusy(pp);
 #if __FreeBSD_version >= 1300047 &&  __FreeBSD_version < 1300051
 #error "unsupported version window"
 #elif  __FreeBSD_version >= 1300051
@@ -611,7 +611,7 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 				vm_page_activate(pp);
 				vm_page_unlock(pp);
 			}
-			vm_page_sunbusy(pp);
+			vm_page_do_sunbusy(pp);
 			if (error != 0 && !vm_page_wired(pp) == 0 &&
 				pp->valid == 0 && vm_page_tryxbusy(pp))
 				vm_page_free(pp);
@@ -629,7 +629,7 @@ mappedread_sf(vnode_t *vp, int nbytes, uio_t *uio)
 #endif
 		} else {
 			ASSERT3U(pp->valid, ==, VM_PAGE_BITS_ALL);
-			vm_page_sunbusy(pp);
+			vm_page_do_sunbusy(pp);
 		}
 		if (error)
 			break;

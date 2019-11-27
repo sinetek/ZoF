@@ -188,7 +188,7 @@ zfsdev_ioctl(struct file *filp, unsigned cmd, unsigned long arg)
 	error = ddi_copyout(zc, (void *)(uintptr_t)arg, sizeof (zfs_cmd_t), 0);
 	if (error)
 		error = -SET_ERROR(EFAULT);
- out:
+out:
 	kmem_free(zc, sizeof (zfs_cmd_t));
 	return (error);
 

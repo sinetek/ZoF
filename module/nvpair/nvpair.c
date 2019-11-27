@@ -558,12 +558,10 @@ nvlist_nv_alloc(int kmflag)
 	switch (kmflag) {
 	case KM_SLEEP:
 		return (nv_alloc_sleep);
-#ifndef __FreeBSD__
-	case KM_PUSHPAGE:
-		return (nv_alloc_pushpage);
-#endif
-	default:
+	case KM_NOSLEEP:
 		return (nv_alloc_nosleep);
+	default:
+		return (nv_alloc_pushpage);
 	}
 #else
 	return (nv_alloc_nosleep);

@@ -900,6 +900,7 @@ zfs_prop_align_right(zfs_prop_t prop)
 #endif
 
 #if defined(_KERNEL)
+
 #include <sys/simd.h>
 
 #if defined(HAVE_KERNEL_FPU_INTERNAL)
@@ -907,10 +908,7 @@ union fpregs_state **zfs_kfpu_fpregs;
 EXPORT_SYMBOL(zfs_kfpu_fpregs);
 #endif /* HAVE_KERNEL_FPU_INTERNAL */
 
-int zcommon_init(void);
-void zcommon_fini(void);
-
-int __init
+static int __init
 zcommon_init(void)
 {
 	int error = kfpu_init();
@@ -922,14 +920,16 @@ zcommon_init(void)
 	return (0);
 }
 
-void __exit
+static void __exit
 zcommon_fini(void)
 {
 	fletcher_4_fini();
 	kfpu_fini();
 }
+
 module_init(zcommon_init);
 module_exit(zcommon_fini);
+
 #endif
 
 ZFS_MODULE_DESCRIPTION("Generic ZFS support");

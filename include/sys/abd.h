@@ -35,8 +35,6 @@
 extern "C" {
 #endif
 
-struct bio;
-
 typedef enum abd_flags {
 	ABD_FLAG_LINEAR	= 1 << 0,	/* is buffer linear (or scattered)? */
 	ABD_FLAG_OWNER	= 1 << 1,	/* does it own its data buffers? */

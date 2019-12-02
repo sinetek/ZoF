@@ -593,7 +593,6 @@ zfs_prop_init(void)
 	zprop_register_hidden(ZFS_PROP_REDACTED, "redacted", PROP_TYPE_NUMBER,
 	    PROP_READONLY, ZFS_TYPE_DATASET, "REDACTED");
 
-#ifdef __linux__
 	/*
 	 * Properties that are obsolete and not used.  These are retained so
 	 * that we don't have to change the values of the zfs_prop_t enum, or
@@ -605,7 +604,6 @@ zfs_prop_init(void)
 	zprop_register_hidden(ZFS_PROP_REMAPTXG, "remaptxg", PROP_TYPE_NUMBER,
 	    PROP_READONLY, ZFS_TYPE_DATASET, "REMAPTXG");
 
-#endif
 	/* oddball properties */
 	zprop_register_impl(ZFS_PROP_CREATION, "creation", PROP_TYPE_NUMBER, 0,
 	    NULL, PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK,

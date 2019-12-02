@@ -74,8 +74,6 @@ zfs_mod_supported_prop(const char *name, zfs_type_t type)
  * always supports all the properties. libzfs needs to query the running
  * module, via sysfs, to determine which properties are supported.
  */
-
-/* XXX */
 #if defined(_KERNEL) || defined(LIB_ZPOOL_BUILD) || defined(__FreeBSD__)
 	return (B_TRUE);
 #else
@@ -184,7 +182,7 @@ int
 zprop_iter_common(zprop_func func, void *cb, boolean_t show_all,
     boolean_t ordered, zfs_type_t type)
 {
-	int i, j, num_props, used_props, size, prop;
+	int i, num_props, size, prop;
 	zprop_desc_t *prop_tbl;
 	zprop_desc_t **order;
 
@@ -199,19 +197,16 @@ zprop_iter_common(zprop_func func, void *cb, boolean_t show_all,
 		return (ZPROP_CONT);
 #endif
 
-	for (i = j = 0; j < num_props; j++) {
-		if (prop_tbl[j].pd_name == NULL)
-			continue;
-		order[i++] = &prop_tbl[j];
-	}
-	used_props = i;
+	for (int j = 0; j < num_props; j++)
+		order[j] = &prop_tbl[j];
+
 	if (ordered) {
-		qsort((void *)order, used_props, sizeof (zprop_desc_t *),
+		qsort((void *)order, num_props, sizeof (zprop_desc_t *),
 		    zprop_compare);
 	}
 
 	prop = ZPROP_CONT;
-	for (i = 0; i < used_props; i++) {
+	for (i = 0; i < num_props; i++) {
 		if ((order[i]->pd_visible || show_all) &&
 		    order[i]->pd_zfs_mod_supported &&
 		    (func(order[i]->pd_propnum, cb) != ZPROP_CONT)) {

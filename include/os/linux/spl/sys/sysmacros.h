@@ -192,6 +192,12 @@ extern void spl_cleanup(void);
 #define	SET_ERROR(err) \
 	(__set_error(__FILE__, __func__, __LINE__, err), err)
 
+#if defined(_KERNEL)
+ #include <linux/sort.h>
+ #define        qsort(base, num, size, cmp) \
+     sort(base, num, size, cmp, NULL)
+#endif
+
 #if defined(_KERNEL) && !defined(_KMEMUSER) && !defined(offsetof)
 
 /* avoid any possibility of clashing with <stddef.h> version */

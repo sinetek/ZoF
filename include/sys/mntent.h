@@ -77,6 +77,7 @@
 #define	MNTOPT_SETUID	"suid"		/* Both setuid and devices allowed */
 #define	MNTOPT_NOSETUID	"nosuid"	/* Neither setuid nor devices allowed */
 #elif defined(__FreeBSD__)
+#define	MNTOPT_NOSUID	"nosuid"	/* Neither setuid nor devices allowed */
 #define	MNTOPT_SETUID	"setuid"	/* Set uid allowed */
 #define	MNTOPT_NOSETUID	"nosetuid"	/* Set uid not allowed */
 #else

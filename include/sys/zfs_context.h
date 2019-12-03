@@ -119,11 +119,7 @@
 #define	noinline	__attribute__((noinline))
 #define	likely(x)	__builtin_expect((x), 1)
 #define	unlikely(x)	__builtin_expect((x), 0)
-#ifdef ZFS_DEBUG
-#define	__debug
-#else
-#define	__debug	__attribute__((__unused__))
-#endif /* ZFS_DEBUG */
+
 /*
  * Debugging
  */

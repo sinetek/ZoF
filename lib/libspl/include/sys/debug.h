@@ -33,4 +33,10 @@
 #define	__printflike(x, y) __attribute__((__format__(__printf__, x, y)))
 #endif
 
+#ifdef ZFS_DEBUG
+#define		__debug
+#else
+#define		__debug __attribute__((__unused__))
+#endif /* ZFS_DEBUG */
+
 #endif

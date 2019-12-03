@@ -52,6 +52,12 @@
  */
 #define	__printflike(a, b)	__printf(a, b)
 
+#ifdef ZFS_DEBUG
+#define		__debug
+#else
+#define		__debug __attribute__((__unused__))
+#endif /* ZFS_DEBUG */
+
 int spl_panic(const char *file, const char *func, int line,
     const char *fmt, ...);
 void spl_dumpstack(void);

@@ -81,7 +81,9 @@ zfs_prop_init(void)
 		{ "noparity",   ZIO_CHECKSUM_NOPARITY },
 		{ "sha512",	ZIO_CHECKSUM_SHA512 },
 		{ "skein",	ZIO_CHECKSUM_SKEIN },
+#if !defined(_KERNEL) || !defined(__FreeBSD__)
 		{ "edonr",	ZIO_CHECKSUM_EDONR },
+#endif
 		{ NULL }
 	};
 
@@ -98,8 +100,10 @@ zfs_prop_init(void)
 		{ "skein",	ZIO_CHECKSUM_SKEIN },
 		{ "skein,verify",
 				ZIO_CHECKSUM_SKEIN | ZIO_CHECKSUM_VERIFY },
+#if !defined(_KERNEL) || !defined(__FreeBSD__)
 		{ "edonr,verify",
 				ZIO_CHECKSUM_EDONR | ZIO_CHECKSUM_VERIFY },
+#endif
 		{ NULL }
 	};
 

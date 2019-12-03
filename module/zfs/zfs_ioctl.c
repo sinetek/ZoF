@@ -227,12 +227,6 @@
 #endif
 volatile int geom_inhibited;
 
-#ifdef __GNUC__
-#define	_CC_UNUSED_ __attribute__((unused))
-#else
-#define	_CC_UNUSED_ __unused
-#endif
-
 /*
  * Limit maximum nvlist size.  We don't want users passing in insane values
  * for zc->zc_nvlist_src_size, since we will need to allocate that much memory.
@@ -4155,7 +4149,7 @@ static int
 zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 {
 	zfsvfs_t *zfsvfs;
-	zvol_state_handle_t *zv _CC_UNUSED_;
+	zvol_state_handle_t *zv __debug;
 	char *target = NULL;
 	int error;
 
@@ -4894,7 +4888,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 
 	if (error == 0) {
 		zfsvfs_t *zfsvfs = NULL;
-		zvol_state_handle_t *zv _CC_UNUSED_ = NULL;
+		zvol_state_handle_t *zv __debug = NULL;
 
 		if (getzfsvfs(tofs, &zfsvfs) == 0) {
 			/* online recv */

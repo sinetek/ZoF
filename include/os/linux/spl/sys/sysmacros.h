@@ -193,8 +193,8 @@ extern void spl_cleanup(void);
 	(__set_error(__FILE__, __func__, __LINE__, err), err)
 
 #include <linux/sort.h>
-#define        qsort(base, num, size, cmp)		\
-     sort(base, num, size, cmp, NULL)
+#define	qsort(base, num, size, cmp)		\
+	sort(base, num, size, cmp, NULL)
 
 #if !defined(_KMEMUSER) && !defined(offsetof)
 

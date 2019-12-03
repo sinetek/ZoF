@@ -213,8 +213,10 @@ zio_checksum_to_feature(enum zio_checksum cksum)
 		return (SPA_FEATURE_SHA512);
 	case ZIO_CHECKSUM_SKEIN:
 		return (SPA_FEATURE_SKEIN);
+#if !defined(_KERNEL) || !defined(__FreeBSD__)
 	case ZIO_CHECKSUM_EDONR:
 		return (SPA_FEATURE_EDONR);
+#endif
 	default:
 		return (SPA_FEATURE_NONE);
 	}

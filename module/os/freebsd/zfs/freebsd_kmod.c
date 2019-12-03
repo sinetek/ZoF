@@ -80,8 +80,6 @@ static struct cdev *zfsdev;
 extern void zfs_init(void);
 extern void zfs_fini(void);
 extern void zfs_ioctl_init(void);
-extern int zcommon_init(void);
-extern void zcommon_fini(void);
 
 
 static struct root_hold_token *zfs_root_token;
@@ -330,7 +328,6 @@ zfs__init(void)
 
 	printf("ZFS storage pool version: features support (" SPA_VERSION_STRING ")\n");
 	root_mount_rel(zfs_root_token);
-	zcommon_init();
 	return (0);
 }
 
@@ -343,7 +340,6 @@ zfs__fini(void)
 	}
 	zfs_kmod_fini();
 	tsd_destroy(&zfs_geom_probe_vdev_key);
-	zcommon_fini();
 	return (0);
 }
 

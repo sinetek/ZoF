@@ -4527,10 +4527,7 @@ zfs_check_settable(const char *dsname, nvpair_t *pair, cred_t *cr)
 			    intval & ZIO_CHECKSUM_MASK);
 			if (feature == SPA_FEATURE_NONE)
 				break;
-#ifdef __FreeBSD__
-			if (feature == SPA_FEATURE_EDONR)
-				return (SET_ERROR(ENOTSUP));
-#endif
+
 			if ((err = spa_open(dsname, &spa, FTAG)) != 0)
 				return (err);
 
@@ -4781,7 +4778,6 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 	error = dmu_recv_begin(tofs, tosnap, begin_record, force,
 	    resumable, localprops, hidden_args, origin, &drc, input_fp,
 	    &off);
-
 	if (error != 0)
 		goto out;
 	tofs_was_redacted = dsl_get_redacted(drc.drc_ds);
@@ -7111,7 +7107,6 @@ zfs_ioctl_init(void)
 
 	zfs_ioctl_init_os();
 }
-
 
 /*
  * Verify that for non-legacy ioctls the input nvlist

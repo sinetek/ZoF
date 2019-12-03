@@ -15,7 +15,7 @@ wrap_ ## fn(void *dummy __unused) \
 {								 \
 	fn();						 \
 }																		\
- SYSINIT(zfs_ ## fn, SI_SUB_LAST, SI_ORDER_FIRST, wrap_ ## fn, NULL)
+SYSINIT(zfs_ ## fn, SI_SUB_LAST, SI_ORDER_FIRST, wrap_ ## fn, NULL)
 
 
 #define module_exit(fn) 							\

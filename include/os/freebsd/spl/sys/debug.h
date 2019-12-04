@@ -46,7 +46,6 @@
 #ifndef _SPL_DEBUG_H
 #define	_SPL_DEBUG_H
 
-#define	__maybe_unused __attribute__((__unused__))
 
 /*
  * Common DEBUG functionality.

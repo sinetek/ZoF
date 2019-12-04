@@ -4149,7 +4149,7 @@ static int
 zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 {
 	zfsvfs_t *zfsvfs;
-	zvol_state_handle_t *zv __debug;
+	zvol_state_handle_t *zv __maybe_unused;
 	char *target = NULL;
 	int error;
 
@@ -4884,7 +4884,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 
 	if (error == 0) {
 		zfsvfs_t *zfsvfs = NULL;
-		zvol_state_handle_t *zv __debug = NULL;
+		zvol_state_handle_t *zv __maybe_unused = NULL;
 
 		if (getzfsvfs(tofs, &zfsvfs) == 0) {
 			/* online recv */

@@ -387,6 +387,11 @@ static moduledata_t zfs_mod = {
 	zfs_modevent,
 	0
 };
+
+#ifdef _KERNEL
+EVENTHANDLER_DEFINE(mountroot, spa_boot_init, NULL, 0);
+#endif
+
 DECLARE_MODULE(zfsctrl, zfs_mod, SI_SUB_CLOCKS, SI_ORDER_ANY);
 MODULE_VERSION(zfsctrl, 1);
 MODULE_DEPEND(zfsctrl, krpc, 1, 1, 1);

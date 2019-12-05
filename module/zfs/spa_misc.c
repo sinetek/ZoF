@@ -2278,7 +2278,7 @@ spa_name_compare(const void *a1, const void *a2)
 void
 spa_boot_init(void)
 {
-	spa_config_load(B_TRUE);
+	spa_config_load();
 }
 
 void
@@ -2333,7 +2333,7 @@ spa_init(spa_mode_t mode)
 	zfs_prop_init();
 	zpool_prop_init();
 	zpool_feature_init();
-	spa_config_load(B_FALSE);
+	spa_config_load();
 	l2arc_start();
 	scan_init();
 	qat_init();
@@ -2706,7 +2706,7 @@ spa_suspend_async_destroy(spa_t *spa)
 	return (B_FALSE);
 }
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
 
 int
 param_set_deadman_failmode_common(const char *val)

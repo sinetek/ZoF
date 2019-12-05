@@ -45,6 +45,7 @@
 #include <sys/zfs_fuid.h>
 #include <sys/zfs_acl.h>
 #include <sys/zfs_dir.h>
+#include <sys/zfs_quotas.h>
 #include <sys/zfs_vfsops.h>
 #include <sys/dmu.h>
 #include <sys/dnode.h>
@@ -1753,8 +1754,6 @@ zfs_acl_ids_free(zfs_acl_ids_t *acl_ids)
 	acl_ids->z_fuidp = NULL;
 }
 
-
-#ifdef notyet
 boolean_t
 zfs_acl_ids_overquota(zfsvfs_t *zv, zfs_acl_ids_t *acl_ids, uint64_t projid)
 {
@@ -1762,14 +1761,6 @@ zfs_acl_ids_overquota(zfsvfs_t *zv, zfs_acl_ids_t *acl_ids, uint64_t projid)
 	    zfs_id_overquota(zv, DMU_GROUPUSED_OBJECT, acl_ids->z_fgid) ||
 	    (projid != ZFS_DEFAULT_PROJID && projid != ZFS_INVALID_PROJID &&
 	    zfs_id_overquota(zv, DMU_PROJECTUSED_OBJECT, projid)));
-}
-#endif
-
-boolean_t
-zfs_acl_ids_overquota(zfsvfs_t *zfsvfs, zfs_acl_ids_t *acl_ids, uint64_t projid)
-{
-	return (zfs_fuid_overquota(zfsvfs, B_FALSE, acl_ids->z_fuid) ||
-	    zfs_fuid_overquota(zfsvfs, B_TRUE, acl_ids->z_fgid));
 }
 
 /*

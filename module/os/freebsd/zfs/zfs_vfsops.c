@@ -66,6 +66,7 @@
 #include <sys/jail.h>
 #include <ufs/ufs/quota.h>
 #include <sys/refstr.h>
+#include <sys/zfs_quotas.h>
 
 #include "zfs_comutil.h"
 
@@ -318,7 +319,7 @@ zfs_quotactl(vfs_t *vfsp, int cmds, uid_t id, void *arg)
 	 * ZFS_OWNER or ZFS_GROUP, cr, &fuidp)?
 	 * I think I can use just the id?
 	 *
-	 * Look at zfs_fuid_overquota() to look up a quota.
+	 * Look at zfs_id_overquota() to look up a quota.
 	 * zap_lookup(something, quotaobj, fuidstring, sizeof (long long), 1, &quota)
 	 *
 	 * See zfs_set_userquota() to set a quota.
@@ -803,294 +804,6 @@ unregister:
 	return (error);
 }
 
-static int
-zfs_space_delta_cb(dmu_object_type_t bonustype, void *data,
-	uint64_t *userp, uint64_t *groupp, uint64_t *projectp)
-{
-	/*
-	 * Is it a valid type of object to track?
-	 */
-	if (bonustype != DMU_OT_ZNODE && bonustype != DMU_OT_SA)
-		return (SET_ERROR(ENOENT));
-
-	/*
-	 * If we have a NULL data pointer
-	 * then assume the id's aren't changing and
-	 * return EEXIST to the dmu to let it know to
-	 * use the same ids
-	 */
-	if (data == NULL)
-		return (SET_ERROR(EEXIST));
-
-	if (bonustype == DMU_OT_ZNODE) {
-		znode_phys_t *znp = data;
-		*userp = znp->zp_uid;
-		*groupp = znp->zp_gid;
-	} else {
-		int hdrsize;
-		sa_hdr_phys_t *sap = data;
-		sa_hdr_phys_t sa = *sap;
-		boolean_t swap = B_FALSE;
-
-		ASSERT(bonustype == DMU_OT_SA);
-
-		if (sa.sa_magic == 0) {
-			/*
-			 * This should only happen for newly created
-			 * files that haven't had the znode data filled
-			 * in yet.
-			 */
-			*userp = 0;
-			*groupp = 0;
-			return (0);
-		}
-		if (sa.sa_magic == BSWAP_32(SA_MAGIC)) {
-			sa.sa_magic = SA_MAGIC;
-			sa.sa_layout_info = BSWAP_16(sa.sa_layout_info);
-			swap = B_TRUE;
-		} else {
-			VERIFY3U(sa.sa_magic, ==, SA_MAGIC);
-		}
-
-		hdrsize = sa_hdrsize(&sa);
-		VERIFY3U(hdrsize, >=, sizeof (sa_hdr_phys_t));
-		*userp = *((uint64_t *)((uintptr_t)data + hdrsize +
-		    SA_UID_OFFSET));
-		*groupp = *((uint64_t *)((uintptr_t)data + hdrsize +
-		    SA_GID_OFFSET));
-		if (swap) {
-			*userp = BSWAP_64(*userp);
-			*groupp = BSWAP_64(*groupp);
-		}
-	}
-	return (0);
-}
-
-static void
-fuidstr_to_sid(zfsvfs_t *zfsvfs, const char *fuidstr,
-    char *domainbuf, int buflen, uid_t *ridp)
-{
-	uint64_t fuid;
-	const char *domain;
-
-	fuid = zfs_strtonum(fuidstr, NULL);
-
-	domain = zfs_fuid_find_by_idx(zfsvfs, FUID_INDEX(fuid));
-	if (domain)
-		(void) strlcpy(domainbuf, domain, buflen);
-	else
-		domainbuf[0] = '\0';
-	*ridp = FUID_RID(fuid);
-}
-
-static uint64_t
-zfs_userquota_prop_to_obj(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type)
-{
-	switch (type) {
-	case ZFS_PROP_USERUSED:
-		return (DMU_USERUSED_OBJECT);
-	case ZFS_PROP_GROUPUSED:
-		return (DMU_GROUPUSED_OBJECT);
-	case ZFS_PROP_USERQUOTA:
-		return (zfsvfs->z_userquota_obj);
-	case ZFS_PROP_GROUPQUOTA:
-		return (zfsvfs->z_groupquota_obj);
-	default:
-		return (0);
-	}
-	return (0);
-}
-
-int
-zfs_userspace_many(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
-    uint64_t *cookiep, void *vbuf, uint64_t *bufsizep)
-{
-	int error;
-	zap_cursor_t zc;
-	zap_attribute_t za;
-	zfs_useracct_t *buf = vbuf;
-	uint64_t obj;
-
-	if (!dmu_objset_userspace_present(zfsvfs->z_os))
-		return (SET_ERROR(ENOTSUP));
-
-	obj = zfs_userquota_prop_to_obj(zfsvfs, type);
-	if (obj == 0) {
-		*bufsizep = 0;
-		return (0);
-	}
-
-	for (zap_cursor_init_serialized(&zc, zfsvfs->z_os, obj, *cookiep);
-	    (error = zap_cursor_retrieve(&zc, &za)) == 0;
-	    zap_cursor_advance(&zc)) {
-		if ((uintptr_t)buf - (uintptr_t)vbuf + sizeof (zfs_useracct_t) >
-		    *bufsizep)
-			break;
-
-		fuidstr_to_sid(zfsvfs, za.za_name,
-		    buf->zu_domain, sizeof (buf->zu_domain), &buf->zu_rid);
-
-		buf->zu_space = za.za_first_integer;
-		buf++;
-	}
-	if (error == ENOENT)
-		error = 0;
-
-	ASSERT3U((uintptr_t)buf - (uintptr_t)vbuf, <=, *bufsizep);
-	*bufsizep = (uintptr_t)buf - (uintptr_t)vbuf;
-	*cookiep = zap_cursor_serialize(&zc);
-	zap_cursor_fini(&zc);
-	return (error);
-}
-
-/*
- * buf must be big enough (eg, 32 bytes)
- */
-static int
-id_to_fuidstr(zfsvfs_t *zfsvfs, const char *domain, uid_t rid,
-    char *buf, boolean_t addok)
-{
-	uint64_t fuid;
-	int domainid = 0;
-
-	if (domain && domain[0]) {
-		domainid = zfs_fuid_find_by_domain(zfsvfs, domain, NULL, addok);
-		if (domainid == -1)
-			return (SET_ERROR(ENOENT));
-	}
-	fuid = FUID_ENCODE(domainid, rid);
-	(void) sprintf(buf, "%llx", (longlong_t)fuid);
-	return (0);
-}
-
-int
-zfs_userspace_one(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
-    const char *domain, uint64_t rid, uint64_t *valp)
-{
-	char buf[32];
-	int err;
-	uint64_t obj;
-
-	*valp = 0;
-
-	if (!dmu_objset_userspace_present(zfsvfs->z_os))
-		return (SET_ERROR(ENOTSUP));
-
-	obj = zfs_userquota_prop_to_obj(zfsvfs, type);
-	if (obj == 0)
-		return (0);
-
-	err = id_to_fuidstr(zfsvfs, domain, rid, buf, B_FALSE);
-	if (err)
-		return (err);
-
-	err = zap_lookup(zfsvfs->z_os, obj, buf, 8, 1, valp);
-	if (err == ENOENT)
-		err = 0;
-	return (err);
-}
-
-int
-zfs_set_userquota(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
-    const char *domain, uint64_t rid, uint64_t quota)
-{
-	char buf[32];
-	int err;
-	dmu_tx_t *tx;
-	uint64_t *objp;
-	boolean_t fuid_dirtied;
-
-	if (type != ZFS_PROP_USERQUOTA && type != ZFS_PROP_GROUPQUOTA)
-		return (SET_ERROR(EINVAL));
-
-	if (zfsvfs->z_version < ZPL_VERSION_USERSPACE)
-		return (SET_ERROR(ENOTSUP));
-
-	objp = (type == ZFS_PROP_USERQUOTA) ? &zfsvfs->z_userquota_obj :
-	    &zfsvfs->z_groupquota_obj;
-
-	err = id_to_fuidstr(zfsvfs, domain, rid, buf, B_TRUE);
-	if (err)
-		return (err);
-	fuid_dirtied = zfsvfs->z_fuid_dirty;
-
-	tx = dmu_tx_create(zfsvfs->z_os);
-	dmu_tx_hold_zap(tx, *objp ? *objp : DMU_NEW_OBJECT, B_TRUE, NULL);
-	if (*objp == 0) {
-		dmu_tx_hold_zap(tx, MASTER_NODE_OBJ, B_TRUE,
-		    zfs_userquota_prop_prefixes[type]);
-	}
-	if (fuid_dirtied)
-		zfs_fuid_txhold(zfsvfs, tx);
-	err = dmu_tx_assign(tx, TXG_WAIT);
-	if (err) {
-		dmu_tx_abort(tx);
-		return (err);
-	}
-
-	mutex_enter(&zfsvfs->z_lock);
-	if (*objp == 0) {
-		*objp = zap_create(zfsvfs->z_os, DMU_OT_USERGROUP_QUOTA,
-		    DMU_OT_NONE, 0, tx);
-		VERIFY(0 == zap_add(zfsvfs->z_os, MASTER_NODE_OBJ,
-		    zfs_userquota_prop_prefixes[type], 8, 1, objp, tx));
-	}
-	mutex_exit(&zfsvfs->z_lock);
-
-	if (quota == 0) {
-		err = zap_remove(zfsvfs->z_os, *objp, buf, tx);
-		if (err == ENOENT)
-			err = 0;
-	} else {
-		err = zap_update(zfsvfs->z_os, *objp, buf, 8, 1, &quota, tx);
-	}
-	ASSERT(err == 0);
-	if (fuid_dirtied)
-		zfs_fuid_sync(zfsvfs, tx);
-	dmu_tx_commit(tx);
-	return (err);
-}
-
-boolean_t
-zfs_fuid_overquota(zfsvfs_t *zfsvfs, boolean_t isgroup, uint64_t fuid)
-{
-	char buf[32];
-	uint64_t used, quota, usedobj, quotaobj;
-	int err;
-
-	usedobj = isgroup ? DMU_GROUPUSED_OBJECT : DMU_USERUSED_OBJECT;
-	quotaobj = isgroup ? zfsvfs->z_groupquota_obj : zfsvfs->z_userquota_obj;
-
-	if (quotaobj == 0 || zfsvfs->z_replay)
-		return (B_FALSE);
-
-	(void) sprintf(buf, "%llx", (longlong_t)fuid);
-	err = zap_lookup(zfsvfs->z_os, quotaobj, buf, 8, 1, &quota);
-	if (err != 0)
-		return (B_FALSE);
-
-	err = zap_lookup(zfsvfs->z_os, usedobj, buf, 8, 1, &used);
-	if (err != 0)
-		return (B_FALSE);
-	return (used >= quota);
-}
-
-boolean_t
-zfs_owner_overquota(zfsvfs_t *zfsvfs, znode_t *zp, boolean_t isgroup)
-{
-	uint64_t fuid;
-	uint64_t quotaobj;
-
-	quotaobj = isgroup ? zfsvfs->z_groupquota_obj : zfsvfs->z_userquota_obj;
-
-	fuid = isgroup ? zp->z_gid : zp->z_uid;
-
-	if (quotaobj == 0 || zfsvfs->z_replay)
-		return (B_FALSE);
-
-	return (zfs_fuid_overquota(zfsvfs, isgroup, fuid));
-}
-
 /*
  * Associate this zfsvfs with the given objset, which must be owned.
  * This will cache a bunch of on-disk state from the objset in the
@@ -1184,6 +897,38 @@ zfsvfs_init(zfsvfs_t *zfsvfs, objset_t *os)
 	    8, 1, &zfsvfs->z_groupquota_obj);
 	if (error == ENOENT)
 		zfsvfs->z_groupquota_obj = 0;
+	else if (error != 0)
+		return (error);
+
+	error = zap_lookup(os, MASTER_NODE_OBJ,
+	    zfs_userquota_prop_prefixes[ZFS_PROP_PROJECTQUOTA],
+	    8, 1, &zfsvfs->z_projectquota_obj);
+	if (error == ENOENT)
+		zfsvfs->z_projectquota_obj = 0;
+	else if (error != 0)
+		return (error);
+
+	error = zap_lookup(os, MASTER_NODE_OBJ,
+	    zfs_userquota_prop_prefixes[ZFS_PROP_USEROBJQUOTA],
+	    8, 1, &zfsvfs->z_userobjquota_obj);
+	if (error == ENOENT)
+		zfsvfs->z_userobjquota_obj = 0;
+	else if (error != 0)
+		return (error);
+
+	error = zap_lookup(os, MASTER_NODE_OBJ,
+	    zfs_userquota_prop_prefixes[ZFS_PROP_GROUPOBJQUOTA],
+	    8, 1, &zfsvfs->z_groupobjquota_obj);
+	if (error == ENOENT)
+		zfsvfs->z_groupobjquota_obj = 0;
+	else if (error != 0)
+		return (error);
+
+	error = zap_lookup(os, MASTER_NODE_OBJ,
+	    zfs_userquota_prop_prefixes[ZFS_PROP_PROJECTOBJQUOTA],
+	    8, 1, &zfsvfs->z_projectobjquota_obj);
+	if (error == ENOENT)
+		zfsvfs->z_projectobjquota_obj = 0;
 	else if (error != 0)
 		return (error);
 

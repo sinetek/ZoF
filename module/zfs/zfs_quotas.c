@@ -485,3 +485,13 @@ zfs_id_overquota(zfsvfs_t *zfsvfs, uint64_t usedobj, uint64_t id)
 	return (zfs_id_overblockquota(zfsvfs, usedobj, id) ||
 	    zfs_id_overobjquota(zfsvfs, usedobj, id));
 }
+
+#if defined(_KERNEL)
+EXPORT_SYMBOL(zfs_space_delta_cb);
+EXPORT_SYMBOL(zfs_userspace_one);
+EXPORT_SYMBOL(zfs_userspace_many);
+EXPORT_SYMBOL(zfs_set_userquota);
+EXPORT_SYMBOL(zfs_id_overblockquota);
+EXPORT_SYMBOL(zfs_id_overobjquota);
+EXPORT_SYMBOL(zfs_id_overquota);
+#endif

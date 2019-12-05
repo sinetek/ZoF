@@ -271,6 +271,7 @@ SRCS+=	aggsum.c \
 	zfs_ioctl.c \
 	zfs_onexit.c \
 	zfs_onexit_os.c \
+	zfs_quotas.c \
 	zfs_ratelimit.c \
 	zfs_rlock.c \
 	zfs_sa.c \

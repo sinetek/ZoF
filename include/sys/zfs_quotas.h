@@ -26,12 +26,21 @@
 #include <sys/zfs_vfsops.h>
 #include <sys/zfs_znode.h>
 
-int zfs_space_delta_cb(dmu_object_type_t bonustype, void *data,
+extern int zfs_space_delta_cb(dmu_object_type_t bonustype, void *data,
     uint64_t *userp, uint64_t *groupp, uint64_t *projectp);
 
-boolean_t zfs_id_overobjquota(zfsvfs_t *zfsvfs, uint64_t usedobj, uint64_t id);
-boolean_t zfs_id_overblockquota(zfsvfs_t *zfsvfs, uint64_t usedobj,
+extern int zfs_userspace_one(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
+    const char *domain, uint64_t rid, uint64_t *valuep);
+extern int zfs_userspace_many(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
+    uint64_t *cookiep, void *vbuf, uint64_t *bufsizep);
+extern int zfs_set_userquota(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
+    const char *domain, uint64_t rid, uint64_t quota);
+
+extern boolean_t zfs_id_overobjquota(zfsvfs_t *zfsvfs, uint64_t usedobj,
     uint64_t id);
-boolean_t zfs_id_overquota(zfsvfs_t *zfsvfs, uint64_t usedobj, uint64_t id);
+extern boolean_t zfs_id_overblockquota(zfsvfs_t *zfsvfs, uint64_t usedobj,
+    uint64_t id);
+extern boolean_t zfs_id_overquota(zfsvfs_t *zfsvfs, uint64_t usedobj,
+    uint64_t id);
 
 #endif

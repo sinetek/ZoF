@@ -2127,12 +2127,6 @@ zfs_fini(void)
 #if defined(_KERNEL)
 EXPORT_SYMBOL(zfs_suspend_fs);
 EXPORT_SYMBOL(zfs_resume_fs);
-EXPORT_SYMBOL(zfs_userspace_one);
-EXPORT_SYMBOL(zfs_userspace_many);
-EXPORT_SYMBOL(zfs_set_userquota);
-EXPORT_SYMBOL(zfs_id_overblockquota);
-EXPORT_SYMBOL(zfs_id_overobjquota);
-EXPORT_SYMBOL(zfs_id_overquota);
 EXPORT_SYMBOL(zfs_set_version);
 EXPORT_SYMBOL(zfsvfs_create);
 EXPORT_SYMBOL(zfsvfs_free);

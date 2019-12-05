@@ -33,8 +33,6 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-#define	ZFS_MODULE "openzfs"
-
 int zfs_ioctl_version = ZFS_IOCVER_UNDEF;
 // static int zfs_spa_version = -1;
 
@@ -234,9 +232,10 @@ zfs_ioctl(libzfs_handle_t *hdl, int request, zfs_cmd_t *zc)
 int
 libzfs_load_module(void)
 {
-	if (modfind(ZFS_MODULE) < 0) {
+	/* XXX: modname is "zfs" but file is named "openzfs". */
+	if (modfind("zfs") < 0) {
 		/* Not present in kernel, try loading it. */
-		if (kldload(ZFS_MODULE) < 0 && errno != EEXIST) {
+		if (kldload("openzfs") < 0 && errno != EEXIST) {
 			return (errno);
 		}
 	}

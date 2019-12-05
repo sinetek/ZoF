@@ -820,11 +820,7 @@ typedef struct zpool_load_policy {
  * The location of the pool configuration repository, shared between kernel and
  * userland.
  */
-#ifdef __FreeBSD__
-#define	ZPOOL_CACHE		"/boot/zfs/zpool.cache"
-#else
 #define	ZPOOL_CACHE		"/etc/zfs/zpool.cache"
-#endif
 
 /*
  * vdev states are ordered from least to most healthy.

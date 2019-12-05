@@ -682,7 +682,7 @@ zfs_register_callbacks(vfs_t *vfsp)
 		readonly = B_FALSE;
 		do_readonly = B_TRUE;
 	}
-	if (vfs_optionisset(vfsp, MNTOPT_NOSUID, NULL)) {
+	if (vfs_optionisset(vfsp, MNTOPT_NOSETUID, NULL)) {
 		setuid = B_FALSE;
 		do_setuid = B_TRUE;
 	} else {

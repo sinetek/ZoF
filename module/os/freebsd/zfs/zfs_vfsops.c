@@ -766,8 +766,11 @@ zfs_register_callbacks(vfs_t *vfsp)
 	    zfs_prop_to_name(ZFS_PROP_EXEC), exec_changed_cb, zfsvfs);
 	error = error ? error : dsl_prop_register(ds,
 	    zfs_prop_to_name(ZFS_PROP_SNAPDIR), snapdir_changed_cb, zfsvfs);
+	/* post-merge feature */
+#ifdef notyet
 	error = error ? error : dsl_prop_register(ds,
 	    zfs_prop_to_name(ZFS_PROP_ACLMODE), acl_mode_changed_cb, zfsvfs);
+#endif
 	error = error ? error : dsl_prop_register(ds,
 	    zfs_prop_to_name(ZFS_PROP_ACLINHERIT), acl_inherit_changed_cb,
 	    zfsvfs);

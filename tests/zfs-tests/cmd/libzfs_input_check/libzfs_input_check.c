@@ -27,10 +27,6 @@
 #include <sys/nvpair.h>
 #include <sys/zfs_ioctl.h>
 
-#ifdef __FreeBSD__
-#define	EBADE EILSEQ
-#endif
-
 /*
  * Test the nvpair inputs for the non-legacy zfs ioctl commands.
  */

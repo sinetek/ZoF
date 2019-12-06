@@ -250,3 +250,9 @@ taskq_wait_outstanding(taskq_t *tq, taskqid_t id __unused)
 {
 	taskq_wait(tq);
 }
+
+int
+taskq_empty_ent(taskq_ent_t *t)
+{
+	return (t->tqent_task.ta_pending == 0);
+}

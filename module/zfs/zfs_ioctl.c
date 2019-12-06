@@ -221,18 +221,11 @@
 #ifndef __linux__
 #define	z_sb z_vfs
 #define	deactivate_super vfs_unbusy
-#define	group_leader p_pid
 #define	KMALLOC_MAX_SIZE MAXPHYS
-#define	VOP_SEEK(...) (0)
 #include <sys/buf.h>
 #endif
 volatile int geom_inhibited;
 
-/*
- * Limit maximum nvlist size.  We don't want users passing in insane values
- * for zc->zc_nvlist_src_size, since we will need to allocate that much memory.
- */
-#define	MAX_NVLIST_SRC_SIZE	KMALLOC_MAX_SIZE
 kmutex_t zfsdev_state_lock;
 zfsdev_state_t *zfsdev_state_list;
 
@@ -4150,7 +4143,7 @@ static int
 zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 {
 	zfsvfs_t *zfsvfs;
-	zvol_state_handle_t *zv __maybe_unused;
+	zvol_state_handle_t *zv;
 	char *target = NULL;
 	int error;
 
@@ -4252,7 +4245,6 @@ zfs_ioc_rename(zfs_cmd_t *zc)
 	objset_t *os;
 	dmu_objset_type_t ost;
 	boolean_t recursive = zc->zc_cookie & 1;
-	boolean_t nounmount = !!(zc->zc_cookie & 2);
 	char *at;
 	int err;
 
@@ -4278,7 +4270,7 @@ zfs_ioc_rename(zfs_cmd_t *zc)
 		if (strncmp(zc->zc_name, zc->zc_value, at - zc->zc_name + 1))
 			return (SET_ERROR(EXDEV));
 		*at = '\0';
-		if (ost == DMU_OST_ZFS && !nounmount) {
+		if (ost == DMU_OST_ZFS) {
 			error = dmu_objset_find(zc->zc_name,
 			    recursive_unmount, at + 1,
 			    recursive ? DS_FIND_CHILDREN : 0);
@@ -4774,6 +4766,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 	if ((error = zfs_file_get(input_fd, &input_fp)))
 		return (error);
 
+	atomic_inc_32(&geom_inhibited);
 	noff = off = zfs_file_off(input_fp);
 	error = dmu_recv_begin(tofs, tosnap, begin_record, force,
 	    resumable, localprops, hidden_args, origin, &drc, input_fp,
@@ -4885,7 +4878,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 
 	if (error == 0) {
 		zfsvfs_t *zfsvfs = NULL;
-		zvol_state_handle_t *zv __maybe_unused = NULL;
+		zvol_state_handle_t *zv = NULL;
 
 		if (getzfsvfs(tofs, &zfsvfs) == 0) {
 			/* online recv */
@@ -6314,6 +6307,7 @@ static const zfs_ioc_key_t zfs_keys_send_new[] = {
 	{"redactbook",		DATA_TYPE_STRING,	ZK_OPTIONAL},
 };
 
+/* ARGSUSED */
 static int
 zfs_ioc_send_new(const char *snapname, nvlist_t *innvl, nvlist_t *outnvl)
 {

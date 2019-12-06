@@ -1801,12 +1801,7 @@ zio_taskq_dispatch(zio_t *zio, zio_taskq_type_t q, boolean_t cutinline)
 	 * to a single taskq at a time.  It would be a grievous error
 	 * to dispatch the zio to another taskq at the same time.
 	 */
-#ifndef __FreeBSD__
-	/*
-	 * XXX requires upstream KPI changes to support
-	 */
 	ASSERT(taskq_empty_ent(&zio->io_tqent));
-#endif
 	spa_taskq_dispatch_ent(spa, t, q, (task_func_t *)zio_execute, zio,
 	    flags, &zio->io_tqent);
 }
@@ -1873,18 +1868,10 @@ zio_deadman_impl(zio_t *pio, int ziodepth)
 		zfs_ereport_post(FM_EREPORT_ZFS_DEADMAN,
 		    pio->io_spa, vd, zb, pio, 0, 0);
 
-		/* BEGIN CSTYLED */
-		if (failmode == ZIO_FAILURE_MODE_CONTINUE
-#ifndef __FreeBSD__
-			/*
-			 * Double enqueue is safe on FreeBSD
-			 */
-		    && taskq_empty_ent(&pio->io_tqent)
-#endif
-			) {
+		if (failmode == ZIO_FAILURE_MODE_CONTINUE &&
+		    taskq_empty_ent(&pio->io_tqent)) {
 			zio_interrupt(pio);
 		}
-		/* END CSTYLED */
 	}
 
 	mutex_enter(&pio->io_lock);
@@ -4566,9 +4553,7 @@ zio_done(zio_t *zio)
 			 * Reexecution is potentially a huge amount of work.
 			 * Hand it off to the otherwise-unused claim taskq.
 			 */
-#ifndef __FreeBSD__
 			ASSERT(taskq_empty_ent(&zio->io_tqent));
-#endif
 			spa_taskq_dispatch_ent(zio->io_spa,
 			    ZIO_TYPE_CLAIM, ZIO_TASKQ_ISSUE,
 			    (task_func_t *)zio_reexecute, zio, 0,

@@ -39,7 +39,7 @@
 #include <sys/zvol.h>
 
 #ifdef _KERNEL
-#include <sys/zfs_vfsops.h>
+#include <sys/zfs_quotas.h>
 #endif
 
 static int

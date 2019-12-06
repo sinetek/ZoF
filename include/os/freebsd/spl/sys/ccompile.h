@@ -138,6 +138,7 @@ extern "C" {
 		/* XXX change us */
 #define	ECKSUM	EBADMSG
 #define	EFRAGS	EFTYPE
+#define	EBADE EILSEQ
 
 /* Similar for ENOACTIVE */
 #define	ENOTACTIVE	ECANCELED

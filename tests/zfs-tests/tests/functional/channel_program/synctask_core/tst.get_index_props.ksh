@@ -35,13 +35,7 @@ log_onexit cleanup
 log_must zfs create -o version=5 $fs
 create_snapshot $fs $TESTSNAP
 
-if is_freebsd; then
-	os="FreeBSD"
-elif is_linux; then
-	os="Linux"
-else
-	os="Other"
-fi
+os=$(uname)
 log_must_program $TESTPOOL $ZCP_ROOT/synctask_core/tst.get_index_props.zcp $fs $snap $os
 
 log_pass "Getting index props should work correctly."

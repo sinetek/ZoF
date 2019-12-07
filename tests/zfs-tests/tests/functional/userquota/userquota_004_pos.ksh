@@ -52,18 +52,14 @@ log_assert "Check the basic function of {user|group} used"
 
 sync_pool
 typeset user_used=$(get_value "userused@$QUSER1" $QFS)
-if ! is_freebsd; then
-	typeset group_used=$(get_value "groupused@$QGROUP" $QFS)
-fi
+typeset group_used=$(get_value "groupused@$QGROUP" $QFS)
 typeset file_size='100m'
 
 if [[ $user_used != 0 ]]; then
 	log_fail "FAIL: userused is $user_used, should be 0"
 fi
-if ! is_freebsd; then
-	if [[ $group_used != 0 ]]; then
-		log_fail "FAIL: groupused is $group_used, should be 0"
-	fi
+if [[ $group_used != 0 ]]; then
+	log_fail "FAIL: groupused is $group_used, should be 0"
 fi
 
 mkmount_writable $QFS
@@ -71,9 +67,7 @@ log_must user_run $QUSER1 mkfile $file_size $QFILE
 sync_pool
 
 user_used=$(get_value "userused@$QUSER1" $QFS)
-if ! is_freebsd; then
-	group_used=$(get_value "groupused@$QGROUP" $QFS)
-fi
+group_used=$(get_value "groupused@$QGROUP" $QFS)
 
 # get_value() reads the exact byte value which is slightly more than 100m
 if [[ "$(($user_used/1024/1024))m" != "$file_size" ]]; then
@@ -82,16 +76,10 @@ if [[ "$(($user_used/1024/1024))m" != "$file_size" ]]; then
 	    "not $user_used"
 fi
 
-if ! is_freebsd; then
-	if [[ $user_used != $group_used ]]; then
-		log_note "user $QUSER1 used is $user_used"
-		log_note "group $QGROUP used is $group_used"
-		log_fail "FAIL: userused should equal to groupused"
-	fi
+if [[ $user_used != $group_used ]]; then
+	log_note "user $QUSER1 used is $user_used"
+	log_note "group $QGROUP used is $group_used"
+	log_fail "FAIL: userused should equal to groupused"
 fi
 
-if ! is_freebsd; then
-	log_pass "Check the basic function of {user|group}used pass as expect"
-else
-	log_pass "Check the basic function of userused pass as expect"
-fi
+log_pass "Check the basic function of {user|group}used pass as expect"

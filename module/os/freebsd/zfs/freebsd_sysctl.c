@@ -583,6 +583,5 @@ int zio_use_uma = 0;
 
 SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, use_uma, CTLFLAG_RDTUN, &zio_use_uma, 0,
     "Use uma(9) for ZIO allocations");
-extern  int zio_exclude_metadata;
 SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, exclude_metadata, CTLFLAG_RDTUN, &zio_exclude_metadata, 0,
     "Exclude metadata buffers from dumps as well");

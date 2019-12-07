@@ -129,11 +129,10 @@ int zio_exclude_metadata = 0;
 int zio_requeue_io_start_cut_in_line = 1;
 
 #ifdef ZFS_DEBUG
-static int zio_buf_debug_limit = 16384;
+int zio_buf_debug_limit = 16384;
 #else
-static int zio_buf_debug_limit = 0;
+int zio_buf_debug_limit = 0;
 #endif
-int zio_exclude_metadata;
 
 static inline void __zio_execute(zio_t *zio);
 

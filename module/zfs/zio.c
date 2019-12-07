@@ -121,14 +121,18 @@ int zfs_sync_pass_rewrite = 2; /* rewrite new bps starting in this pass */
  */
 #define	IO_IS_ALLOCATING(zio) ((zio)->io_orig_pipeline & ZIO_STAGE_DVA_ALLOCATE)
 
-static int zio_requeue_io_start_cut_in_line = 1;
+/*
+ * Enable smaller cores by excluding metadata
+ * allocations as well.
+ */
+int zio_exclude_metadata = 0;
+int zio_requeue_io_start_cut_in_line = 1;
 
 #ifdef ZFS_DEBUG
-static int zio_buf_debug_limit = 16384;
+int zio_buf_debug_limit = 16384;
 #else
-static int zio_buf_debug_limit = 0;
+int zio_buf_debug_limit = 0;
 #endif
-int zio_exclude_metadata;
 
 static inline void __zio_execute(zio_t *zio);
 

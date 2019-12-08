@@ -75,6 +75,15 @@ zfs_vfs_ref(zfsvfs_t **zfvp)
 	return (0);
 }
 
+int
+zfs_vfs_rele(zfsvfs_t *zfsvfs)
+{
+	if (zfsvfs->z_sb == NULL)
+		return (1);
+	deactivate_super(zfsvfs->z_sb);
+	return (0);
+}
+
 static int
 zfsdev_state_init(struct file *filp)
 {

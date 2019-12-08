@@ -217,12 +217,6 @@
 #include <sys/lua/lauxlib.h>
 #include <sys/zfs_ioctl_impl.h>
 
-#ifndef __linux__
-#define	z_sb z_vfs
-#define	deactivate_super vfs_unbusy
-#define	KMALLOC_MAX_SIZE MAXPHYS
-#include <sys/buf.h>
-#endif
 volatile int geom_inhibited;
 
 kmutex_t zfsdev_state_lock;
@@ -1413,17 +1407,6 @@ getzfsvfs(const char *dsname, zfsvfs_t **zfvp)
 
 	error = getzfsvfs_impl(os, zfvp);
 	dmu_objset_rele(os, FTAG);
-#ifdef __FreeBSD__
-	if (error)
-		return (error);
-
-	error = vfs_busy((*zfvp)->z_vfs, 0);
-	vfs_rel((*zfvp)->z_vfs);
-	if (error != 0) {
-		*zfvp = NULL;
-		error = SET_ERROR(ESRCH);
-	}
-#endif
 	return (error);
 }
 
@@ -1461,9 +1444,7 @@ zfsvfs_rele(zfsvfs_t *zfsvfs, void *tag)
 {
 	rrm_exit(&zfsvfs->z_teardown_lock, tag);
 
-	if (zfsvfs->z_sb) {
-		deactivate_super(zfsvfs->z_sb);
-	} else {
+	if (zfs_vfs_rele(zfsvfs)) {
 		dmu_objset_disown(zfsvfs->z_os, B_TRUE, zfsvfs);
 		zfsvfs_free(zfsvfs);
 	}
@@ -4172,7 +4153,7 @@ zfs_ioc_rollback(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 			resume_err = zfs_resume_fs(zfsvfs, ds);
 			error = error ? error : resume_err;
 		}
-		deactivate_super(zfsvfs->z_sb);
+		zfs_vfs_rele(zfsvfs);
 	} else if ((zv = zvol_suspend(fsname)) != NULL) {
 		error = dsl_dataset_rollback(fsname, target, zvol_tag(zv),
 		    outnvl);
@@ -4906,7 +4887,7 @@ zfs_ioc_recv_impl(char *tofs, char *tosnap, char *origin, nvlist_t *recvprops,
 				error = zfs_resume_fs(zfsvfs, ds);
 			}
 			error = error ? error : end_err;
-			deactivate_super(zfsvfs->z_sb);
+			zfs_vfs_rele(zfsvfs);
 		} else if ((zv = zvol_suspend(tofs)) != NULL) {
 			error = dmu_recv_end(&drc, zvol_tag(zv));
 			zvol_resume(zv);
@@ -5825,7 +5806,7 @@ zfs_ioc_userspace_upgrade(zfs_cmd_t *zc)
 		}
 		if (error == 0)
 			error = dmu_objset_userspace_upgrade(zfsvfs->z_os);
-		deactivate_super(zfsvfs->z_sb);
+		zfs_vfs_rele(zfsvfs);
 	} else {
 		/* XXX kind of reading contents without owning */
 		error = dmu_objset_hold_flags(zc->zc_name, B_TRUE, FTAG, &os);

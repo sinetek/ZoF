@@ -59,13 +59,26 @@ zfs_vfs_ref(zfsvfs_t **zfvp)
 {
 	int error = 0;
 
-	if (*zfvp) {
-		vfs_ref((*zfvp)->z_vfs);
-	} else {
+	if (*zfvp == NULL)
+		return (SET_ERROR(ESRCH));
+
+	vfs_ref((*zfvp)->z_vfs);
+	error = vfs_busy((*zfvp)->z_vfs, 0);
+	vfs_rel((*zfvp)->z_vfs);
+	if (error != 0) {
+		*zfvp = NULL;
 		error = SET_ERROR(ESRCH);
 	}
-
 	return (error);
+}
+
+int
+zfs_vfs_rele(zfsvfs_t *zfsvfs)
+{
+	if (zfsvfs->z_vfs == NULL)
+		return (1);
+	vfs_unbusy(zfsvfs->z_vfs);
+	return (0);
 }
 
 int

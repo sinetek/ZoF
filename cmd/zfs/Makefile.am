@@ -16,7 +16,6 @@ zfs_LDADD = \
 	$(top_builddir)/lib/libzfs/libzfs.la \
 	$(top_builddir)/lib/libzfs_core/libzfs_core.la
 
-# XXX
 if BUILD_FREEBSD
 zfs_LDADD += -L/usr/local/lib -lintl -lgeom -ljail
 endif

@@ -750,15 +750,12 @@ zfs_mount_and_share(libzfs_handle_t *hdl, const char *dataset, zfs_type_t type)
 	 */
 	if (zfs_prop_valid_for_type(ZFS_PROP_CANMOUNT, type, B_FALSE) &&
 	    zfs_prop_get_int(zhp, ZFS_PROP_CANMOUNT) == ZFS_CANMOUNT_ON) {
-#ifdef __linux__
-		/* Let Linux prevent user delegation */
-		if (geteuid() != 0) {
+		if (zfs_mount_delegation_check()) {
 			(void) fprintf(stderr, gettext("filesystem "
 			    "successfully created, but it may only be "
 			    "mounted by root\n"));
 			ret = 1;
 		} else
-#endif
 			if (zfs_mount(zhp, NULL, 0) != 0) {
 				(void) fprintf(stderr, gettext("filesystem "
 			    "successfully created, but not mounted\n"));
@@ -7256,28 +7253,15 @@ unshare_unmount(int op, int argc, char **argv)
 
 			switch (op) {
 			case OP_SHARE:
-#if defined(__FreeBSD__)
-				if (zfs_unshareall_bypath(node->un_zhp,
-				    node->un_mountp) != 0)
-					ret = 1;
-#else
 				if (zfs_unshareall_bytype(node->un_zhp,
 				    node->un_mountp, protocol) != 0)
 					ret = 1;
-#endif
 				break;
 
 			case OP_MOUNT:
-#ifdef __FreeBSD__
 				if (zfs_unmount(node->un_zhp,
-				    NULL, flags) != 0)
+				    node->un_mountp, flags) != 0)
 					ret = 1;
-#else
-				if (zfs_unmount(node->un_zhp,
-				    node->un_zhp->zfs_name, flags) != 0)
-					ret = 1;
-#endif
-				break;
 			}
 
 			zfs_close(node->un_zhp);
@@ -8390,7 +8374,7 @@ main(int argc, char **argv)
  */
 /* ARGSUSED */
 static int
-do_jail(int argc, char **argv, int attach)
+zfs_do_jail_impl(int argc, char **argv, boolean_t attach)
 {
 	zfs_handle_t *zhp;
 	int jailid, ret;
@@ -8430,8 +8414,7 @@ do_jail(int argc, char **argv, int attach)
 static int
 zfs_do_jail(int argc, char **argv)
 {
-
-	return (do_jail(argc, argv, 1));
+	return (zfs_do_jail_impl(argc, argv, B_TRUE));
 }
 
 /*
@@ -8443,7 +8426,6 @@ zfs_do_jail(int argc, char **argv)
 static int
 zfs_do_unjail(int argc, char **argv)
 {
-
-	return (do_jail(argc, argv, 0));
+	return (zfs_do_jail_impl(argc, argv, B_FALSE));
 }
 #endif

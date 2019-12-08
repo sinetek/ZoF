@@ -150,7 +150,9 @@ extern "C" {
 #define	O_LARGEFILE 0
 #define	O_RSYNC 0
 #define	O_DSYNC 0
-	
+
+#define	KMALLOC_MAX_SIZE MAXPHYS
+
 #ifdef _KERNEL
 #include <linux/types.h>
 typedef	void zfs_kernel_param_t;

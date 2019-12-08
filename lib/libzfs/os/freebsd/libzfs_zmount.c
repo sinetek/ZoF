@@ -122,3 +122,9 @@ do_unmount(const char *mntpt, int flags)
 
 	return (unmount(mntpt, flags));
 }
+
+int
+zfs_mount_delegation_check(void)
+{
+	return (0);
+}

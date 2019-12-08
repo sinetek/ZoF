@@ -3327,16 +3327,6 @@ zfs_ioc_create(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 			}
 		}
 	}
-#if defined(__FreeBSD__) && defined(_KERNEL)
-	if (error == 0 && type == DMU_OST_ZVOL) {
-		spa_t *spa;
-
-		if (spa_open(fsname, &spa, FTAG) == 0) {
-			zvol_create_minors(spa, fsname, B_TRUE);
-			spa_close(spa, FTAG);
-		}
-	}
-#endif
 	return (error);
 }
 
@@ -3385,16 +3375,6 @@ zfs_ioc_clone(const char *fsname, nvlist_t *innvl, nvlist_t *outnvl)
 		if (error != 0)
 			(void) dsl_destroy_head(fsname);
 	}
-#if defined(__FreeBSD__) && defined(_KERNEL)
-	if (error == 0) {
-		spa_t *spa;
-
-		if (spa_open(fsname, &spa, FTAG) == 0) {
-			zvol_create_minors(spa, fsname, B_FALSE);
-			spa_close(spa, FTAG);
-		}
-	}
-#endif
 	return (error);
 }
 

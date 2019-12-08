@@ -218,12 +218,6 @@
 #include <sys/lua/lauxlib.h>
 #include <sys/zfs_ioctl_impl.h>
 
-#ifndef __linux__
-#define	z_sb z_vfs
-#define	deactivate_super vfs_unbusy
-#define	KMALLOC_MAX_SIZE MAXPHYS
-#include <sys/buf.h>
-#endif
 volatile int geom_inhibited;
 
 kmutex_t zfsdev_state_lock;
@@ -1414,17 +1408,6 @@ getzfsvfs(const char *dsname, zfsvfs_t **zfvp)
 
 	error = getzfsvfs_impl(os, zfvp);
 	dmu_objset_rele(os, FTAG);
-#ifdef __FreeBSD__
-	if (error)
-		return (error);
-
-	error = vfs_busy((*zfvp)->z_vfs, 0);
-	vfs_rel((*zfvp)->z_vfs);
-	if (error != 0) {
-		*zfvp = NULL;
-		error = SET_ERROR(ESRCH);
-	}
-#endif
 	return (error);
 }
 

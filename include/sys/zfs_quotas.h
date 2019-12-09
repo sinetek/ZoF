@@ -20,7 +20,7 @@
  */
 
 #ifndef _SYS_ZFS_QUOTAS_H
-#define _SYS_ZFS_QUOTAS_H
+#define	_SYS_ZFS_QUOTAS_H
 
 #include <sys/dmu.h>
 #include <sys/zfs_vfsops.h>

@@ -69,6 +69,7 @@ log_onexit cleanup
 # Preparation work for testing
 savedcorefile=""
 corepath=$TESTDIR/core
+corefile=$corepath/core.zfs
 if [[ -d $corepath ]]; then
 	rm -rf $corepath
 fi
@@ -96,7 +97,7 @@ typeset badparams=("" "create" "destroy" "snapshot" "rollback" "clone" \
 
 if is_linux; then
 	ulimit -c unlimited
-	echo "$corepath/core.zfs" >/proc/sys/kernel/core_pattern
+	echo "$corefile" >/proc/sys/kernel/core_pattern
 	echo 0 >/proc/sys/kernel/core_uses_pid
 	export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 elif is_freebsd; then

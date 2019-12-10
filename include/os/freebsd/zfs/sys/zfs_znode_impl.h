@@ -103,8 +103,8 @@ extern minor_t zfsdev_minor_alloc(void);
 #define	ZTOI(ZP)	((ZP)->z_vnode)
 #define	VTOZ(VP)	((struct znode *)(VP)->v_data)
 #define	ITOZ(VP)	((struct znode *)(VP)->v_data)
-#define	igrab(vp)	vhold(vp)
-#define	iput(vp)	vput(vp)
+#define	zhold(zp)	vhold(ZTOV((zp)))
+#define	zrele(zp)	vput(ZTOV((zp)))
 
 #define	ZTOZSB(zp) ((zp)->z_zfsvfs)
 #define	ITOZSB(vp) (VTOZ(vp)->z_zfsvfs)

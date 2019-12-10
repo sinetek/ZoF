@@ -131,26 +131,6 @@ fuidstr_to_sid(zfsvfs_t *zfsvfs, const char *fuidstr,
 	*ridp = FUID_RID(fuid);
 }
 
-/*
- * buf must be big enough (eg, 32 bytes)
- */
-static int
-id_to_fuidstr(zfsvfs_t *zfsvfs, const char *domain, uid_t rid,
-    char *buf, boolean_t addok)
-{
-	uint64_t fuid;
-	int domainid = 0;
-
-	if (domain && domain[0]) {
-		domainid = zfs_fuid_find_by_domain(zfsvfs, domain, NULL, addok);
-		if (domainid == -1)
-			return (SET_ERROR(ENOENT));
-	}
-	fuid = FUID_ENCODE(domainid, rid);
-	(void) sprintf(buf, "%llx", (longlong_t)fuid);
-	return (0);
-}
-
 static uint64_t
 zfs_userquota_prop_to_obj(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type)
 {
@@ -289,7 +269,7 @@ zfs_userspace_one(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
 		offset = DMU_OBJACCT_PREFIX_LEN;
 	}
 
-	err = id_to_fuidstr(zfsvfs, domain, rid, buf + offset, B_FALSE);
+	err = zfs_id_to_fuidstr(zfsvfs, domain, rid, buf + offset, B_FALSE);
 	if (err)
 		return (err);
 
@@ -345,7 +325,7 @@ zfs_set_userquota(zfsvfs_t *zfsvfs, zfs_userquota_prop_t type,
 		return (SET_ERROR(EINVAL));
 	}
 
-	err = id_to_fuidstr(zfsvfs, domain, rid, buf, B_TRUE);
+	err = zfs_id_to_fuidstr(zfsvfs, domain, rid, buf, B_TRUE);
 	if (err)
 		return (err);
 	fuid_dirtied = zfsvfs->z_fuid_dirty;
@@ -486,7 +466,6 @@ zfs_id_overquota(zfsvfs_t *zfsvfs, uint64_t usedobj, uint64_t id)
 	    zfs_id_overobjquota(zfsvfs, usedobj, id));
 }
 
-#if defined(_KERNEL)
 EXPORT_SYMBOL(zfs_space_delta_cb);
 EXPORT_SYMBOL(zfs_userspace_one);
 EXPORT_SYMBOL(zfs_userspace_many);
@@ -494,4 +473,3 @@ EXPORT_SYMBOL(zfs_set_userquota);
 EXPORT_SYMBOL(zfs_id_overblockquota);
 EXPORT_SYMBOL(zfs_id_overobjquota);
 EXPORT_SYMBOL(zfs_id_overquota);
-#endif

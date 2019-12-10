@@ -76,12 +76,15 @@ zfs_vfs_ref(zfsvfs_t **zfvp)
 }
 
 int
+zfs_vfs_held(zfsvfs_t *zfsvfs)
+{
+	return (zfsvfs->z_sb != NULL);
+}
+
+void
 zfs_vfs_rele(zfsvfs_t *zfsvfs)
 {
-	if (zfsvfs->z_sb == NULL)
-		return (1);
 	deactivate_super(zfsvfs->z_sb);
-	return (0);
 }
 
 static int

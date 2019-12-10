@@ -104,7 +104,6 @@
 
 struct proc *zfsproc;
 extern uint_t zfs_geom_probe_vdev_key;
-extern volatile int geom_inhibited;
 
 struct zvol_state_os {
 	int zso_state;

@@ -73,12 +73,15 @@ zfs_vfs_ref(zfsvfs_t **zfvp)
 }
 
 int
+zfs_vfs_held(zfsvfs_t *zfsvfs)
+{
+	return (zfsvfs->z_vfs != NULL);
+}
+
+void
 zfs_vfs_rele(zfsvfs_t *zfsvfs)
 {
-	if (zfsvfs->z_vfs == NULL)
-		return (1);
 	vfs_unbusy(zfsvfs->z_vfs);
-	return (0);
 }
 
 int

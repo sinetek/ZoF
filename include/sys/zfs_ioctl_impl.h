@@ -86,8 +86,6 @@ boolean_t zfs_vfs_held(zfsvfs_t *);
 int zfs_vfs_ref(zfsvfs_t **);
 void zfs_vfs_rele(zfsvfs_t *);
 
-int zfs_vfs_rele(zfsvfs_t *);
-
 long zfsdev_ioctl_common(uint_t, zfs_cmd_t *);
 int zfsdev_attach(void);
 void zfsdev_detach(void);

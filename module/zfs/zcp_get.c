@@ -40,6 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/zfs_quotas.h>
+#include <sys/zfs_vfsops.h>
 #endif
 
 static int

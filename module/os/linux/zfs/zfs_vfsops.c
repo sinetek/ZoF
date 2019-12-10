@@ -52,6 +52,7 @@
 #include <sys/zfs_ioctl.h>
 #include <sys/zfs_ctldir.h>
 #include <sys/zfs_fuid.h>
+#include <sys/zfs_quotas.h>
 #include <sys/sunddi.h>
 #include <sys/dmu_objset.h>
 #include <sys/spa_boot.h>
@@ -1006,7 +1007,8 @@ zfs_statfs_project(zfsvfs_t *zfsvfs, znode_t *zp, struct kstatfs *statp,
 	int err;
 
 	strlcpy(buf, DMU_OBJACCT_PREFIX, DMU_OBJACCT_PREFIX_LEN + 1);
-	err = id_to_fuidstr(zfsvfs, NULL, zp->z_projid, buf + offset, B_FALSE);
+	err = zfs_id_to_fuidstr(zfsvfs, NULL, zp->z_projid, buf + offset,
+	    B_FALSE);
 	if (err)
 		return (err);
 

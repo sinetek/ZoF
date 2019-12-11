@@ -66,7 +66,7 @@
 #include <sys/jail.h>
 #include <ufs/ufs/quota.h>
 #include <sys/refstr.h>
-#include <sys/zfs_quotas.h>
+#include <sys/zfs_quota.h>
 
 #include "zfs_comutil.h"
 

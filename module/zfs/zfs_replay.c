@@ -631,11 +631,12 @@ zfs_replay_link(void *arg1, void *arg2, boolean_t byteswap)
 
 	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	vn_lock(ZTOV(zp), LK_EXCLUSIVE | LK_RETRY);
-	error = zfs_link(ZTOI(dzp), ZTOI(zp), name, kcred, vflg);
+	error = zfs_link(dzp, zp, name, kcred, vflg);
 	VOP_UNLOCK(ZTOV(zp), 0);
 	VOP_UNLOCK(ZTOV(dzp), 0);
 	zrele(zp);
 	zrele(dzp);
+
 	return (error);
 }
 
@@ -668,6 +669,7 @@ zfs_replay_rename(void *arg1, void *arg2, boolean_t byteswap)
 
 	zrele(tdzp);
 	zrele(sdzp);
+
 	return (error);
 }
 
@@ -789,6 +791,7 @@ top:
 	}
 
 	zrele(zp);
+
 	return (error);
 }
 
@@ -817,6 +820,7 @@ zfs_replay_truncate(void *arg1, void *arg2, boolean_t byteswap)
 	    lr->lr_offset, kcred);
 
 	zrele(zp);
+
 	return (error);
 }
 
@@ -872,6 +876,7 @@ zfs_replay_setattr(void *arg1, void *arg2, boolean_t byteswap)
 	zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;
 	zrele(zp);
+
 	return (error);
 }
 
@@ -903,6 +908,7 @@ zfs_replay_acl_v0(void *arg1, void *arg2, boolean_t byteswap)
 	error = zfs_setsecattr(zp, &vsa, 0, kcred);
 
 	zrele(zp);
+
 	return (error);
 }
 
@@ -966,6 +972,7 @@ zfs_replay_acl(void *arg1, void *arg2, boolean_t byteswap)
 
 	zfsvfs->z_fuid_replay = NULL;
 	zrele(zp);
+
 	return (error);
 }
 

@@ -505,7 +505,9 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 		    lr->lr_uid, lr->lr_gid);
 	}
 
+#ifdef __FreeBSD__
 	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+#endif
 	switch (txtype) {
 	case TX_CREATE_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -555,7 +557,10 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 	default:
 		error = SET_ERROR(ENOTSUP);
 	}
+
+#ifdef __FreeBSD__
 	VOP_UNLOCK(ZTOV(dzp), 0);
+#endif
 out:
 	if (error == 0 && zp != NULL)
 		zrele(zp);
@@ -587,7 +592,9 @@ zfs_replay_remove(void *arg1, void *arg2, boolean_t byteswap)
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
 
+#ifdef __FreeBSD__
 	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+#endif
 	switch ((int)lr->lr_common.lrc_txtype) {
 	case TX_REMOVE:
 		error = zfs_remove(dzp, name, kcred, vflg);
@@ -599,7 +606,9 @@ zfs_replay_remove(void *arg1, void *arg2, boolean_t byteswap)
 		error = SET_ERROR(ENOTSUP);
 	}
 
+#ifdef __FreeBSD__
 	VOP_UNLOCK(ZTOV(dzp), 0);
+#endif
 	zrele(dzp);
 
 	return (error);
@@ -629,11 +638,15 @@ zfs_replay_link(void *arg1, void *arg2, boolean_t byteswap)
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
 
+#ifdef __FreeBSD__
 	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	vn_lock(ZTOV(zp), LK_EXCLUSIVE | LK_RETRY);
+#endif
 	error = zfs_link(dzp, zp, name, kcred, vflg);
+#ifdef __FreeBSD__
 	VOP_UNLOCK(ZTOV(zp), 0);
 	VOP_UNLOCK(ZTOV(dzp), 0);
+#endif
 	zrele(zp);
 	zrele(dzp);
 
@@ -736,6 +749,7 @@ zfs_replay_write(void *arg1, void *arg2, boolean_t byteswap)
 	else if (written < length)
 		error = SET_ERROR(EIO); /* short write */
 #endif
+
 	zrele(zp);
 	zfsvfs->z_replay_eof = 0;	/* safety */
 

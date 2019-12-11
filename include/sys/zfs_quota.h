@@ -19,12 +19,12 @@
  * CDDL HEADER END
  */
 
-#ifndef _SYS_ZFS_QUOTAS_H
-#define	_SYS_ZFS_QUOTAS_H
+#ifndef _SYS_ZFS_QUOTA_H
+#define	_SYS_ZFS_QUOTA_H
 
 #include <sys/dmu.h>
+#include <sys/fs/zfs.h>
 #include <sys/zfs_vfsops.h>
-#include <sys/zfs_znode.h>
 
 extern int zfs_space_delta_cb(dmu_object_type_t bonustype, void *data,
     uint64_t *userp, uint64_t *groupp, uint64_t *projectp);

@@ -35,7 +35,7 @@
 #include <sys/sa_impl.h>
 #include <sys/zap.h>
 #include <sys/zfs_project.h>
-#include <sys/zfs_quotas.h>
+#include <sys/zfs_quota.h>
 #include <sys/zfs_znode.h>
 
 int

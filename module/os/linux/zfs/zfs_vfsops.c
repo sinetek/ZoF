@@ -52,7 +52,7 @@
 #include <sys/zfs_ioctl.h>
 #include <sys/zfs_ctldir.h>
 #include <sys/zfs_fuid.h>
-#include <sys/zfs_quotas.h>
+#include <sys/zfs_quota.h>
 #include <sys/sunddi.h>
 #include <sys/dmu_objset.h>
 #include <sys/spa_boot.h>

@@ -6348,7 +6348,11 @@ zfs_lock(ap)
 	znode_t *zp;
 	int err;
 
+#if __FreeBSD_version >= 1300064
+	err = vop_lock(ap);
+#else
 	err = vop_stdlock(ap);
+#endif
 	if (err == 0 && (ap->a_flags & LK_NOWAIT) == 0) {
 		vp = ap->a_vp;
 		zp = vp->v_data;
@@ -6407,8 +6411,18 @@ struct vop_vector zfs_vnodeops = {
 	.vop_getpages =		zfs_freebsd_getpages,
 	.vop_putpages =		zfs_freebsd_putpages,
 	.vop_vptocnp =		zfs_vptocnp,
+#if __FreeBSD_version >= 1300064
+#ifdef DIAGNOSTIC
+	.vop_lock1 =            zfs_lock,
+#else
+	.vop_lock1 =            vop_lock,
+#endif
+	.vop_unlock =           vop_unlock,
+	.vop_islocked =         vop_islocked,
+#else
 #ifdef DIAGNOSTIC
 	.vop_lock1 =		zfs_lock,
+#endif
 #endif
 };
 

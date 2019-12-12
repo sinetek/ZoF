@@ -5315,23 +5315,24 @@ zfs_freebsd_create(ap)
 	struct componentname *cnp = ap->a_cnp;
 	vattr_t *vap = ap->a_vap;
 	znode_t *zp = NULL;
-	int error, mode;
+	int rc, mode;
 
 	ASSERT(cnp->cn_flags & SAVENAME);
 
 	vattr_init_mask(vap);
 	mode = vap->va_mode & ALLPERMS;
 	zfsvfs = ap->a_dvp->v_mount->mnt_data;
+	*ap->a_vpp = NULL;
 
-	error = zfs_create(VTOZ(ap->a_dvp), cnp->cn_nameptr, vap, !EXCL, mode,
+	rc = zfs_create(VTOZ(ap->a_dvp), cnp->cn_nameptr, vap, !EXCL, mode,
 	    &zp, cnp->cn_cred, 0 /* flag */, NULL /* vsecattr */);
-	if (zp)
+	if (rc == 0)
 		*ap->a_vpp = ZTOV(zp);
 	if (zfsvfs->z_use_namecache &&
-	    error == 0 && (cnp->cn_flags & MAKEENTRY) != 0)
+	    rc == 0 && (cnp->cn_flags & MAKEENTRY) != 0)
 		cache_enter(ap->a_dvp, *ap->a_vpp, cnp);
 
-	return (error);
+	return (rc);
 }
 
 static int
@@ -5365,11 +5366,12 @@ zfs_freebsd_mkdir(ap)
 	ASSERT(ap->a_cnp->cn_flags & SAVENAME);
 
 	vattr_init_mask(vap);
+	*ap->a_vpp = NULL;
 
 	rc = zfs_mkdir(VTOZ(ap->a_dvp), ap->a_cnp->cn_nameptr, vap, &zp,
 	    ap->a_cnp->cn_cred, 0, NULL);
 
-	if (zp)
+	if (rc == 0)
 		*ap->a_vpp = ZTOV(zp);
 	return (rc);
 }
@@ -5654,10 +5656,11 @@ zfs_freebsd_symlink(ap)
 
 	vap->va_type = VLNK;	/* FreeBSD: Syscall only sets va_mode. */
 	vattr_init_mask(vap);
+	*ap->a_vpp = NULL;
 
 	rc = zfs_symlink(VTOZ(ap->a_dvp), cnp->cn_nameptr, vap,
 			    ap->a_target, &zp, cnp->cn_cred, 0 /* flags */);
-	if (zp)
+	if (rc == 0)
 		*ap->a_vpp = ZTOV(zp);
 	return (rc);
 }

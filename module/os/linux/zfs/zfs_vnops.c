@@ -988,7 +988,7 @@ zfs_write_simple(znode_t *zp, const void *data, size_t len,
 		if (written < len)
 			error = SET_ERROR(EIO); /* short write */
 	} else {
-		*resid = count - len;
+		*resid = len - written;
 	}
 	return (error);
 }

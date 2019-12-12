@@ -46,19 +46,7 @@
 #include <sys/acl.h>
 #include <sys/atomic.h>
 #include <sys/cred.h>
-#ifdef __linux__
 #include <sys/zpl.h>
-#define	zfs_cmpldev(rdev) (rdev)
-#endif
-
-#ifdef __FreeBSD__
-#define	SHARED 1
-#else
-#define	vn_lock(a, b)
-#define	VOP_UNLOCK(a, b)
-#define	SHARED 0
-#endif
-
 
 /*
  * Functions to replay ZFS intent log (ZIL) records

@@ -180,6 +180,10 @@ typedef	void zfs_kernel_param_t;
 #define vm_page_do_sunbusy(m) vm_page_sunbusy(m)
 #endif
 
+#if  __FreeBSD_version < 1300064
+#define	VN_IS_DOOMED(vp)	((vp)->vi_iflag & VI_DOOMED)
+#endif
+
 struct hlist_node {
         struct hlist_node *next, **pprev;
 };

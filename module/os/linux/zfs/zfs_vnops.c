@@ -973,6 +973,26 @@ zfs_write(struct inode *ip, uio_t *uio, int ioflag, cred_t *cr)
 	return (0);
 }
 
+int
+zfs_write_simple(znode_t *zp, const void *data, size_t len,
+    loff_t pos, size_t *resid)
+{
+	ssize_t written;
+	int error = 0;
+
+	written = zpl_write_common(ZTOI(zp), data, len, &pos,
+	    UIO_SYSSPACE, 0, kcred);
+	if (written < 0) {
+		error = -written;
+	} else if (resid == NULL) {
+		if (written < len)
+			error = SET_ERROR(EIO); /* short write */
+	} else {
+		*resid = count - len;
+	}
+	return (error);
+}
+
 /*
  * Write the bytes to a file.
  *

@@ -622,6 +622,7 @@ vscan_changed_cb(void *arg, uint64_t newval)
 	zfsvfs->z_vscan = newval;
 }
 
+#ifdef notyet
 static void
 acl_mode_changed_cb(void *arg, uint64_t newval)
 {
@@ -629,6 +630,7 @@ acl_mode_changed_cb(void *arg, uint64_t newval)
 
 	zfsvfs->z_acl_mode = newval;
 }
+#endif
 
 static void
 acl_inherit_changed_cb(void *arg, uint64_t newval)

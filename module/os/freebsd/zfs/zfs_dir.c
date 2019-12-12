@@ -109,6 +109,7 @@ int
 zfs_dirent_lookup(znode_t *dzp, const char *name, znode_t **zpp, int flag)
 {
 	zfsvfs_t	*zfsvfs = dzp->z_zfsvfs;
+	znode_t		*zp;
 	matchtype_t	mt = 0;
 	uint64_t	zoid;
 	int		error = 0;
@@ -183,10 +184,11 @@ zfs_dirent_lookup(znode_t *dzp, const char *name, znode_t **zpp, int flag)
 		if (flag & ZNEW) {
 			return (SET_ERROR(EEXIST));
 		}
-		error = zfs_zget(zfsvfs, zoid, zpp);
+		error = zfs_zget(zfsvfs, zoid, &zp);
 		if (error)
 			return (error);
-		ASSERT(!(*zpp)->z_unlinked);
+		ASSERT(!zp->z_unlinked);
+		*zpp = zp;
 	}
 
 	return (0);
@@ -220,7 +222,7 @@ int
 zfs_dirlook(znode_t *dzp, const char *name, znode_t **zpp)
 {
 	zfsvfs_t *zfsvfs __unused = dzp->z_zfsvfs;
-	znode_t *zp;
+	znode_t *zp = NULL;
 	int error = 0;
 
 	ASSERT_VOP_LOCKED(ZTOV(dzp), __func__);
@@ -232,7 +234,9 @@ zfs_dirlook(znode_t *dzp, const char *name, znode_t **zpp)
 	if (name[0] == 0 || (name[0] == '.' && name[1] == 0)) {
 		*zpp = dzp;
 	} else if (name[0] == '.' && name[1] == '.' && name[2] == 0) {
-		error = zfs_dd_lookup(dzp, zpp);
+		error = zfs_dd_lookup(dzp, &zp);
+		if (error == 0)
+			*zpp = zp;
 	} else {
 		error = zfs_dirent_lookup(dzp, name, &zp, ZEXISTS);
 		if (error == 0) {

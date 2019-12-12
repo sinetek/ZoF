@@ -1194,6 +1194,28 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr)
 	return (0);
 }
 
+int
+zfs_write_simple(znode_t *zp, const void *data, size_t len,
+    loff_t pos, size_t *presid)
+{
+	int error = 0;
+	ssize_t resid;
+
+	error = vn_rdwr(UIO_WRITE, ZTOV(zp), __DECONST(void *, data), len, pos,
+	    UIO_SYSSPACE, IO_SYNC, kcred, NOCRED, &resid, curthread);
+
+	if (error) {
+		return (SET_ERROR(error));
+	} else if (presid == NULL) {
+		if (resid != 0) {
+			error = SET_ERROR(EIO);
+		}
+	} else {
+		*presid = resid;
+	}
+	return (error);
+}
+
 static ssize_t
 zpl_write_common_iovec(vnode_t *ip, struct iovec *iovp, size_t count,
     unsigned long nr_segs, loff_t *ppos, uio_seg_t segment, int flags,

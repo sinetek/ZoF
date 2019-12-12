@@ -785,7 +785,7 @@ zfs_dirempty(znode_t *dzp)
 }
 
 int
-zfs_make_xattrdir(znode_t *zp, vattr_t *vap, vnode_t **xvpp, cred_t *cr)
+zfs_make_xattrdir(znode_t *zp, vattr_t *vap, znode_t **xvpp, cred_t *cr)
 {
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	znode_t *xzp;
@@ -852,7 +852,7 @@ zfs_make_xattrdir(znode_t *zp, vattr_t *vap, vnode_t **xvpp, cred_t *cr)
 
 	getnewvnode_drop_reserve();
 
-	*xvpp = ZTOV(xzp);
+	*xvpp = xzp;
 
 	return (0);
 }
@@ -871,7 +871,7 @@ zfs_make_xattrdir(znode_t *zp, vattr_t *vap, vnode_t **xvpp, cred_t *cr)
  *		error number on failure
  */
 int
-zfs_get_xattrdir(znode_t *zp, vnode_t **xvpp, cred_t *cr, int flags)
+zfs_get_xattrdir(znode_t *zp, znode_t **xvpp, cred_t *cr, int flags)
 {
 	zfsvfs_t	*zfsvfs = zp->z_zfsvfs;
 	znode_t		*xzp;
@@ -883,7 +883,7 @@ top:
 		return (error);
 
 	if (xzp != NULL) {
-		*xvpp = ZTOV(xzp);
+		*xvpp = xzp;
 		return (0);
 	}
 
@@ -917,7 +917,7 @@ top:
 		goto top;
 	}
 	if (error == 0)
-		VOP_UNLOCK(*xvpp, 0);
+		VOP_UNLOCK(ZTOV(*xvpp), 0);
 
 	return (error);
 }

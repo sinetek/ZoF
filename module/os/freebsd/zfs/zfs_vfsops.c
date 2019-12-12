@@ -1824,7 +1824,7 @@ zfsvfs_teardown(zfsvfs_t *zfsvfs, boolean_t unmounting)
 
 	/*
 	 * If someone has not already unmounted this file system,
-	 * drain the iput_taskq to ensure all active references to the
+	 * drain the zrele_taskq to ensure all active references to the
 	 * zfsvfs_t have been handled only then can it be safely destroyed.
 	 */
 	if (zfsvfs->z_os) {
@@ -1833,7 +1833,7 @@ zfsvfs_teardown(zfsvfs_t *zfsvfs, boolean_t unmounting)
 		 * drain completely.
 		 *
 		 * If we're not unmounting there's no guarantee the list
-		 * will drain completely, but iputs run from the taskq
+		 * will drain completely, but zreles run from the taskq
 		 * may add the parents of dir-based xattrs to the taskq
 		 * so we want to wait for these.
 		 *
@@ -1843,7 +1843,7 @@ zfsvfs_teardown(zfsvfs_t *zfsvfs, boolean_t unmounting)
 		 */
 		int round = 0;
 		while (zfsvfs->z_nr_znodes > 0) {
-			taskq_wait_outstanding(dsl_pool_iput_taskq(
+			taskq_wait_outstanding(dsl_pool_zrele_taskq(
 			    dmu_objset_pool(zfsvfs->z_os)), 0);
 			if (++round > 1 && !unmounting)
 				break;

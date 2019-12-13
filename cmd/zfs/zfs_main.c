@@ -755,9 +755,8 @@ zfs_mount_and_share(libzfs_handle_t *hdl, const char *dataset, zfs_type_t type)
 			    "successfully created, but it may only be "
 			    "mounted by root\n"));
 			ret = 1;
-		} else
-			if (zfs_mount(zhp, NULL, 0) != 0) {
-				(void) fprintf(stderr, gettext("filesystem "
+		} else if (zfs_mount(zhp, NULL, 0) != 0) {
+			(void) fprintf(stderr, gettext("filesystem "
 			    "successfully created, but not mounted\n"));
 			ret = 1;
 		} else if (zfs_share(zhp) != 0) {
@@ -7266,6 +7265,7 @@ unshare_unmount(int op, int argc, char **argv)
 				if (zfs_unmount(node->un_zhp,
 				    mntarg, flags) != 0)
 					ret = 1;
+				break;
 			}
 
 			zfs_close(node->un_zhp);

@@ -559,7 +559,6 @@ zfs_replay_create(void *arg1, void *arg2, boolean_t byteswap)
 #ifdef __FreeBSD__
 	VOP_UNLOCK(ZTOV(dzp), 0);
 #endif
-
 out:
 	if (error == 0 && zp != NULL)
 		zrele(zp);

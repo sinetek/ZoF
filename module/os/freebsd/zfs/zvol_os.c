@@ -73,7 +73,6 @@
 #include <sys/dsl_dataset.h>
 #include <sys/dsl_prop.h>
 #include <sys/dsl_dir.h>
-#include <sys/dkio.h>
 #include <sys/byteorder.h>
 #include <sys/sunddi.h>
 #include <sys/dirent.h>

@@ -101,7 +101,6 @@ SRCS+=	acl_common.c \
 	opensolaris_dtrace.c \
 	opensolaris_kmem.c \
 	opensolaris_kstat.c \
-	opensolaris_lookup.c \
 	opensolaris_misc.c \
 	opensolaris_policy.c \
 	opensolaris_string.c \

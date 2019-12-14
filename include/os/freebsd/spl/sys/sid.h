@@ -28,7 +28,6 @@
 
 #ifndef _OPENSOLARIS_SYS_SID_H_
 #define	_OPENSOLARIS_SYS_SID_H_
-#include <sys/kidmap.h>
 
 typedef struct ksiddomain {
 	char	*kd_name;	/* Domain part of SID */

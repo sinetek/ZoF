@@ -65,7 +65,6 @@
 #include <sys/spa_boot.h>
 #include <sys/jail.h>
 #include <ufs/ufs/quota.h>
-#include <sys/refstr.h>
 #include <sys/zfs_quota.h>
 
 #include "zfs_comutil.h"
@@ -1427,7 +1426,7 @@ zfs_mount_label_policy(vfs_t *vfsp, char *osname)
 	 * zoned property is off), the label must be default or
 	 * admin_low/admin_high only; no other checks are needed.
 	 */
-	mntzone = zone_find_by_any_path(refstr_value(vfsp->vfs_mntpt), B_FALSE);
+	mntzone = zone_find_by_any_path(vfsp->vfs_mntpt, B_FALSE);
 	if (mntzone->zone_id == GLOBAL_ZONEID) {
 		uint64_t zoned;
 
@@ -1950,7 +1949,7 @@ zfs_umount(vfs_t *vfsp, int fflag)
 
 	ret = secpolicy_fs_unmount(cr, vfsp);
 	if (ret) {
-		if (dsl_deleg_access((char *)refstr_value(vfsp->vfs_resource),
+		if (dsl_deleg_access((char *)vfsp->vfs_resource,
 		    ZFS_DELEG_PERM_MOUNT, cr))
 			return (ret);
 	}

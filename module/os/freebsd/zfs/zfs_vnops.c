@@ -70,7 +70,6 @@
 #include <sys/zfs_sa.h>
 #include <sys/zfs_rlock.h>
 #include <sys/extdirent.h>
-#include <sys/kidmap.h>
 #include <sys/bio.h>
 #include <sys/buf.h>
 #include <sys/sched.h>

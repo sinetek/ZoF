@@ -34,7 +34,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #if defined(_KERNEL) && !defined(_ASM)
-#include <sys/va_list.h>
+#include <sys/varargs.h>
 #endif
 
 #ifdef	__cplusplus

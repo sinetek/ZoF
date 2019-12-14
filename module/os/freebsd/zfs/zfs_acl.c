@@ -53,7 +53,6 @@
 #include <sys/sa.h>
 #include <acl/acl_common.h>
 
-#include <sys/kidmap.h>
 
 #define	ALLOW	ACE_ACCESS_ALLOWED_ACE_TYPE
 #define	DENY	ACE_ACCESS_DENIED_ACE_TYPE

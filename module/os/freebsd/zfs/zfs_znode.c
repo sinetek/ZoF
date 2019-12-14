@@ -51,7 +51,6 @@
 #include <sys/zfs_fuid.h>
 #include <sys/dnode.h>
 #include <sys/fs/zfs.h>
-#include <sys/kidmap.h>
 #endif /* _KERNEL */
 
 #include <sys/dmu.h>

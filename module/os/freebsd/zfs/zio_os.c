@@ -61,15 +61,29 @@ zio_delay_interrupt(zio_t *zio)
 
 			zio_interrupt(zio);
 		} else {
+			taskqid_t tid;
 			hrtime_t diff = zio->io_target_timestamp - now;
+			clock_t expire_at_tick = ddi_get_lbolt() +
+			    NSEC_TO_TICK(diff);
+			/*
+			 * Use taskq_dispatch_delay() in the place of
+			 * OpenZFS's timeout_generic().
+			 */
+			tid = taskq_dispatch_delay(system_taskq,
+				    (task_func_t *)zio_interrupt,
+				    zio, TQ_NOSLEEP, expire_at_tick);
+			if (tid == TASKQID_INVALID) {
+				/*
+				 * Couldn't allocate a task.  Just
+				 * finish the zio without a delay.
+				 */
+				zio_interrupt(zio);
+			}
 
 			DTRACE_PROBE3(zio__delay__hit, zio_t *, zio,
 			    hrtime_t, now, hrtime_t, diff);
 
-			(void) timeout_generic(CALLOUT_NORMAL,
-			    (void (*)(void *))zio_interrupt, zio, diff, 1, 0);
 		}
-
 		return;
 	}
 

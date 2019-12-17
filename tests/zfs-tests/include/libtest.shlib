@@ -2655,11 +2655,6 @@ function add_user #<group_name> <user_name> <basedir>
 #
 function del_user #<logname> <basedir>
 {
-	if is_freebsd ; then
-		del_user_freebsd "$1" "$2"
-		return $?
-	fi
-
 	typeset user=$1
 	typeset basedir=${2:-"/var/tmp"}
 
@@ -2691,11 +2686,6 @@ function del_user #<logname> <basedir>
 #
 function add_group #<group_name>
 {
-	if is_freebsd ; then
-		add_group_freebsd "$1"
-		return $?
-	fi
-
 	typeset group=$1
 
 	if ((${#group} == 0)); then

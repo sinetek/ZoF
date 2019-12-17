@@ -31,11 +31,6 @@
 # 7. Verify labels 0 and 1 have unique Uberblocks, but 2 and 3 have none
 #
 
-if is_freebsd ; then
-	# FreeBSD won't allow writing to an in-use device without this set
-	log_must sysctl kern.geom.debugflags=16
-fi
-
 log_assert "Verify zdb produces unique dumps of uberblocks"
 log_onexit cleanup
 

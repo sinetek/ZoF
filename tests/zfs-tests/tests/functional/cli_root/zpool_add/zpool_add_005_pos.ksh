@@ -87,8 +87,8 @@ else
 fi
 
 if ! is_linux; then
-	log_must echo "y" | newfs ${DEV_DSKDIR}/$dump_dev > /dev/null 2>&1
-	log_must dumpadm -u -d ${DEV_DSKDIR}/$dump_dev > /dev/null
+	log_must eval "new_fs ${DEV_DSKDIR}/$dump_dev > /dev/null 2>&1"
+	log_must eval "dumpadm -u -d ${DEV_DSKDIR}/$dump_dev > /dev/null"
 	log_mustnot zpool add -f "$TESTPOOL" $dump_dev
 fi
 

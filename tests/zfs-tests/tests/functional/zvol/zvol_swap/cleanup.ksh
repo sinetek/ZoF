@@ -38,7 +38,7 @@ verify_runnable "global"
 if is_linux; then
 	log_must swapon -a
 elif is_freebsd; then
-	/sbin/swapon -a || true
+	swapon -a || true
 else
 	log_must swapadd
 fi

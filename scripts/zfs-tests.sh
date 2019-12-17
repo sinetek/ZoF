@@ -239,6 +239,9 @@ create_links() {
 constrain_path() {
 	. "$STF_SUITE/include/commands.cfg"
 
+	SYSTEM_DIRS="/bin /sbin /usr/bin /usr/sbin"
+	SYSTEM_DIRS+=" /usr/local/bin /usr/local/sbin"
+
 	if [ "$INTREE" = "yes" ]; then
 		# Constrained path set to ./zfs/bin/
 		STF_PATH="$BIN_DIR"
@@ -268,32 +271,33 @@ constrain_path() {
 		chmod 755 "$STF_PATH" || fail "Couldn't chmod $STF_PATH"
 
 		# Special case links for standard zfs utilities
-		if [ "$UNAME" = "FreeBSD" ] ; then
-			create_links "/bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin" "$ZFS_FILES"
-		else
-			create_links "/bin /usr/bin /sbin /usr/sbin" "$ZFS_FILES"
-		fi
+		create_links "$SYSTEM_DIRS" "$ZFS_FILES"
 
 		# Special case links for zfs test suite utilities
 		create_links "$STF_SUITE/bin" "$ZFSTEST_FILES"
 	fi
 
 	# Standard system utilities
+	SYSTEM_FILES="$SYSTEM_FILES_COMMON"
 	if [ "$UNAME" = "FreeBSD" ] ; then
-		create_links "/bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin" "$SYSTEM_FILES"
-		create_links "/sbin /usr/bin" "fsck newfs compress uncompress"
+		SYSTEM_FILES+=" $SYSTEM_FILES_FREEBSD"
 	else
-		create_links "/bin /usr/bin /sbin /usr/sbin" "$SYSTEM_FILES"
-		# Exceptions
+		SYSTEM_FILES+=" $SYSTEM_FILES_LINUX"
+	fi
+	create_links "$SYSTEM_DIRS" "$SYSTEM_FILES"
+
+	# Exceptions
+	ln -fs "$STF_PATH/awk" "$STF_PATH/nawk"
+	if [ "$UNAME" = "Linux" ] ; then
 		ln -fs /sbin/fsck.ext4 "$STF_PATH/fsck"
 		ln -fs /sbin/mkfs.ext4 "$STF_PATH/newfs"
 		ln -fs "$STF_PATH/gzip" "$STF_PATH/compress"
 		ln -fs "$STF_PATH/gunzip" "$STF_PATH/uncompress"
 		ln -fs "$STF_PATH/exportfs" "$STF_PATH/share"
 		ln -fs "$STF_PATH/exportfs" "$STF_PATH/unshare"
+	elif [ "$UNAME" = "FreeBSD" ] ; then
+		ln -fs /usr/local/bin/ksh93 "$STF_PATH/ksh"
 	fi
-
-	ln -fs "$STF_PATH/awk" "$STF_PATH/nawk"
 
 	if [ -L "$STF_PATH/arc_summary3" ]; then
 		ln -fs "$STF_PATH/arc_summary3" "$STF_PATH/arc_summary"
@@ -512,16 +516,10 @@ constrain_path
 #
 # Check if ksh exists
 #
-if [ "$UNAME" = "FreeBSD" ] ; then
-	[ -e "/usr/local/bin/ksh93" ] || fail \
-		"Missing /usr/local/bin/ksh93 - Please install ksh93"
-	if [ ! -e "/bin/ksh" ] ; then
-		sudo ln -s /usr/local/bin/ksh93 /bin/ksh
-	fi
-else
-	[ -e "$STF_PATH/ksh" ] || fail "This test suite requires ksh."
+if [ "$UNAME" = "FreeBSD" ]; then
+	ln -fs /usr/local/bin/ksh93 /bin/ksh
 fi
-
+[ -e "$STF_PATH/ksh" ] || fail "This test suite requires ksh."
 [ -e "$STF_SUITE/include/default.cfg" ] || fail \
     "Missing $STF_SUITE/include/default.cfg file."
 

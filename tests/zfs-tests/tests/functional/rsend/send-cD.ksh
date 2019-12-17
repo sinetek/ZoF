@@ -60,13 +60,8 @@ log_must zfs snapshot $sendfs@snap1
 
 # The stream sizes should match, since the second stream contains no new blocks
 log_must eval "zfs send -D -c $sendfs@snap1 >$stream1"
-if is_freebsd; then
-	typeset size0=$(stat -f "%z" $stream0)
-	typeset size1=$(stat -f "%z" $stream1)
-else
-	typeset size0=$(stat -c %s $stream0)
-	typeset size1=$(stat -c %s $stream1)
-fi
+typeset size0=$(stat_size $stream0)
+typeset size1=$(stat_size $stream1)
 within_percent $size0 $size1 90 || log_fail "$size0 and $size1"
 
 # Finally, make sure the receive works correctly.
@@ -76,11 +71,7 @@ log_must eval "zfs recv -d $recvfs <$inc"
 cmp_ds_cont $sendfs $recvfs
 
 # The size of the incremental should be the same as the initial send.
-if is_freebsd; then
-	typeset size2=$(stat -f "%z" $inc)
-else
-	typeset size2=$(stat -c %s $inc)
-fi
+typeset size2=$(stat_size $inc)
 within_percent $size0 $size2 90 || log_fail "$size0 and $size1"
 
 log_pass "The -c and -D flags do not interfere with each other"

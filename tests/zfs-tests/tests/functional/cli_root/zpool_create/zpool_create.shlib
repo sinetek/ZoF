@@ -74,9 +74,7 @@ function create_blockfile
 		log_must mkdir -p $dir
 	fi
 
-	echo "y" | newfs ${DEV_RDSKDIR}/$disk >/dev/null 2>&1
-	(( $? != 0 )) &&
-		log_fail "Create file system fail."
+	log_must eval "new_fs ${DEV_RDSKDIR}/$disk >/dev/null 2>&1"
 
         log_must mount ${DEV_DSKDIR}/$disk $dir
         log_must truncate -s $size $file

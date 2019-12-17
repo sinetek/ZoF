@@ -483,10 +483,7 @@ function verify_userprop
 	typeset stamp=${perm}.${user}.$(date +'%F-%T-%N')
 
 	user_run $user zfs set "$user:ts=$stamp" $dtst
-	# On FreeBSD this can fail if run immediately
-	if is_freebsd; then
-		sleep 2
-	fi
+	zpool sync ${dtst%%/*}
 	if [[ $stamp != $(get_prop "$user:ts" $dtst) ]]; then
 		return 1
 	fi

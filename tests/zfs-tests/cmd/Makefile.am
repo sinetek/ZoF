@@ -25,7 +25,6 @@ SUBDIRS = \
 	stride_dd \
 	threadsappend
 
-
 if BUILD_LINUX
 SUBDIRS += \
 	randfree_file \

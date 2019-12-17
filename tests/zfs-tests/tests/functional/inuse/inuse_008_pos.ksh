@@ -66,15 +66,9 @@ function verify_assertion #slices
 	typeset targets=$1
 
 	for t in $targets; do
-		if is_freebsd; then
-			newfs $t
-			(( $? != 0 )) && \
-				log_fail "newfs over exported pool " \
-		else
-			echo "y" | newfs -v $t > /dev/null 2>&1
-			(( $? != 0 )) && \
-				log_fail "newfs over exported pool " \
-					"fails unexpectedly."
+		if ! new_fs $t; then
+			log_fail "newfs over exported pool " \
+				"fails unexpectedly."
 		fi
 	done
 

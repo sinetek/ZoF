@@ -2393,34 +2393,36 @@ EOF
 	echo $unused
 }
 
-function add_user_freebsd #<group_name> <user_name>
+function add_user_freebsd #<group_name> <user_name> <basedir>
 {
-	typeset gname=$1
-	typeset uname=$2
-
-	if (( ${#gname} == 0 || ${#uname} == 0 )); then
-		log_fail "group name or user name are not defined."
-	fi
+	typeset group=$1
+	typeset user=$2
+	typeset basedir=$3
 
 	# Check to see if the user exists.
-	/usr/bin/id $uname > /dev/null 2>&1 && return 0
+	if id $user > /dev/null 2>&1; then
+		return 0
+	fi
 
 	# Assign 1000 as the base uid
 	typeset -i uid=1000
 	while true; do
 		typeset -i ret
-		/usr/sbin/pw useradd -u $uid -g $gname -d /var/tmp/$uname -m -n $uname
+		pw useradd -u $uid -g $group -d $basedir/$user -m -n $user
 		ret=$?
 		case $ret in
-			0) return 0 ;;
+			0) break ;;
 			# The uid is not unique
 			65) ((uid += 1)) ;;
 			*) return 1 ;;
 		esac
 		if [[ $uid == 65000 ]]; then
-			log_fail "No user id available under 65000 for $uname"
+			log_fail "No user id available under 65000 for $user"
 		fi
 	done
+
+	# Silence MOTD
+	touch $basedir/$user/.hushlogin
 
 	return 0
 }
@@ -2434,12 +2436,8 @@ function del_user_freebsd #<logname>
 {
 	typeset user=$1
 
-	if (( ${#user} == 0 )); then
-		log_fail "login name is necessary."
-	fi
-
-	if /usr/bin/id $user > /dev/null 2>&1; then
-		log_must /usr/sbin/pw userdel $user
+	if id $user > /dev/null 2>&1; then
+		log_must pw userdel $user
 	fi
 
 	return 0
@@ -2454,18 +2452,15 @@ function add_group_freebsd #<group_name>
 {
 	typeset group=$1
 
-	if (( ${#group} == 0 )); then
-		log_fail "group name is necessary."
-	fi
-
 	# See if the group already exists.
-	/usr/sbin/pw groupshow $group >/dev/null 2>&1
-	[[ $? == 0 ]] && return 0
+	if pw groupshow $group >/dev/null 2>&1; then
+		return 0
+	fi
 
 	# Assign 1000 as the base gid
 	typeset -i gid=1000
 	while true; do
-		/usr/sbin/pw groupadd -g $gid -n $group > /dev/null 2>&1
+		pw groupadd -g $gid -n $group > /dev/null 2>&1
 		typeset -i ret=$?
 		case $ret in
 			0) return 0 ;;
@@ -2486,18 +2481,130 @@ function add_group_freebsd #<group_name>
 #
 function del_group_freebsd #<group_name>
 {
-	typeset grp=$1
-	if (( ${#grp} == 0 )); then
-		log_fail "group name is necessary."
-	fi
+	typeset group=$1
 
-	/usr/sbin/pw groupdel -n $grp > /dev/null 2>&1
+	pw groupdel -n $group > /dev/null 2>&1
 	typeset -i ret=$?
 	case $ret in
 		# Group does not exist, or was deleted successfully.
 		0|6|65) return 0 ;;
 		# Name already exists as a group name
-		9) log_must /usr/sbin/pw groupdel $grp ;;
+		9) log_must pw groupdel $group ;;
+		*) return 1 ;;
+	esac
+
+	return 0
+}
+
+function add_user_illumos #<group_name> <user_name> <basedir>
+{
+	typeset group=$1
+	typeset user=$2
+	typeset basedir=$3
+
+	log_must useradd -g $group -d $basedir/$user -m $user
+
+	return 0
+}
+
+function del_user_illumos #<user_name>
+{
+	typeset user=$1
+
+	if id $user > /dev/null 2>&1; then
+		log_must_retry "currently used" 6 userdel $user
+	fi
+
+	return 0
+}
+
+function add_group_illumos #<group_name>
+{
+	typeset group=$1
+
+	typeset -i gid=100
+	while true; do
+		groupadd -g $gid $group > /dev/null 2>&1
+		typeset -i ret=$?
+		case $ret in
+			0) return 0 ;;
+			# The gid is not  unique
+			4) ((gid += 1)) ;;
+			*) return 1 ;;
+		esac
+	done
+}
+
+function del_group_illumos #<group_name>
+{
+	typeset group=$1
+
+	groupmod -n $grp $grp > /dev/null 2>&1
+	typeset -i ret=$?
+	case $ret in
+		# Group does not exist.
+		6) return 0 ;;
+		# Name already exists as a group name
+		9) log_must groupdel $grp ;;
+		*) return 1 ;;
+	esac
+}
+
+function add_user_linux #<group_name> <user_name> <basedir>
+{
+	typeset group=$1
+	typeset user=$2
+	typeset basedir=$3
+
+	log_must useradd -g $group -d $basedir/$user -m $user
+
+	# Add new users to the same group and the command line utils.
+	# This allows them to be run out of the original users home
+	# directory as long as it permissioned to be group readable.
+	cmd_group=$(stat --format="%G" $(which zfs))
+	log_must usermod -a -G $cmd_group $user
+
+	return 0
+}
+
+function del_user_linux #<user_name>
+{
+	typeset user=$1
+
+	if id $user > /dev/null 2>&1; then
+		log_must_retry "currently used" 6 userdel $user
+	fi
+
+	return 0
+}
+
+function add_group_linux #<group_name>
+{
+	typeset group=$1
+
+	# Assign 100 as the base gid, a larger value is selected for
+	# Linux because for many distributions 1000 and under are reserved.
+	while true; do
+		groupadd $group > /dev/null 2>&1
+		typeset -i ret=$?
+		case $ret in
+			0) return 0 ;;
+			*) return 1 ;;
+		esac
+	done
+}
+
+function del_group_linux #<group_name>
+{
+	typeset group=$1
+
+	getent group $group > /dev/null 2>&1
+	typeset -i ret=$?
+	case $ret in
+		# Group does not exist.
+		2) return 0 ;;
+		# Name already exists as a group name
+		0) log_must groupdel $group ;;
 		*) return 1 ;;
 	esac
 
@@ -2513,31 +2620,29 @@ function del_group_freebsd #<group_name>
 #
 function add_user #<group_name> <user_name> <basedir>
 {
-	if is_freebsd ; then
-		add_user_freebsd "$1" "$2" "$3"
-		return $?
-	fi
-
-	typeset gname=$1
-	typeset uname=$2
+	typeset group=$1
+	typeset user=$2
 	typeset basedir=${3:-"/var/tmp"}
 
-	if ((${#gname} == 0 || ${#uname} == 0)); then
+	if ((${#group} == 0 || ${#user} == 0)); then
 		log_fail "group name or user name are not defined."
 	fi
 
-	log_must useradd -g $gname -d $basedir/$uname -m $uname
-	echo "export PATH=\"$STF_PATH\"" >>$basedir/$uname/.profile
-	echo "export PATH=\"$STF_PATH\"" >>$basedir/$uname/.bash_profile
-	echo "export PATH=\"$STF_PATH\"" >>$basedir/$uname/.login
+	case $(uname) in
+	FreeBSD)
+		add_user_freebsd "$group" "$user" "$basedir"
+		;;
+	Linux)
+		add_user_linux "$group" "$user" "$basedir"
+		;;
+	*)
+		add_user_illumos "$group" "$user" "$basedir"
+		;;
+	esac
 
-	# Add new users to the same group and the command line utils.
-	# This allows them to be run out of the original users home
-	# directory as long as it permissioned to be group readable.
-	if is_linux; then
-		cmd_group=$(stat --format="%G" $(which zfs))
-		log_must usermod -a -G $cmd_group $uname
-	fi
+	echo "export PATH=\"$STF_PATH\"" >>$basedir/$user/.profile
+	echo "export PATH=\"$STF_PATH\"" >>$basedir/$user/.bash_profile
+	echo "export PATH=\"$STF_PATH\"" >>$basedir/$user/.login
 
 	return 0
 }
@@ -2550,11 +2655,6 @@ function add_user #<group_name> <user_name> <basedir>
 #
 function del_user #<logname> <basedir>
 {
-	if is_freebsd ; then
-		del_user_freebsd "$1" "$2"
-		return $?
-	fi
-
 	typeset user=$1
 	typeset basedir=${2:-"/var/tmp"}
 
@@ -2562,9 +2662,17 @@ function del_user #<logname> <basedir>
 		log_fail "login name is necessary."
 	fi
 
-	if id $user > /dev/null 2>&1; then
-		log_must_retry "currently used" 6 userdel $user
-	fi
+	case $(uname) in
+	FreeBSD)
+		del_user_freebsd "$user"
+		;;
+	Linux)
+		del_user_linux "$user"
+		;;
+	*)
+		del_user_illumos "$user"
+		;;
+	esac
 
 	[[ -d $basedir/$user ]] && rm -fr $basedir/$user
 
@@ -2578,41 +2686,25 @@ function del_user #<logname> <basedir>
 #
 function add_group #<group_name>
 {
-	if is_freebsd ; then
-		add_group_freebsd "$1"
-		return $?
-	fi
-
 	typeset group=$1
 
 	if ((${#group} == 0)); then
 		log_fail "group name is necessary."
 	fi
 
-	# Assign 100 as the base gid, a larger value is selected for
-	# Linux because for many distributions 1000 and under are reserved.
-	if is_linux; then
-		while true; do
-			groupadd $group > /dev/null 2>&1
-			typeset -i ret=$?
-			case $ret in
-				0) return 0 ;;
-				*) return 1 ;;
-			esac
-		done
-	else
-		typeset -i gid=100
-		while true; do
-			groupadd -g $gid $group > /dev/null 2>&1
-			typeset -i ret=$?
-			case $ret in
-				0) return 0 ;;
-				# The gid is not  unique
-				4) ((gid += 1)) ;;
-				*) return 1 ;;
-			esac
-		done
-	fi
+	case $(uname) in
+	FreeBSD)
+		add_group_freebsd "$group"
+		;;
+	Linux)
+		add_group_linux "$group"
+		;;
+	*)
+		add_group_illumos "$group"
+		;;
+	esac
+
+	return 0
 }
 
 #
@@ -2622,37 +2714,23 @@ function add_group #<group_name>
 #
 function del_group #<group_name>
 {
-	if is_freebsd ; then
-		del_group_freebsd "$1"
-		return $?
-	fi
+	typeset group=$1
 
-	typeset grp=$1
-	if ((${#grp} == 0)); then
+	if ((${#group} == 0)); then
 		log_fail "group name is necessary."
 	fi
 
-	if is_linux; then
-		getent group $grp > /dev/null 2>&1
-		typeset -i ret=$?
-		case $ret in
-			# Group does not exist.
-			2) return 0 ;;
-			# Name already exists as a group name
-			0) log_must groupdel $grp ;;
-			*) return 1 ;;
-		esac
-	else
-		groupmod -n $grp $grp > /dev/null 2>&1
-		typeset -i ret=$?
-		case $ret in
-			# Group does not exist.
-			6) return 0 ;;
-			# Name already exists as a group name
-			9) log_must groupdel $grp ;;
-			*) return 1 ;;
-		esac
-	fi
+	case $(uname) in
+	FreeBSD)
+		del_group_freebsd "$group"
+		;;
+	Linux)
+		del_group_linux "$group"
+		;;
+	*)
+		del_group_illumos "$group"
+		;;
+	esac
 
 	return 0
 }
@@ -3108,7 +3186,7 @@ function get_package_name
 {
 	typeset dirpath=${1:-$STC_NAME}
 
-	echo "SUNWstc-${dirpath}" | /usr/bin/sed -e "s/\//-/g"
+	echo "SUNWstc-${dirpath}" | sed -e "s/\//-/g"
 }
 
 #
@@ -3592,7 +3670,7 @@ function is_swap_inuse
 	if is_linux; then
 		swapon -s | grep -w $(readlink -f $device) > /dev/null 2>&1
 	elif is_freebsd; then
-		/sbin/swapctl -l | grep -w $device
+		swapctl -l | grep -w $device
 	else
 		swap -l | grep -w $device > /dev/null 2>&1
 	fi
@@ -3611,7 +3689,7 @@ function swap_setup
 		log_must eval "mkswap $swapdev > /dev/null 2>&1"
 		log_must swapon $swapdev
 	elif is_freebsd; then
-		log_must /sbin/swapctl -a $swapdev
+		log_must swapctl -a $swapdev
 	else
 	        log_must swap -a $swapdev
 	fi
@@ -3630,7 +3708,7 @@ function swap_cleanup
 		if is_linux; then
 			log_must swapoff $swapdev
 		elif is_freebsd; then
-			log_must /sbin/swapoff $swapdev
+			log_must swapoff $swapdev
 		else
 			log_must swap -d $swapdev
 		fi
@@ -3795,7 +3873,7 @@ function md5digest
 {
 	typeset file=$1
 
-	case "$(uname)" in
+	case $(uname) in
 	FreeBSD)
 		md5 -q $file
 		;;
@@ -3813,12 +3891,38 @@ function sha256digest
 {
 	typeset file=$1
 
-	case "$(uname)" in
+	case $(uname) in
 	FreeBSD)
 		sha256 -q $file
 		;;
 	*)
 		sha256sum -b $file | awk '{ print $1 }'
+		;;
+	esac
+}
+
+function new_fs #<args>
+{
+	case $(uname) in
+	FreeBSD)
+		newfs "$@"
+		;;
+	*)
+		echo y | newfs -v "$@"
+		;;
+	esac
+}
+
+function stat_size #<path>
+{
+	typeset path=$1
+
+	case $(uname) in
+	FreeBSD)
+		stat -f %z "$path"
+		;;
+	*)
+		stat -c %s "$path"
 		;;
 	esac
 }

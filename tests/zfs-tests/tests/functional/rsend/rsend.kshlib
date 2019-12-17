@@ -571,11 +571,7 @@ function mess_file
 {
 	file=$1
 
-	if is_freebsd; then
-		filesize=$(stat -f "%z" $file)
-	else
-		filesize=$(stat -c '%s' $file)
-	fi
+	filesize=$(stat_size $file)
 
 	offset=$(($RANDOM * $RANDOM % $filesize))
 	if (($RANDOM % 7 <= 1)); then

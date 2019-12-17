@@ -31,10 +31,6 @@
 
 log_assert "Testing the scrub after resilver zedlet"
 
-if is_freebsd; then
-	log_unsupported "ZED not supported on freebsd"
-fi
-
 # Backup our zed.rc
 zedrc_backup=$(zed_rc_backup)
 
@@ -46,6 +42,7 @@ function cleanup
 	# Restore our zed.rc
 	log_must zed_rc_restore $zedrc_backup
 	default_cleanup_noexit
+	log_must zpool labelclear -f $DISK1
 }
 
 log_onexit cleanup

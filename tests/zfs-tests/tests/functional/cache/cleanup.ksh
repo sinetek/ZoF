@@ -34,10 +34,6 @@
 
 verify_runnable "global"
 
-if ! is_physical_device $LDEV; then
-	log_unsupported "Only physical disk could be cache device"
-fi
-
 if datasetexists $TESTPOOL ; then
 	log_must zpool destroy -f $TESTPOOL
 fi

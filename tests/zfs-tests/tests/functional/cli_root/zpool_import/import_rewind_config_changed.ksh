@@ -48,11 +48,7 @@ function custom_cleanup
 {
 	set_vdev_validate_skip 0
 	cleanup
-	if is_freebsd; then
-		log_must set_tunable64 vfs.zfs.vdev.vdev_min_ms_count 16
-	else
-		log_must set_tunable64 vdev_min_ms_count 16
-	fi
+	log_must set_tunable64 zfs_vdev_min_ms_count 16
 }
 
 log_onexit custom_cleanup
@@ -119,7 +115,7 @@ function test_common
 	# further than the time that we took the checkpoint.
 	#
 	# Note that, ideally we would want to take a checkpoint
-	# right after we recond the txg we plan to rewind to.
+	# right after we record the txg we plan to rewind to.
 	# But since we can't attach, detach or remove devices
 	# while having a checkpoint, we take it after the
 	# operation that changes the config.
@@ -212,11 +208,7 @@ increase_device_sizes $(( FILE_SIZE * 4 ))
 
 # Increase the number of metaslabs for small pools temporarily to
 # reduce the chance of reusing a metaslab that holds old MOS metadata.
-if is_freebsd; then
-	log_must set_tunable64 vfs.zfs.vdev.vdev_min_ms_count 150
-else
-	log_must set_tunable64 vdev_min_ms_count 150
-fi
+log_must set_tunable64 zfs_vdev_min_ms_count 150
 
 # Part of the rewind test is to see how it reacts to path changes
 typeset pathstochange="$VDEV0 $VDEV1 $VDEV2 $VDEV3"

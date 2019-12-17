@@ -95,7 +95,6 @@ for arg in ${badargs[@]}; do
 	log_mustnot eval "zfs unmount $arg $fs >/dev/null 2>&1"
 done
 
-
 # Testing invalid datasets
 for ds in $snap $vol "blah"; do
 	for opt in "" "-f"; do

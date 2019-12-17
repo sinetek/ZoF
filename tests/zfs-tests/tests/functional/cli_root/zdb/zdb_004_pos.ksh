@@ -31,12 +31,6 @@
 # 7. Verify labels 0 and 1 have unique Uberblocks, but 2 and 3 have none
 #
 
-if is_freebsd ; then
-	# FreeBSD won't allow writing to an in-use device without this set
-	log_must /sbin/sysctl kern.geom.debugflags=16
-	DEV_RDSKDIR="/dev"
-fi
-
 log_assert "Verify zdb produces unique dumps of uberblocks"
 log_onexit cleanup
 
@@ -46,7 +40,16 @@ function cleanup
 	for DISK in $DISKS; do
 		zpool labelclear -f $DEV_RDSKDIR/$DISK
 	done
+	if is_freebsd ; then
+		log_must sysctl kern.geom.debugflags=$saved_debugflags
+	fi
 }
+
+if is_freebsd ; then
+	# FreeBSD won't allow writing to an in-use device without this set
+	saved_debugflags=$(sysctl -n kern.geom.debugflags)
+	log_must sysctl kern.geom.debugflags=16
+fi
 
 verify_runnable "global"
 verify_disk_count "$DISKS" 2

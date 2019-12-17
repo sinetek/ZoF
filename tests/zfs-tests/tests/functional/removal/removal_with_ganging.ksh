@@ -23,21 +23,12 @@
 
 function cleanup
 {
-	if is_freebsd; then
-		log_must set_tunable64 vfs.zfs.metaslab.force_ganging $((2**17 + 1))
-	else
-		log_must set_tunable64 metaslab_force_ganging $((2**17 + 1))
-	fi
-
+	log_must set_tunable64 metaslab_force_ganging $((2**17 + 1))
 	default_cleanup_noexit
 }
 
 default_setup_noexit "$DISKS"
-if is_freebsd; then
-	log_must set_tunable64 vfs.zfs.metaslab.force_ganging $((2**14))
-else
-	log_must set_tunable64 metaslab_force_ganging $((2**14))
-fi
+log_must set_tunable64 metaslab_force_ganging $((2**14))
 log_onexit cleanup
 
 FILE_CONTENTS="Leeloo Dallas mul-ti-pass."

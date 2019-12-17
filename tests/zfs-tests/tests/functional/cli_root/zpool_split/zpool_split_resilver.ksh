@@ -41,11 +41,7 @@ verify_runnable "both"
 
 function cleanup
 {
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.zfs_scan_suspend_progress 0
-	else
-		log_must set_tunable32 zfs_scan_suspend_progress 0
-	fi
+	log_must set_tunable32 zfs_scan_suspend_progress 0
 	destroy_pool $TESTPOOL
 	destroy_pool $TESTPOOL2
 	rm -f $DEVICE1 $DEVICE2
@@ -73,11 +69,7 @@ function zpool_split #disk_to_be_offline/online
 	log_must sync
 
 	# temporarily prevent resilvering progress, so it will not finish too early
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.zfs_scan_suspend_progress 1
-	else
-		log_must set_tunable32 zfs_scan_suspend_progress 1
-	fi
+	log_must set_tunable32 zfs_scan_suspend_progress 1
 
 	log_must zpool online $TESTPOOL $disk
 
@@ -92,11 +84,7 @@ function zpool_split #disk_to_be_offline/online
 
 	log_mustnot zpool split $TESTPOOL $TESTPOOL2
 
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.zfs_scan_suspend_progress 0
-	else
-		log_must set_tunable32 zfs_scan_suspend_progress 0
-	fi
+	log_must set_tunable32 zfs_scan_suspend_progress 0
 }
 
 log_assert "Verify 'zpool split' will fail if resilver in progress for a disk"

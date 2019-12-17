@@ -42,10 +42,6 @@
 # 3. Verify fsck on the snapshot is OK
 #
 
-if is_freebsd; then
-	log_unsupported "Snapshot devices not supported on FreeBSD"
-fi
-
 verify_runnable "global"
 
 volsize=$(zfs get -H -o value volsize $TESTPOOL/$TESTVOL)
@@ -70,12 +66,7 @@ NUM_WRITES=40
 
 log_must zfs set volsize=128m $TESTPOOL/$TESTVOL
 
-if is_freebsd; then
-	log_must /sbin/newfs ${ZVOL_RDEVDIR}/$TESTPOOL/$TESTVOL
-else
-	echo "y" | newfs -v ${ZVOL_RDEVDIR}/$TESTPOOL/$TESTVOL >/dev/null 2>&1
-	(( $? != 0 )) && log_fail "Unable to newfs(1M) $TESTPOOL/$TESTVOL"
-fi
+log_must new_fs ${ZVOL_RDEVDIR}/$TESTPOOL/$TESTVOL
 
 log_must mount ${ZVOL_DEVDIR}/$TESTPOOL/$TESTVOL $TESTDIR
 

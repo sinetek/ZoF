@@ -43,7 +43,7 @@ function verify_truncate # <filename> <filesize> <option>
 		typeset -i timestc="$(stat -f "%c" $filename)"
 		log_must sleep 1
 		log_must $STF_SUITE/tests/functional/truncate/truncate_test -s $size $filename $option
-		verify_eq $size "$(stat -f "%z" $filename)" "size"
+		verify_eq $size "$(stat_size $filename)" "size"
 		verify_ne $timestm "$(stat -f "%m" $filename)" "mtime"
 		verify_ne $timestc "$(stat -f "%c" $filename)" "ctime"
 	else
@@ -51,7 +51,7 @@ function verify_truncate # <filename> <filesize> <option>
 		typeset -i timestc="$(stat -c %Z $filename)"
 		log_must sleep 1
 		log_must $STF_SUITE/tests/functional/truncate/truncate_test -s $size $filename $option
-		verify_eq $size "$(stat -c %s $filename)" "size"
+		verify_eq $size "$(stat_size $filename)" "size"
 		verify_ne $timestm "$(stat -c %Y $filename)" "mtime"
 		verify_ne $timestc "$(stat -c %Z $filename)" "ctime"
 	fi

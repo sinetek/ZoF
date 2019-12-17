@@ -158,14 +158,9 @@ function cmp_md5s {
 	typeset file1=$1
 	typeset file2=$2
 
-	eval md5sum $file1 | awk '{ print $1 }'	> $BACKDIR/md5_file1
-	eval md5sum $file2 | awk '{ print $1 }'	> $BACKDIR/md5_file2
-	diff $BACKDIR/md5_file1 $BACKDIR/md5_file2
-	typeset -i ret=$?
-
-	rm -f $BACKDIR/md5_file1 $BACKDIR/md5_file2
-
-	return $ret
+	typeset sum1=$(md5digest $file1)
+	typeset sum2=$(md5digest $file2)
+	test "$sum1" = "$sum2"
 }
 
 #
@@ -343,7 +338,7 @@ function getds_with_suffix
 }
 
 #
-# Output inherited properties whitch is edited for file system
+# Output inherited properties which is edited for file system
 #
 function fs_inherit_prop
 {
@@ -576,11 +571,7 @@ function mess_file
 {
 	file=$1
 
-	if is_freebsd; then
-		filesize=$(stat -f "%z" $file)
-	else
-		filesize=$(stat -c '%s' $file)
-	fi
+	filesize=$(stat_size $file)
 
 	offset=$(($RANDOM * $RANDOM % $filesize))
 	if (($RANDOM % 7 <= 1)); then
@@ -805,10 +796,20 @@ function rand_set_prop
 }
 
 # Generate a recursive checksum of a filesystem which includes the file
-# contents and any associated xattrs.
+# contents and any associated extended attributes.
 function recursive_cksum
 {
-	find $1 -type f -exec sh -c 'sha256sum {}; getfattr \
-	    --absolute-names --only-values -d {} | sha256sum' \; | \
-	    sort -k 2 | awk '{ print $1 }' | sha256sum
+	case "$(uname)" in
+	FreeBSD)
+		find $1 -type f -exec sh -c 'sha256 -q {}; lsextattr -q \
+		    system {} | sha256 -q; lsextattr -q user {} | sha256 -q' \
+		    \; | sort | sha256 -q
+		;;
+	*)
+		find $1 -type f -exec sh -c 'sha256sum {}; getfattr \
+		    --absolute-names --only-values -d {} | sha256sum' \; | \
+		    sort -k 2 | awk '{ print $1 }' | sha256sum | \
+		    awk '{ print $1 }'
+		;;
+	esac
 }

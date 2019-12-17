@@ -115,19 +115,19 @@ function safe_dumpadm
 		log_must dumpadm -d $device
 	else
 		if is_freebsd; then
-			log_must /sbin/swapon
+			log_must swapon
 		else
 			log_must swapadd
 		fi
 		if ! is_swap_inuse $device ; then
 			if is_freebsd; then
-				log_must /sbin/swapctl -a $device
+				log_must swapctl -a $device
 			else
 				log_must swap -a $device
 			fi
 		fi
 		if is_freebsd; then
-			log_must /sbin/dumpon $device
+			log_must dumpon $device
 		else
 			log_must dumpadm -d swap
 		fi

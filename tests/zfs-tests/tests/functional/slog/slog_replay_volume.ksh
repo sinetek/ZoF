@@ -61,10 +61,11 @@ verify_runnable "global"
 
 VOLUME=$ZVOL_DEVDIR/$TESTPOOL/$TESTVOL
 MNTPNT=$TESTDIR/$TESTVOL
+FSTYPE=none
 
 function cleanup_volume
 {
-	if ismounted $MNTPNT $NEWFS_DEFAULT_FS; then
+	if ismounted $MNTPNT $FSTYPE; then
 		log_must umount $MNTPNT
 		rmdir $MNTPNT
 	fi
@@ -76,6 +77,7 @@ function cleanup_volume
 
 log_assert "Replay of intent log succeeds."
 log_onexit cleanup_volume
+log_must setup
 
 #
 # 1. Create an empty volume (TESTVOL), set sync=always, and format
@@ -86,16 +88,19 @@ log_must zfs create -V 128M $TESTPOOL/$TESTVOL
 log_must zfs set compression=on $TESTPOOL/$TESTVOL
 log_must zfs set sync=always $TESTPOOL/$TESTVOL
 log_must mkdir -p $TESTDIR
-log_must block_device_wait
-if is_freebsd; then
-	log_must newfs $VOLUME
-	log_must mkdir -p $MNTPNT
-	log_must mount $VOLUME $MNTPNT
-else
-	log_must eval "echo y | newfs -t ext4 -v $VOLUME"
+block_device_wait
+if is_linux; then
+	# ext4 only on Linux
+	log_must new_fs -t ext4 -v $VOLUME
 	log_must mkdir -p $MNTPNT
 	log_must mount -o discard $VOLUME $MNTPNT
+	FSTYPE=ext4
 	log_must rmdir $MNTPNT/lost+found
+else
+	log_must new_fs $VOLUME
+	log_must mkdir -p $MNTPNT
+	log_must mount $VOLUME $MNTPNT
+	FSTYPE=$NEWFS_DEFAULT_FS
 fi
 log_must zpool sync
 
@@ -109,13 +114,8 @@ log_must zpool freeze $TESTPOOL
 #
 
 # TX_WRITE
-if is_freebsd; then
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 conv=sync
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 conv=sync
-else
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
-	log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
-fi
+log_must dd if=/dev/urandom of=$MNTPNT/latency-8k bs=8k count=1 oflag=sync
+log_must dd if=/dev/urandom of=$MNTPNT/latency-128k bs=128k count=1 oflag=sync
 
 # TX_WRITE (WR_INDIRECT)
 log_must zfs set logbias=throughput $TESTPOOL/$TESTVOL
@@ -126,23 +126,21 @@ log_must dd if=/dev/urandom of=$MNTPNT/throughput-128k bs=128k count=1
 log_must dd if=/dev/urandom of=$MNTPNT/holes bs=128k count=8
 log_must dd if=/dev/zero of=$MNTPNT/holes bs=128k count=2 seek=2 conv=notrunc
 
-# TX_TRUNCATE
-if fallocate --punch-hole 2>&1 | grep -q "unrecognized option"; then
-	log_note "fallocate(1) does not support --punch-hole"
-else
-	log_must dd if=/dev/urandom of=$MNTPNT/discard bs=128k count=16
-	log_must fallocate --punch-hole -l 128K -o 512K $MNTPNT/discard
-	log_must fallocate --punch-hole -l 512K -o 1M $MNTPNT/discard
+if is_linux; then
+	# TX_TRUNCATE
+	if fallocate --punch-hole 2>&1 | grep -q "unrecognized option"; then
+		log_note "fallocate(1) does not support --punch-hole"
+	else
+		log_must dd if=/dev/urandom of=$MNTPNT/discard bs=128k count=16
+		log_must fallocate --punch-hole -l 128K -o 512K $MNTPNT/discard
+		log_must fallocate --punch-hole -l 512K -o 1M $MNTPNT/discard
+	fi
 fi
 
 #
 # 4. Generate checksums for all ext4 files.
 #
-if is_freebsd; then
-	log_must eval "sha256 $MNTPNT/* >$TESTDIR/checksum"
-else
-	log_must eval "sha256sum -b $MNTPNT/* >$TESTDIR/checksum"
-fi
+typeset checksum=$(cat $MNTPNT/* | sha256digest)
 
 #
 # 5. Unmount filesystem and export the pool
@@ -174,10 +172,8 @@ log_note "Verify current block usage:"
 log_must zdb -bcv $TESTPOOL
 
 log_note "Verify checksums"
-if is_freebsd; then
-	log_must sha256 -c $TESTDIR/checksum
-else
-	log_must sha256sum -c $TESTDIR/checksum
-fi
+typeset checksum1=$(cat $MNTPNT/* | sha256digest)
+[[ "$checksum1" == "$checksum" ]] || \
+    log_fail "checksum mismatch ($checksum1 != $checksum)"
 
 log_pass "Replay of intent log succeeds."

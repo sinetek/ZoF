@@ -48,10 +48,6 @@
 
 verify_runnable "global"
 
-if is_freebsd; then
-	log_unsupported "Devices setting not supported on FreeBSD"
-fi
-
 log_assert "Setting devices=off on file system, the devices files in this file"\
 	"system can not be used."
 log_onexit cleanup

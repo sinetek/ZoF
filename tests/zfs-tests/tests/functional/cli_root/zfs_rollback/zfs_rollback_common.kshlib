@@ -76,12 +76,7 @@ function setup_snap_env
 		# mount it. Otherwise, only check if this ufs|ext file system
 		# was mounted.
 		#
-		if is_freebsd; then
-			log_must /sbin/newfs $ZVOL_DEVDIR/$VOL
-		else
-			log_must eval "echo "y" | \
-				newfs -v $ZVOL_DEVDIR/$VOL > /dev/null 2>&1"
-		fi
+		log_must new_fs $ZVOL_DEVDIR/$VOL
 
 		[[ ! -d $TESTDIR1 ]] && log_must mkdir $TESTDIR1
 
@@ -151,7 +146,7 @@ function setup_clone_env
 }
 
 #
-# Clean up the test environmnet
+# Clean up the test environment
 #
 # $1 number of snapshot Note: Currently only support three snapshots.
 #

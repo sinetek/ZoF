@@ -24,7 +24,7 @@
 #
 # Strategy:
 # 1. Create an origin fs with compression and sha256.
-# 2. Clone origin such that it inherits the properies.
+# 2. Clone origin such that it inherits the properties.
 # 3. Use dd with the sync flag to test the sync write path.
 #
 
@@ -42,23 +42,14 @@ log_assert "nopwrite works for sync writes"
 
 log_must zfs set compress=on $origin
 log_must zfs set checksum=sha256 $origin
-if is_freebsd; then
-	dd if=/dev/urandom of=$TESTDIR/file bs=1024k count=$MEGS conv=notrunc \
-	    >/dev/null 2>&1 || log_fail "dd into $TESTDIR/file failed."
-else
-	dd if=/dev/urandom of=$TESTDIR/file bs=1024k count=$MEGS oflag=sync \
-	    conv=notrunc >/dev/null 2>&1 \
-	    || log_fail "dd into $TESTDIR/file failed."
-fi
+dd if=/dev/urandom of=$TESTDIR/file bs=1024k count=$MEGS oflag=sync \
+    conv=notrunc >/dev/null 2>&1 || log_fail "dd into $TESTDIR/file failed."
 zfs snapshot $origin@a || log_fail "zfs snap failed"
 log_must zfs clone $origin@a $origin/clone
-if is_freebsd; then
-	dd if=$TESTDIR/file of=$TESTDIR/clone/file bs=1024k count=$MEGS \
-	    conv=notrunc >/dev/null 2>&1 || log_fail "dd failed."
-else
-	dd if=/$TESTDIR/file of=/$TESTDIR/clone/file bs=1024k count=$MEGS \
-	    oflag=sync conv=notrunc >/dev/null 2>&1 || log_fail "dd failed."
-fi
+
+dd if=/$TESTDIR/file of=/$TESTDIR/clone/file bs=1024k count=$MEGS \
+    oflag=sync conv=notrunc >/dev/null 2>&1 || log_fail "dd failed."
+
 log_must verify_nopwrite $origin $origin@a $origin/clone
 
 log_pass "nopwrite works for sync writes"

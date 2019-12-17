@@ -57,13 +57,8 @@ function write_compare_files # <sendfs> <recvfs> <offset>
 	# compare sparse files
 	recvfile="$(get_prop mountpoint $recvfs)/data.bin"
 	log_must cmp $sendfile $recvfile $offset $offset
-	if is_freebsd; then
-		sendsz=$(stat -f '%z' $sendfile)
-		recvsz=$(stat -f '%z' $recvfile)
-	else
-		sendsz=$(stat -c '%s' $sendfile)
-		recvsz=$(stat -c '%s' $recvfile)
-	fi
+	sendsz=$(stat_size $sendfile)
+	recvsz=$(stat_size $recvfile)
 	if [[ $sendsz -ne $recvsz ]]; then
 		log_fail "$sendfile ($sendsz) and $recvfile ($recvsz) differ."
 	fi

@@ -34,12 +34,15 @@ log_onexit cleanup
 function cleanup
 {
 	datasetexists $TESTPOOL && destroy_pool $TESTPOOL
+	if is_freebsd ; then
+		log_must sysctl kern.geom.debugflags=$saved_debugflags
+	fi
 }
 
 if is_freebsd ; then
 	# FreeBSD won't allow writing to an in-use device without this set
-	log_must /sbin/sysctl kern.geom.debugflags=16
-	DEV_RDSKDIR="/dev"
+	saved_debugflags=$(sysctl -n kern.geom.debugflags)
+	log_must sysctl kern.geom.debugflags=16
 fi
 
 verify_runnable "global"

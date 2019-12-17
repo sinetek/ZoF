@@ -22,10 +22,8 @@ SUBDIRS = \
 	readmmap \
 	rename_dir \
 	rm_lnkcnt_zero_file \
-	threadsappend \
 	stride_dd \
 	threadsappend
-
 
 if BUILD_LINUX
 SUBDIRS += \

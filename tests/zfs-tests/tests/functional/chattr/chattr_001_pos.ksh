@@ -49,7 +49,7 @@ function cleanup
 {
 	for i in ${files[*]}; do
 		if is_freebsd ; then
-			log_must /bin/chflags noschg $TESTDIR/$i
+			log_must chflags noschg $TESTDIR/$i
 			log_must rm -f $TESTDIR/$i
 		else
 			log_must chattr -ia $TESTDIR/$i
@@ -71,9 +71,9 @@ log_must touch $TESTDIR/immutable
 log_must touch $TESTDIR/append
 
 if is_freebsd ; then
-	log_must /bin/chflags noschg $TESTDIR/writable
-	log_must /bin/chflags schg $TESTDIR/immutable
-	log_must /bin/chflags sappnd $TESTDIR/append
+	log_must chflags noschg $TESTDIR/writable
+	log_must chflags schg $TESTDIR/immutable
+	log_must chflags sappnd $TESTDIR/append
 else
 	log_must chattr -i $TESTDIR/writable
 	log_must chattr +i $TESTDIR/immutable

@@ -48,8 +48,8 @@ verify_runnable "global"
 function cleanup
 {
 	#
-	# Essentailly this is the default_cleanup routine but I cannot get it
-	# to work correctly.  So its reproduced below.  Still need to full
+	# Essentially this is the default_cleanup routine but I cannot get it
+	# to work correctly.  So its reproduced below.  Still need to fully
 	# understand why default_cleanup does not work correctly from here.
 	#
         log_must zfs umount $TESTPOOL/$TESTFS
@@ -73,7 +73,7 @@ function mini_format
 		parted $disk -s -- mklabel gpt
 		typeset -i retval=$?
 	elif is_freebsd; then
-		/sbin/gpart create -s gpt $disk
+		gpart create -s gpt $disk
 		typeset -i retval=$?
 	else
 		typeset format_file=$TEST_BASE_DIR/format_in.$$.1

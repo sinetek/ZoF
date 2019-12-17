@@ -46,11 +46,7 @@
 function test_cleanup
 {
 	poolexists $NESTEDPOOL && destroy_pool $NESTEDPOOL
-	if is_freebsd; then
-		log_must set_tunable32 vfs.zfs.spa_asize_inflation 24
-	else
-		log_must set_tunable32 spa_asize_inflation 24
-	fi
+	log_must set_tunable32 spa_asize_inflation 24
 	cleanup_test_pool
 }
 
@@ -58,11 +54,7 @@ verify_runnable "global"
 
 setup_test_pool
 log_onexit test_cleanup
-if is_freebsd; then
-	log_must set_tunable32 vfs.zfs.spa_asize_inflation 4
-else
-	log_must set_tunable32 spa_asize_inflation 4
-fi
+log_must set_tunable32 spa_asize_inflation 4
 
 log_must zfs create $DISKFS
 

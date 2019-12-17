@@ -26,10 +26,6 @@
 
 . $STF_SUITE/include/libtest.shlib
 
-if is_freebsd; then
-	log_unsupported "Events not supported on FreeBSD"
-fi
-
 DISK=${DISKS%% *}
 
 zed_setup all-debug.sh all-syslog.sh

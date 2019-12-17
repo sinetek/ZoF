@@ -37,7 +37,8 @@ CLEANUPALL="no"
 LOOPBACK="yes"
 STACK_TRACER="no"
 FILESIZE="4G"
-RUNFILE=${RUNFILE:-"linux.run"}
+DEFAULT_RUNFILES="common.run,$(uname | tr '[:upper:]' '[:lower:]').run"
+RUNFILES=${RUNFILES:-$DEFAULT_RUNFILES}
 FILEDIR=${FILEDIR:-/var/tmp}
 DISKS=${DISKS:-""}
 SINGLETEST=()
@@ -50,7 +51,7 @@ UNAME=$(uname -s)
 
 # Override some defaults if on FreeBSD
 if [ "$UNAME" = "FreeBSD" ] ; then
-	TESTFAIL_CALLBACKS=${TESTFAIL_CALLBACKS:-"$ZFS_DBGMSG:$ZFS_DMESG"}
+	TESTFAIL_CALLBACKS=${TESTFAIL_CALLBACKS:-"$ZFS_DMESG"}
 	LOSETUP=/sbin/mdconfig
 	DMSETUP=/sbin/gpart
 else
@@ -238,6 +239,9 @@ create_links() {
 constrain_path() {
 	. "$STF_SUITE/include/commands.cfg"
 
+	SYSTEM_DIRS="/bin /sbin /usr/bin /usr/sbin"
+	SYSTEM_DIRS+=" /usr/local/bin /usr/local/sbin"
+
 	if [ "$INTREE" = "yes" ]; then
 		# Constrained path set to ./zfs/bin/
 		STF_PATH="$BIN_DIR"
@@ -267,32 +271,33 @@ constrain_path() {
 		chmod 755 "$STF_PATH" || fail "Couldn't chmod $STF_PATH"
 
 		# Special case links for standard zfs utilities
-		if [ "$UNAME" = "FreeBSD" ] ; then
-			create_links "/bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin" "$ZFS_FILES"
-		else
-			create_links "/bin /usr/bin /sbin /usr/sbin" "$ZFS_FILES"
-		fi
+		create_links "$SYSTEM_DIRS" "$ZFS_FILES"
 
 		# Special case links for zfs test suite utilities
 		create_links "$STF_SUITE/bin" "$ZFSTEST_FILES"
 	fi
 
 	# Standard system utilities
+	SYSTEM_FILES="$SYSTEM_FILES_COMMON"
 	if [ "$UNAME" = "FreeBSD" ] ; then
-		create_links "/bin /usr/bin /usr/local/bin /sbin /usr/sbin /usr/local/sbin" "$SYSTEM_FILES"
-		create_links "/sbin /usr/bin" "fsck newfs compress uncompress"
+		SYSTEM_FILES+=" $SYSTEM_FILES_FREEBSD"
 	else
-		create_links "/bin /usr/bin /sbin /usr/sbin" "$SYSTEM_FILES"
-		# Exceptions
+		SYSTEM_FILES+=" $SYSTEM_FILES_LINUX"
+	fi
+	create_links "$SYSTEM_DIRS" "$SYSTEM_FILES"
+
+	# Exceptions
+	ln -fs "$STF_PATH/awk" "$STF_PATH/nawk"
+	if [ "$UNAME" = "Linux" ] ; then
 		ln -fs /sbin/fsck.ext4 "$STF_PATH/fsck"
 		ln -fs /sbin/mkfs.ext4 "$STF_PATH/newfs"
 		ln -fs "$STF_PATH/gzip" "$STF_PATH/compress"
 		ln -fs "$STF_PATH/gunzip" "$STF_PATH/uncompress"
 		ln -fs "$STF_PATH/exportfs" "$STF_PATH/share"
 		ln -fs "$STF_PATH/exportfs" "$STF_PATH/unshare"
+	elif [ "$UNAME" = "FreeBSD" ] ; then
+		ln -fs /usr/local/bin/ksh93 "$STF_PATH/ksh"
 	fi
-
-	ln -fs "$STF_PATH/awk" "$STF_PATH/nawk"
 
 	if [ -L "$STF_PATH/arc_summary3" ]; then
 		ln -fs "$STF_PATH/arc_summary3" "$STF_PATH/arc_summary"
@@ -305,7 +310,7 @@ constrain_path() {
 usage() {
 cat << EOF
 USAGE:
-$0 [hvqxkfS] [-s SIZE] [-r RUNFILE] [-t PATH] [-u USER]
+$0 [hvqxkfS] [-s SIZE] [-r RUNFILES] [-t PATH] [-u USER]
 
 DESCRIPTION:
 	ZFS Test Suite launch script
@@ -323,7 +328,7 @@ OPTIONS:
 	-I NUM      Number of iterations
 	-d DIR      Use DIR for files and loopback devices
 	-s SIZE     Use vdevs of SIZE (default: 4G)
-	-r RUNFILE  Run tests in RUNFILE (default: linux.run)
+	-r RUNFILES Run tests in RUNFILES (default: ${DEFAULT_RUNFILES})
 	-t PATH     Run single test at PATH relative to test suite
 	-T TAGS     Comma separated list of tags (default: 'functional')
 	-u USER     Run single test as USER (default: root)
@@ -390,7 +395,7 @@ while getopts 'hvqxkfScn:d:s:r:?t:T:u:I:' OPTION; do
 		FILESIZE="$OPTARG"
 		;;
 	r)
-		RUNFILE="$OPTARG"
+		RUNFILES="$OPTARG"
 		;;
 	t)
 		if [ ${#SINGLETEST[@]} -ne 0 ]; then
@@ -421,14 +426,14 @@ if [ ${#SINGLETEST[@]} -ne 0 ]; then
 		fail "-t and -T are mutually exclusive."
 	fi
 	RUNFILE_DIR="/var/tmp"
-	RUNFILE="zfs-tests.$$.run"
+	RUNFILES="zfs-tests.$$.run"
 	SINGLEQUIET="False"
 
 	if [ -n "$QUIET" ]; then
 		SINGLEQUIET="True"
 	fi
 
-	cat >$RUNFILE_DIR/$RUNFILE << EOF
+	cat >$RUNFILE_DIR/$RUNFILES << EOF
 [DEFAULT]
 pre =
 quiet = $SINGLEQUIET
@@ -454,7 +459,7 @@ EOF
 			CLEANUPSCRIPT="cleanup"
 		fi
 
-		cat >>$RUNFILE_DIR/$RUNFILE << EOF
+		cat >>$RUNFILE_DIR/$RUNFILES << EOF
 
 [$SINGLETESTDIR]
 tests = ['$SINGLETESTFILE']
@@ -471,17 +476,24 @@ fi
 TAGS=${TAGS:='functional'}
 
 #
-# Attempt to locate the runfile describing the test workload.
+# Attempt to locate the runfiles describing the test workload.
 #
-if [ -n "$RUNFILE" ]; then
-	SAVED_RUNFILE="$RUNFILE"
-	RUNFILE=$(find_runfile "$RUNFILE")
-	[ -z "$RUNFILE" ] && fail "Cannot find runfile: $SAVED_RUNFILE"
-fi
+R=""
+IFS=,
+for RUNFILE in $RUNFILES; do
+	if [ -n "$RUNFILE" ]; then
+		SAVED_RUNFILE="$RUNFILE"
+		RUNFILE=$(find_runfile "$RUNFILE")
+		[ -z "$RUNFILE" ] && fail "Cannot find runfile: $SAVED_RUNFILE"
+		R+="${R:+,}${RUNFILE}"
+	fi
 
-if [ ! -r "$RUNFILE" ]; then
-	fail "Cannot read runfile: $RUNFILE"
-fi
+	if [ ! -r "$RUNFILE" ]; then
+		fail "Cannot read runfile: $RUNFILE"
+	fi
+done
+unset IFS
+RUNFILES=$R
 
 #
 # This script should not be run as root.  Instead the test user, which may
@@ -504,16 +516,10 @@ constrain_path
 #
 # Check if ksh exists
 #
-if [ "$UNAME" = "FreeBSD" ] ; then
-	[ -e "/usr/local/bin/ksh93" ] || fail \
-		"Missing /usr/local/bin/ksh93 - Please install ksh93"
-	if [ ! -e "/bin/ksh" ] ; then
-		sudo ln -s /usr/local/bin/ksh93 /bin/ksh
-	fi
-else
-	[ -e "$STF_PATH/ksh" ] || fail "This test suite requires ksh."
+if [ "$UNAME" = "FreeBSD" ]; then
+	ln -fs /usr/local/bin/ksh93 /bin/ksh
 fi
-
+[ -e "$STF_PATH/ksh" ] || fail "This test suite requires ksh."
 [ -e "$STF_SUITE/include/default.cfg" ] || fail \
     "Missing $STF_SUITE/include/default.cfg file."
 
@@ -566,7 +572,7 @@ fi
 
 msg
 msg "--- Configuration ---"
-msg "Runfile:         $RUNFILE"
+msg "Runfiles:        $RUNFILES"
 msg "STF_TOOLS:       $STF_TOOLS"
 msg "STF_SUITE:       $STF_SUITE"
 msg "STF_PATH:        $STF_PATH"
@@ -680,13 +686,13 @@ fi
 #
 # Run all the tests as specified.
 #
-msg "${PYTHON} \"${TEST_RUNNER}\" ${QUIET:+-q}" \
-    "-c \"${RUNFILE}\"" \
+msg "${TEST_RUNNER} ${QUIET:+-q}" \
+    "-c \"${RUNFILES}\"" \
     "-T \"${TAGS}\"" \
     "-i \"${STF_SUITE}\"" \
     "-I \"${ITERATIONS}\""
-${PYTHON} "${TEST_RUNNER}" ${QUIET:+-q} \
-    -c "${RUNFILE}" \
+${TEST_RUNNER} ${QUIET:+-q} \
+    -c "${RUNFILES}" \
     -T "${TAGS}" \
     -i "${STF_SUITE}" \
     -I "${ITERATIONS}" \
@@ -696,7 +702,7 @@ ${PYTHON} "${TEST_RUNNER}" ${QUIET:+-q} \
 # Analyze the results.
 #
 set -o pipefail
-${PYTHON} "${ZTS_REPORT}" "$RESULTS_FILE" | tee "$REPORT_FILE"
+${ZTS_REPORT} "$RESULTS_FILE" | tee "$REPORT_FILE"
 RESULT=$?
 set +o pipefail
 
@@ -708,7 +714,7 @@ fi
 rm -f "$RESULTS_FILE" "$REPORT_FILE"
 
 if [ ${#SINGLETEST[@]} -ne 0 ]; then
-	rm -f "$RUNFILE" &>/dev/null
+	rm -f "$RUNFILES" &>/dev/null
 fi
 
 exit ${RESULT}

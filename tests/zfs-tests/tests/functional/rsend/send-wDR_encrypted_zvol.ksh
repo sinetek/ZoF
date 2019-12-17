@@ -64,11 +64,11 @@ log_must zfs create -o dedup=on -o encryption=on -o keyformat=passphrase \
 	-o keylocation=file://$keyfile -V 128M $TESTPOOL/$TESTVOL
 block_device_wait
 
-if is_freebsd; then
-	# ext4 not supported on FreeBSD
-	log_must eval "echo 'y' | /sbin/newfs $zdev"
+if is_linux; then
+	# ext4 only supported on Linux
+	log_must new_fs -t ext4 $zdev
 else
-	log_must eval "echo 'y' | newfs -t ext4 -v $zdev"
+	log_must new_fs $zdev
 fi
 log_must mkdir -p $mntpnt
 log_must mkdir -p $recvmnt
@@ -91,8 +91,8 @@ block_device_wait
 
 log_must mount $recvdev $recvmnt
 
-md5_1=$(cat $mntpnt/* | md5sum | awk '{print $1}')
-md5_2=$(cat $recvmnt/* | md5sum | awk '{print $1}')
+md5_1=$(cat $mntpnt/* | md5digest)
+md5_2=$(cat $recvmnt/* | md5digest)
 [[ "$md5_1" == "$md5_2" ]] || log_fail "md5 mismatch: $md5_1 != $md5_2"
 
 log_pass "zfs can receive raw, recursive, and deduplicated send streams"

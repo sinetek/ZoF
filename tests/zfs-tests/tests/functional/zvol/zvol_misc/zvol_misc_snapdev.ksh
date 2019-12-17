@@ -39,10 +39,6 @@
 # 3. Verify "snapdev" is inherited correctly
 #
 
-if is_freebsd; then
-	log_unsupported "Snapdev unavailable on FreeBSD"
-fi
-
 verify_runnable "global"
 
 function cleanup

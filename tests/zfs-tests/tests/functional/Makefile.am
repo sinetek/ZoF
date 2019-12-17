@@ -61,6 +61,7 @@ SUBDIRS = \
 	rename_dirs \
 	replacement \
 	reservation \
+	resilver \
 	rootpool \
 	rsend \
 	scrub_mirror \
@@ -68,6 +69,7 @@ SUBDIRS = \
 	snapshot \
 	snapused \
 	sparse \
+	suid \
 	threadsappend \
 	trim \
 	truncate \
@@ -80,6 +82,6 @@ SUBDIRS = \
 	zvol
 
 if BUILD_LINUX
-SUBDIRS+= \
+SUBDIRS += \
 	tmpfile
 endif

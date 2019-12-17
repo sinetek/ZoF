@@ -44,10 +44,6 @@
 
 verify_runnable "global"
 
-if is_freebsd; then
-	log_unsupported "Requires setting up loop device"
-fi
-
 function cleanup_testenv
 {
 	cleanup
@@ -55,7 +51,7 @@ function cleanup_testenv
 		if is_linux; then
 			losetup -d $lofidev
 		elif is_freebsd; then
-			log_note "Requires setting up loop device"
+			mdconfig -du ${lofidev#md}
 		else
 			lofiadm -d $lofidev
 		fi
@@ -66,6 +62,7 @@ log_assert "Verify slog device can be disk, file, lofi device or any device " \
 	"that presents a block interface."
 verify_disk_count "$DISKS" 2
 log_onexit cleanup_testenv
+log_must setup
 
 dsk1=${DISKS%% *}
 log_must zpool create $TESTPOOL ${DISKS#$dsk1}
@@ -84,7 +81,7 @@ if is_linux; then
 	log_must losetup $lofidev ${LDEV2%% *}
 	lofidev=${lofidev##*/}
 elif is_freebsd; then
-	log_note "Requires setting up loop device"
+	lofidev=$(mdconfig -a ${LDEV2%% *})
 else
 	lofidev=${LDEV2%% *}
 	log_must lofiadm -a $lofidev

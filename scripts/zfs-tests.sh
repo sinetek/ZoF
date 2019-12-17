@@ -517,7 +517,7 @@ constrain_path
 # Check if ksh exists
 #
 if [ "$UNAME" = "FreeBSD" ]; then
-	ln -fs /usr/local/bin/ksh93 /bin/ksh
+	sudo ln -fs /usr/local/bin/ksh93 /bin/ksh
 fi
 [ -e "$STF_PATH/ksh" ] || fail "This test suite requires ksh."
 [ -e "$STF_SUITE/include/default.cfg" ] || fail \

@@ -14,6 +14,7 @@ libzfs_core_la_LIBADD = \
 
 if BUILD_FREEBSD
 libzfs_core_la_LDFLAGS = -version-info 3:0:0
+libzfs_core_la_LIBADD += -lutil -lgeom
 else
 libzfs_core_la_LDFLAGS = -version-info 1:0:0
 endif

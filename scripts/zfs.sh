@@ -77,7 +77,7 @@ kill_zed() {
 	fi
 }
 
-check_modules() {
+check_modules_linux() {
 	LOADED_MODULES=""
 	MISSING_MODULES=""
 
@@ -109,7 +109,7 @@ check_modules() {
 	return 0
 }
 
-load_module() {
+load_module_linux() {
 	KMOD=$1
 
 	FILE=$(modinfo "$KMOD" | awk '/^filename:/ {print $2}')
@@ -139,7 +139,7 @@ load_modules_freebsd() {
 	return 0
 }
 
-load_modules() {
+load_modules_linux() {
 	mkdir -p /etc/zfs
 
 	if modinfo "$KMOD_ZLIB_DEFLATE" >/dev/null 2>&1; then
@@ -152,7 +152,7 @@ load_modules() {
 
 	for KMOD in $KMOD_SPL $KMOD_ZAVL $KMOD_ZNVPAIR \
 	    $KMOD_ZUNICODE $KMOD_ZCOMMON $KMOD_ZLUA $KMOD_ICP $KMOD_ZFS; do
-		load_module "$KMOD" || return 1
+		load_module_linux "$KMOD" || return 1
 	done
 
 	if [ "$VERBOSE" = "yes" ]; then
@@ -162,7 +162,7 @@ load_modules() {
 	return 0
 }
 
-unload_module() {
+unload_module_linux() {
 	KMOD=$1
 
 	NAME=$(basename "$KMOD" .ko)
@@ -188,14 +188,14 @@ unload_modules_freebsd() {
 	return 0
 }
 
-unload_modules() {
+unload_modules_linux() {
 	for KMOD in $KMOD_ZFS $KMOD_ICP $KMOD_ZLUA $KMOD_ZCOMMON $KMOD_ZUNICODE \
 	    $KMOD_ZNVPAIR  $KMOD_ZAVL $KMOD_SPL; do
 		NAME=$(basename "$KMOD" .ko)
 		USE_COUNT=$(lsmod | grep -E "^${NAME} " | awk '{print $3}')
 
 		if [ "$USE_COUNT" = "0" ] ; then
-			unload_module "$KMOD" || return 1
+			unload_module_linux "$KMOD" || return 1
 		fi
 	done
 
@@ -214,7 +214,7 @@ unload_modules() {
 	return 0
 }
 
-stack_clear() {
+stack_clear_linux() {
 	STACK_MAX_SIZE=/sys/kernel/debug/tracing/stack_max_size
 	STACK_TRACER_ENABLED=/proc/sys/kernel/stack_tracer_enabled
 
@@ -224,7 +224,7 @@ stack_clear() {
 	fi
 }
 
-stack_check() {
+stack_check_linux() {
 	STACK_MAX_SIZE=/sys/kernel/debug/tracing/stack_max_size
 	STACK_TRACE=/sys/kernel/debug/tracing/stack_trace
 	STACK_LIMIT=15362
@@ -254,21 +254,20 @@ if [ "$UNLOAD" = "yes" ]; then
 		FreeBSD)
 	           unload_modules_freebsd
 		   ;;
-		*)
-	           stack_check
-	           unload_modules
+		Linux)
+	           stack_check_linux
+	           unload_modules_linux
 		   ;;
-
 	esac
 else
 	case $UNAME in
 		FreeBSD)
 		   load_modules_freebsd
 		   ;;
-		*)
-		   stack_clear
-		   check_modules
-		   load_modules "$@"
+		Linux)
+		   stack_clear_linux
+		   check_modules_linux
+		   load_modules_linux "$@"
 		   udevadm trigger
 		   udevadm settle
 		   ;;

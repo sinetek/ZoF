@@ -3173,20 +3173,10 @@ function get_rootpool
 	fi
 	zfs list $rootfs > /dev/null 2>&1
 	if (($? == 0)); then
-		echo ${rootpool%%/*}
+		echo ${rootfs%%/*}
 	else
 		log_fail "This is not a zfsroot system."
 	fi
-}
-
-#
-# Get the package name
-#
-function get_package_name
-{
-	typeset dirpath=${1:-$STC_NAME}
-
-	echo "SUNWstc-${dirpath}" | sed -e "s/\//-/g"
 }
 
 #

@@ -55,7 +55,11 @@ function cleanup
 	done
 
 	if [[ -n $saved_dump_dev ]]; then
-		log_must dumpadm -u -d $saved_dump_dev
+		if is_freebsd; then
+			log_must dumpon $saved_dump_dev
+		else
+			log_must dumpadm -u -d $saved_dump_dev
+		fi
 	fi
 
 	partition_disk $SIZE $disk 7
@@ -78,7 +82,7 @@ raidz2=$mirror2
 diff_size_dev="${disk}${SLICE_PREFIX}${SLICE6} ${disk}${SLICE_PREFIX}${SLICE7}"
 vfstab_dev=$(find_vfstab_dev)
 
-if is_linux || is_freebsd; then
+if is_linux; then
 	partition_disk $SIZE $disk 7
 	cyl=$(get_endslice $disk $SLICE5)
 	log_must set_partition $SLICE6 "$cyl" $SIZE1 $disk
@@ -128,7 +132,11 @@ if ! is_linux; then
 	log_must zpool create -f $TESTPOOL3 $disk
 	log_must zpool destroy -f $TESTPOOL3
 
-	log_must dumpadm -d ${DEV_DSKDIR}/$specified_dump_dev
+	if is_freebsd; then
+		log_must dumpon ${DEV_DSKDIR}/$specified_dump_dev
+	else
+		log_must dumpadm -d ${DEV_DSKDIR}/$specified_dump_dev
+	fi
 	log_mustnot zpool create -f $TESTPOOL1 "$specified_dump_dev"
 
 	# Also check to see that in-use checking prevents us from creating

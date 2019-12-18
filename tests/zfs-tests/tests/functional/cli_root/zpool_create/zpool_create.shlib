@@ -123,7 +123,7 @@ function find_vfstab_dev
 	typeset vfstabdevs=""
 	typeset line
 
-	if is_linux; then
+	if is_freebsd || is_linux; then
 		vfstab="/etc/fstab"
 		tmpfile="$TEST_BASE_DIR/fstab.tmp"
 	else
@@ -150,7 +150,9 @@ function save_dump_dev
 {
 	typeset dumpdev
 
-	if is_linux; then
+	if is_freebsd; then
+		dumpdev=$(dumpon -l)
+	elif is_linux; then
 		dumpdev=""
 	else
 		typeset fnd="Dump device"

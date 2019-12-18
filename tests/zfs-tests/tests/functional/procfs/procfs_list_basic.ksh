@@ -52,10 +52,6 @@ function count_snap_cmds
 	log_must eval "[[ $count -eq $expected_count ]]"
 }
 
-if ! is_linux ; then
-	log_unsupported "procfs is only used on Linux"
-fi
-
 typeset -r ZFS_DBGMSG=/proc/spl/kstat/zfs/dbgmsg
 typeset -r FS=$TESTPOOL/fs
 typeset snap_msgs

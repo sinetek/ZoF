@@ -144,13 +144,6 @@ function log_program_construct_args
 	infile=$1
 	shift
 
-	# test -s /dev/stdin doesn't work on FreeBSD
-	if is_freebsd; then
-		if [ "$1" = "-" ] ; then
-			cat > $tmpin
-		fi
-	fi
-
 	#
 	# Copy the contents of the original channel program to $tmpin.
 	#

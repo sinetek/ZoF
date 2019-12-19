@@ -796,6 +796,7 @@ static struct vop_vector zfsctl_ops_root = {
 	.vop_pathconf =	zfsctl_common_pathconf,
 	.vop_getacl =	zfsctl_common_getacl,
 };
+VFS_VOP_VECTOR_REGISTER(zfsctl_ops_root);
 
 static int
 zfsctl_snapshot_zname(vnode_t *vp, const char *name, int len, char *zname)
@@ -1107,6 +1108,8 @@ static struct vop_vector zfsctl_ops_snapdir = {
 	.vop_pathconf =	zfsctl_common_pathconf,
 	.vop_getacl =	zfsctl_common_getacl,
 };
+VFS_VOP_VECTOR_REGISTER(zfsctl_ops_snapdir);
+
 
 static int
 zfsctl_snapshot_inactive(struct vop_inactive_args *ap)
@@ -1206,6 +1209,7 @@ static struct vop_vector zfsctl_ops_snapshot = {
 	.vop_advlockpurge =	vop_stdadvlockpurge, /* called by vgone */
 	.vop_print =		zfsctl_common_print,
 };
+VFS_VOP_VECTOR_REGISTER(zfsctl_ops_snapshot);
 
 int
 zfsctl_lookup_objset(vfs_t *vfsp, uint64_t objsetid, zfsvfs_t **zfsvfsp)

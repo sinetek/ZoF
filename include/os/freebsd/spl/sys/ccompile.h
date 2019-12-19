@@ -184,6 +184,10 @@ typedef	void zfs_kernel_param_t;
 #define	VN_IS_DOOMED(vp)	((vp)->v_iflag & VI_DOOMED)
 #endif
 
+#if  __FreeBSD_version < 1300068
+#define	VFS_VOP_VECTOR_REGISTER(x)
+#endif
+
 struct hlist_node {
         struct hlist_node *next, **pprev;
 };

@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 
-#include_next <sys/condvar.h>
+#include <sys/spl_condvar.h>
 #include <sys/mutex.h>
 #include <sys/time.h>
 #include <sys/kmem.h>
@@ -77,6 +77,26 @@ typedef enum {
 	cv_init((cv), _name);						\
 } while (0)
 #define	cv_init(cv, name, type, arg)	zfs_cv_init(cv, name, type, arg)
+
+
+static inline int
+cv_wait_sig(kcondvar_t *cvp, kmutex_t *mp)
+{
+
+	return (_cv_wait_sig(cvp, &(mp)->lock_object) != 0);
+}
+
+static inline int
+cv_timedwait(kcondvar_t *cvp, kmutex_t *mp, int timo)
+{
+	int rc;
+
+	rc = _cv_timedwait_sbt((cvp), &(mp)->lock_object, \
+	    tick_sbt * (timo), 0, C_HARDCLOCK);
+	if (rc == EWOULDBLOCK)
+		return (-1);
+	return (0);
+}
 #define	cv_timedwait_io cv_timedwait
 
 static inline clock_t

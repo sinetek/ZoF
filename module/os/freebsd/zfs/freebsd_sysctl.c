@@ -56,6 +56,7 @@
 #include <sys/dsl_crypt.h>
 
 #include <sys/zfs_ioctl_compat.h>
+#include <sys/zfs_context.h>
 
 #include <sys/arc_impl.h>
 #include <sys/dsl_pool.h>
@@ -585,3 +586,25 @@ SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, use_uma, CTLFLAG_RDTUN, &zio_use_uma, 0,
     "Use uma(9) for ZIO allocations");
 SYSCTL_INT(_vfs_zfs_zio, OID_AUTO, exclude_metadata, CTLFLAG_RDTUN, &zio_exclude_metadata, 0,
     "Exclude metadata buffers from dumps as well");
+
+
+extern unsigned long zfs_arc_max;
+extern unsigned long zfs_arc_min;
+extern unsigned long zfs_arc_meta_limit;
+extern unsigned long zfs_arc_meta_min;
+extern unsigned long zfs_arc_meta_limit_percent;
+
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, min, UQUAD, ZMOD_RW, "Min arc size");
+
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, max, UQUAD, ZMOD_RW,
+    "Maximum ARC size");
+
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_limit, UQUAD, ZMOD_RW,
+	"Metadata limit for arc size");
+
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_limit_percent, UQUAD, ZMOD_RW,
+	"Percent of arc size for arc meta limit");
+
+ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_min, UQUAD, ZMOD_RW,
+	"Min arc metadata");
+

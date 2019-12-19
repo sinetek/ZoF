@@ -492,7 +492,7 @@ AC_DEFUN([ZFS_AC_DEFAULT_PACKAGE], [
 		sles)       DEFAULT_INITCONF_DIR=/etc/sysconfig ;;
 		ubuntu)     DEFAULT_INITCONF_DIR=/etc/default   ;;
 		debian)     DEFAULT_INITCONF_DIR=/etc/default   ;;
-		freebsd)    DEFAULT_INITCONF_DIR=${prefix}/etc/rc.conf.d ;;
+		freebsd)    DEFAULT_INITCONF_DIR=$sysconfdir/rc.conf.d;;
 		*)          DEFAULT_INITCONF_DIR=/etc/default   ;;
 	esac
 	AC_MSG_RESULT([$DEFAULT_INITCONF_DIR])

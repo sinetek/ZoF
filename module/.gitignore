@@ -15,4 +15,8 @@
 /Module.symvers
 /vnode_if*
 
+/export_syms
+/machine
+/x86
+
 !Makefile.in

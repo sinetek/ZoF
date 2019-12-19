@@ -1,6 +1,6 @@
 #ifdef _KERNEL
 
-#include <sys/kcondvar.h>
+#include <sys/condvar.h>
 #include <sys/rwlock.h>
 #include <sys/sig.h>
 #include_next <sys/sdt.h>

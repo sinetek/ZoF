@@ -44,7 +44,7 @@
 #include <sys/sunddi.h>
 #include <sys/random.h>
 #include <sys/policy.h>
-#include <sys/kcondvar.h>
+#include <sys/condvar.h>
 #include <sys/callb.h>
 #include <sys/smp.h>
 #include <sys/zfs_dir.h>

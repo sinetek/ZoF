@@ -26,7 +26,7 @@
 #ifndef	_SYS_CALLB_H
 #define	_SYS_CALLB_H
 
-#include <sys/kcondvar.h>
+#include <sys/condvar.h>
 
 #ifdef	__cplusplus
 extern "C" {

@@ -32,11 +32,9 @@
 
 #include <sys/param.h>
 #include <sys/isa_defs.h>
-#if defined(__FreeBSD__) && defined(_KERNEL)
 #include <sys/libkern.h>
 #include <sys/zone.h>
-#include <sys/kcondvar.h>
-#endif
+#include <sys/condvar.h>
 
 #ifdef	__cplusplus
 extern "C" {

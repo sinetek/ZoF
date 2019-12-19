@@ -16,7 +16,9 @@ endif
 
 if BUILD_FREEBSD
 DEFAULT_INCLUDES += \
-	-I$(top_srcdir)/lib/libspl/include/os/freebsd
+	-include $(top_srcdir)/include/os/freebsd/spl/sys/ccompile.h \
+	-I$(top_srcdir)/lib/libspl/include/os/freebsd \
+	-I/usr/include -I/usr/local/include
 endif
 
 if BUILD_LINUX
@@ -30,8 +32,6 @@ AM_CFLAGS += $(ASAN_CFLAGS)
 AM_CFLAGS += $(CODE_COVERAGE_CFLAGS) $(NO_FORMAT_ZERO_LENGTH)
 if BUILD_FREEBSD
 AM_CFLAGS += -fPIC -Werror -Wno-unknown-pragmas -Wno-enum-conversion
-AM_CFLAGS += -include $(top_srcdir)/include/os/freebsd/spl/sys/ccompile.h
-AM_CFLAGS += -I/usr/include -I/usr/local/include
 AM_CFLAGS += -D_MACHINE_ENDIAN_H_
 endif
 

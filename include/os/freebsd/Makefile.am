@@ -1,1 +1,1 @@
-# TODO
+SUBDIRS = linux spl zfs

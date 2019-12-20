@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -34,11 +34,10 @@
 #ifdef _KERNEL
 
 #define	LO_ALLMASK	(LO_INITIALIZED | LO_WITNESS | LO_QUIET |	\
-			 LO_RECURSABLE | LO_SLEEPABLE | LO_UPGRADABLE |	\
-			 LO_DUPOK | LO_CLASSMASK | LO_NOPROFILE)
+    LO_RECURSABLE | LO_SLEEPABLE | LO_UPGRADABLE |	\
+    LO_DUPOK | LO_CLASSMASK | LO_NOPROFILE)
 #define	LO_EXPECTED	(LO_INITIALIZED | LO_WITNESS | LO_RECURSABLE |	\
-			 LO_SLEEPABLE | LO_UPGRADABLE | LO_DUPOK |	\
-			 /* sx lock class */(2 << LO_CLASSSHIFT))
+    LO_SLEEPABLE | LO_UPGRADABLE | LO_DUPOK | (2 << LO_CLASSSHIFT))
 
 #endif	/* defined(_KERNEL) */
 

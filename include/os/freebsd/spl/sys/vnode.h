@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -46,7 +46,7 @@ typedef enum vtype vtype_t;
 #include <sys/namei.h>
 enum symfollow { NO_FOLLOW = NOFOLLOW };
 
-#define	       NOCRED  ((struct ucred *)0)     /* no credential available */
+#define	NOCRED	((struct ucred *)0)	/* no credential available */
 #define	F_FREESP	11 	/* Free file space */
 
 #include <sys/proc.h>
@@ -79,11 +79,12 @@ vn_is_readonly(vnode_t *vp)
 }
 #define	vn_vfswlock(vp)		(0)
 #define	vn_vfsunlock(vp)	do { } while (0)
-#define	vn_ismntpt(vp)		((vp)->v_type == VDIR && (vp)->v_mountedhere != NULL)
+#define	vn_ismntpt(vp)	   \
+	((vp)->v_type == VDIR && (vp)->v_mountedhere != NULL)
 #define	vn_mountedvfs(vp)	((vp)->v_mountedhere)
 #define	vn_has_cached_data(vp)	\
 	((vp)->v_object != NULL && \
-	 (vp)->v_object->resident_page_count > 0)
+	(vp)->v_object->resident_page_count > 0)
 #define	vn_exists(vp)		do { } while (0)
 #define	vn_invalid(vp)		do { } while (0)
 #define	vn_renamepath(tdvp, svp, tnm, lentnm)	do { } while (0)
@@ -183,13 +184,13 @@ vattr_init_mask(vattr_t *vap)
 		vap->va_mask |= AT_ATIME;
 	if (vap->va_mtime.tv_sec != VNOVAL)
 		vap->va_mask |= AT_MTIME;
-	if (vap->va_mode != (u_short)VNOVAL)
+	if (vap->va_mode != (uint16_t)VNOVAL)
 		vap->va_mask |= AT_MODE;
 	if (vap->va_flags != VNOVAL)
 		vap->va_mask |= AT_XVATTR;
 }
 
-#define        RLIM64_INFINITY 0
+#define		RLIM64_INFINITY 0
 
 static __inline int
 vn_rename(char *from, char *to, enum uio_seg seg)

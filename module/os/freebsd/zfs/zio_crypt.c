@@ -27,9 +27,7 @@
 #include <sys/sha2.h>
 #include <sys/hkdf.h>
 
-#ifdef __FreeBSD__
-# undef FCRYPTO_DEBUG
-#endif
+#undef FCRYPTO_DEBUG
 
 /*
  * This file is responsible for handling all of the details of generating
@@ -222,7 +220,7 @@ zio_crypt_key_destroy_early(zio_crypt_key_t *key)
 
 	/* free crypto templates */
 #ifdef __FreeBSD__
-	bzero(&key->zk_session, sizeof(key->zk_session));
+	bzero(&key->zk_session, sizeof (key->zk_session));
 #else
 	crypto_destroy_ctx_template(key->zk_current_tmpl);
 	crypto_destroy_ctx_template(key->zk_hmac_tmpl);
@@ -246,7 +244,7 @@ zio_crypt_key_init(uint64_t crypt, zio_crypt_key_t *key)
 	crypto_mechanism_t mech __unused;
 	uint_t keydata_len;
 	zio_crypt_info_t *ci = NULL;
-	
+
 	ASSERT(key != NULL);
 	ASSERT3U(crypt, <, ZIO_CRYPT_FUNCTIONS);
 
@@ -256,7 +254,7 @@ zio_crypt_key_init(uint64_t crypt, zio_crypt_key_t *key)
 	    ci->ci_crypt_type != ZC_TYPE_CCM)
 		return (ENOTSUP);
 #endif
-	
+
 	keydata_len = zio_crypt_table[crypt].ci_keylen;
 	bzero(key, sizeof (zio_crypt_key_t));
 	rw_init(&key->zk_salt_lock, NULL, RW_DEFAULT, NULL);
@@ -300,10 +298,10 @@ zio_crypt_key_init(uint64_t crypt, zio_crypt_key_t *key)
 	    ci->ci_crypt_type != ZC_TYPE_CCM)
 		return (ENOTSUP);
 
-	ret = freebsd_crypt_newsession(&key->zk_session, ci, &key->zk_current_key);
+	ret = freebsd_crypt_newsession(&key->zk_session, ci,
+	    &key->zk_current_key);
 	if (ret)
 		goto error;
-					 
 #else
 	/*
 	 * Initialize the crypto templates. It's ok if this fails because
@@ -438,7 +436,6 @@ int failed_decrypt_size;
  * Since the auth data is part of the iovec array, all we need to know
  * is the length:  0 means there's no AAD.
  *
- * 
  */
 static int
 zio_do_crypt_uio_opencrypto(boolean_t encrypt, freebsd_crypt_session_t *sess,
@@ -455,10 +452,11 @@ zio_do_crypt_uio_opencrypto(boolean_t encrypt, freebsd_crypt_session_t *sess,
 
 
 	ret = freebsd_crypt_uio(encrypt, sess, ci, uio, key, ivbuf,
-				datalen, auth_len);
+	    datalen, auth_len);
 	if (ret != 0) {
 #ifdef FCRYPTO_DEBUG
-		printf("%s(%d):  Returning error %s\n", __FUNCTION__, __LINE__, encrypt ? "EIO" : "ECKSUM");
+		printf("%s(%d):  Returning error %s\n",
+		    __FUNCTION__, __LINE__, encrypt ? "EIO" : "ECKSUM");
 #endif
 		ret = SET_ERROR(encrypt ? EIO : ECKSUM);
 	}
@@ -602,7 +600,6 @@ zio_crypt_key_wrap(crypto_key_t *cwkey, zio_crypt_key_t *key, uint8_t *iv,
 
 	/* generate iv for wrapping the master and hmac key */
 	ret = random_get_pseudo_bytes(iv, WRAPPING_IV_LEN);
-	
 	if (ret != 0)
 		goto error;
 
@@ -613,7 +610,8 @@ zio_crypt_key_wrap(crypto_key_t *cwkey, zio_crypt_key_t *key, uint8_t *iv,
 	 * We set iovecs[0] -- the authentication data -- below.
 	 */
 	bcopy((void*)key->zk_master_keydata, keydata_out, keydata_len);
-	bcopy((void*)key->zk_hmac_keydata, hmac_keydata_out, SHA512_HMAC_KEYLEN);
+	bcopy((void*)key->zk_hmac_keydata, hmac_keydata_out,
+	    SHA512_HMAC_KEYLEN);
 	iovecs[1].iov_base = keydata_out;
 	iovecs[1].iov_len = keydata_len;
 	iovecs[2].iov_base = hmac_keydata_out;
@@ -882,7 +880,7 @@ zio_crypt_do_hmac(zio_crypt_key_t *key, uint8_t *data, uint_t datalen,
 #ifdef __FreeBSD__
 	crypto_mac(&key->zk_hmac_key, data, datalen,
 	    raw_digestbuf, SHA512_DIGEST_LENGTH);
-#else		   
+#else
 	/* initialize sha512-hmac mechanism and crypto data */
 	mech.cm_type = crypto_mech2id(SUN_CKM_SHA512_HMAC);
 	mech.cm_param = NULL;
@@ -915,7 +913,7 @@ zio_crypt_do_hmac(zio_crypt_key_t *key, uint8_t *data, uint_t datalen,
 	return (0);
 
 #ifndef __FreeBSD__
- error:
+error:
 #endif
 	bzero(digestbuf, digestlen);
 	return (ret);
@@ -1227,7 +1225,7 @@ zio_crypt_bp_do_hmac_updates(crypto_context_t ctx, uint64_t version,
 	return (0);
 
 #ifndef __FreeBSD__
- error:
+error:
 #endif
 	return (ret);
 }
@@ -1746,7 +1744,7 @@ zio_crypt_init_uios_zil(boolean_t encrypt, uint8_t *plainbuf,
 #else
 	nr_iovecs = 0;
 #endif
-	
+
 	slrp = src + sizeof (zil_chain_t);
 	dlrp = dst + sizeof (zil_chain_t);
 
@@ -2278,15 +2276,15 @@ zio_do_crypt_data(boolean_t encrypt, zio_crypt_key_t *key,
 
 #ifdef FCRYPTO_DEBUG
 	printf("%s(%s, %p, %p, %d, %p, %p, %u, %s, %p, %p, %p)\n",
-	       __FUNCTION__,
-	       encrypt ? "encrypt" : "decrypt",
-	       key, salt, ot, iv, mac, datalen,
-	       byteswap ? "byteswap" : "native_endian", plainbuf,
-	       cipherbuf, no_crypt);
+	    __FUNCTION__,
+	    encrypt ? "encrypt" : "decrypt",
+	    key, salt, ot, iv, mac, datalen,
+	    byteswap ? "byteswap" : "native_endian", plainbuf,
+	    cipherbuf, no_crypt);
 
 	printf("\tkey = {");
 	for (int i = 0; i < key->zk_current_key.ck_length/8; i++)
-		printf("%02x ", ((uint8_t*)key->zk_current_key.ck_data)[i]);
+		printf("%02x ", ((uint8_t *)key->zk_current_key.ck_data)[i]);
 	printf("}\n");
 #endif
 	/* create uios for encryption */
@@ -2309,7 +2307,7 @@ zio_do_crypt_data(boolean_t encrypt, zio_crypt_key_t *key,
 		ckey = &key->zk_current_key;
 #ifdef __FreeBSD__
 		tmpl = &key->zk_session;
-#else		
+#else
 		tmpl = key->zk_current_tmpl;
 #endif
 	} else {
@@ -2331,8 +2329,8 @@ zio_do_crypt_data(boolean_t encrypt, zio_crypt_key_t *key,
 
 	/* perform the encryption / decryption */
 #ifdef __FreeBSD__
-	ret = zio_do_crypt_uio_opencrypto(encrypt, tmpl, key->zk_crypt, ckey, iv,
-	    enc_len, &cuio, auth_len);
+	ret = zio_do_crypt_uio_opencrypto(encrypt, tmpl, key->zk_crypt,
+	    ckey, iv, enc_len, &cuio, auth_len);
 #else
 	ret = zio_do_crypt_uio(encrypt, key->zk_crypt, ckey, tmpl, iv, enc_len,
 	    &puio, &cuio, authbuf, auth_len);

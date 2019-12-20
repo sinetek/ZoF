@@ -43,7 +43,7 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 	uid_t		id;
 
 	VERIFY(type == ZFS_OWNER || type == ZFS_GROUP);
-	
+
 	id = (type == ZFS_OWNER) ? crgetuid(cr) : crgetgid(cr);
 
 	if (IS_EPHEMERAL(id))
@@ -51,4 +51,3 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 
 	return ((uint64_t)id);
 }
-

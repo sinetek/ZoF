@@ -39,7 +39,7 @@ spa_txg_history_add(spa_t *spa, uint64_t txg, hrtime_t birth_time)
  */
 int
 spa_txg_history_set(spa_t *spa, uint64_t txg, txg_state_t completed_state,
-					hrtime_t completed_time)
+    hrtime_t completed_time)
 {
 	return (0);
 }

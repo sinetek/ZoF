@@ -31,9 +31,9 @@
 #endif
 
 #if  __FreeBSD_version < 1300051
-#define VM_ALLOC_BUSY_FLAGS VM_ALLOC_NOBUSY
+#define	VM_ALLOC_BUSY_FLAGS VM_ALLOC_NOBUSY
 #else
-#define VM_ALLOC_BUSY_FLAGS  VM_ALLOC_SBUSY | VM_ALLOC_IGN_SBUSY
+#define	VM_ALLOC_BUSY_FLAGS  VM_ALLOC_SBUSY | VM_ALLOC_IGN_SBUSY
 #endif
 
 
@@ -94,7 +94,8 @@ dmu_write_pages(objset_t *os, uint64_t object, uint64_t offset, uint64_t size,
 			dmu_buf_will_dirty(db, tx);
 
 		for (copied = 0; copied < tocpy; copied += PAGESIZE) {
-			ASSERT3U(ptoa((*ma)->pindex), ==, db->db_offset + bufoff);
+			ASSERT3U(ptoa((*ma)->pindex), ==,
+			    db->db_offset + bufoff);
 			thiscpy = MIN(PAGESIZE, tocpy - copied);
 			va = zfs_map_page(*ma, &sf);
 			bcopy(va, (char *)db->db_data + bufoff, thiscpy);

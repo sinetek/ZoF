@@ -160,29 +160,30 @@ unshare_one(libzfs_handle_t *hdl, const char *name, const char *mountpoint,
 }
 
 zfs_share_type_t
-is_shared_impl(libzfs_handle_t *hdl, const char *mountpoint, zfs_share_proto_t proto)
+is_shared_impl(libzfs_handle_t *hdl, const char *mountpoint,
+    zfs_share_proto_t proto)
 {
 	char buf[MAXPATHLEN], *tab;
 
-       if (hdl->libzfs_sharetab == NULL)
-               return (SHARED_NOT_SHARED);
+	if (hdl->libzfs_sharetab == NULL)
+		return (SHARED_NOT_SHARED);
 
-       (void) fseek(hdl->libzfs_sharetab, 0, SEEK_SET);
+	(void) fseek(hdl->libzfs_sharetab, 0, SEEK_SET);
 
-       while (fgets(buf, sizeof (buf), hdl->libzfs_sharetab) != NULL) {
+	while (fgets(buf, sizeof (buf), hdl->libzfs_sharetab) != NULL) {
 
-               /* the mountpoint is the first entry on each line */
-               if ((tab = strchr(buf, '\t')) == NULL)
-                       continue;
+		/* the mountpoint is the first entry on each line */
+		if ((tab = strchr(buf, '\t')) == NULL)
+			continue;
 
-               *tab = '\0';
-               if (strcmp(buf, mountpoint) == 0) {
-                       if (proto == PROTO_NFS)
-                               return (SHARED_NFS);
-               }
-       }
+		*tab = '\0';
+		if (strcmp(buf, mountpoint) == 0) {
+			if (proto == PROTO_NFS)
+				return (SHARED_NFS);
+		}
+	}
 
-       return (SHARED_NOT_SHARED);
+	return (SHARED_NOT_SHARED);
 }
 
 static void

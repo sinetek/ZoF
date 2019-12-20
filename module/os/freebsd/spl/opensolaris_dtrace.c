@@ -33,4 +33,5 @@ __FBSDID("$FreeBSD$");
 #include <sys/queue.h>
 #include <sys/sdt.h>
 
-SDT_PROBE_DEFINE1(sdt,,, set__error, "int");
+/* CSTYLED */
+SDT_PROBE_DEFINE1(sdt, , , set__error, "int");

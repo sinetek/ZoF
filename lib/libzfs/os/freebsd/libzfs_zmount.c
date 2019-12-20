@@ -113,7 +113,7 @@ do_mount(const char *src, const char *mntpt, char *opts, int flags)
 {
 
 	return (zmount(src, mntpt, flags, MNTTYPE_ZFS, NULL, 0, opts,
-	    sizeof(mntpt)));
+	    sizeof (mntpt)));
 }
 
 int

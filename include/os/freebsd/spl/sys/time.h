@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -66,8 +66,8 @@ typedef longlong_t	hrtime_t;
 #ifdef _KERNEL
 
 static __inline hrtime_t
-gethrtime(void) {
-
+gethrtime(void)
+{
 	struct timespec ts;
 	hrtime_t nsec;
 
@@ -83,15 +83,17 @@ gethrtime(void) {
 extern int nsec_per_tick;	/* nanoseconds per clock tick */
 
 #define	ddi_get_lbolt64()				\
-    (int64_t)(((getsbinuptime() >> 16) * hz) >> 16)
+	(int64_t)(((getsbinuptime() >> 16) * hz) >> 16)
 #define	ddi_get_lbolt()		(clock_t)ddi_get_lbolt64()
 
 #else
 
-static __inline hrtime_t gethrtime(void) {
+static __inline hrtime_t
+gethrtime(void)
+{
 	struct timespec ts;
-	clock_gettime(CLOCK_UPTIME,&ts);
-	return (((u_int64_t) ts.tv_sec) * NANOSEC + ts.tv_nsec);
+	clock_gettime(CLOCK_UPTIME, &ts);
+	return (((u_int64_t)ts.tv_sec) * NANOSEC + ts.tv_nsec);
 }
 
 #endif	/* _KERNEL */

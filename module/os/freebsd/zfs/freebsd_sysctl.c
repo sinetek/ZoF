@@ -60,6 +60,7 @@
 
 #include <sys/arc_impl.h>
 #include <sys/dsl_pool.h>
+/* BEGIN CSTYLED */
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, zio, CTLFLAG_RW, 0, "ZFS ZIO");
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, zil, CTLFLAG_RW, 0, "ZFS ZIL");
@@ -607,4 +608,3 @@ ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_limit_percent, UQUAD, ZMOD_RW,
 
 ZFS_MODULE_PARAM(zfs_arc, zfs_arc_, meta_min, UQUAD, ZMOD_RW,
 	"Min arc metadata");
-

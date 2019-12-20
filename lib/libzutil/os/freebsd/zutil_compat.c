@@ -72,4 +72,3 @@ zfs_ioctl_fd(int fd, unsigned long request, zfs_cmd_t *zc)
 
 	return (ret);
 }
-

@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -31,7 +31,18 @@
 
 #include_next <sys/random.h>
 
-static inline int random_get_bytes(uint8_t *p, size_t s) { arc4rand(p, (int)s, 0); return 0; }
-static inline int random_get_pseudo_bytes(uint8_t *p, size_t s) { arc4rand(p, (int)s, 0); return 0; }
+static inline int
+random_get_bytes(uint8_t *p, size_t s)
+{
+	arc4rand(p, (int)s, 0);
+	return (0);
+}
+
+static inline int
+random_get_pseudo_bytes(uint8_t *p, size_t s)
+{
+	arc4rand(p, (int)s, 0);
+	return (0);
+}
 
 #endif	/* !_OPENSOLARIS_SYS_RANDOM_H_ */

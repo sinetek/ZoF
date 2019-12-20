@@ -151,14 +151,16 @@ static const uint64_t K[80] = {
 
 /* Message schedule computation */
 #define	MSCH(W, ii, i)				\
-	W[i + ii + 16] = s1(W[i + ii + 14]) + W[i + ii + 9] + s0(W[i + ii + 1]) + W[i + ii]
+	W[i + ii + 16] = s1(W[i + ii + 14]) + W[i + ii + 9] +	\
+		s0(W[i + ii + 1]) + W[i + ii]
 
 /*
  * SHA512 block compression function.  The 512-bit state is transformed via
  * the 512-bit input block to produce a new state.
  */
 static void
-SHA512_Transform(uint64_t * state, const unsigned char block[SHA512_BLOCK_LENGTH])
+SHA512_Transform(uint64_t *state,
+    const unsigned char block[SHA512_BLOCK_LENGTH])
 {
 	uint64_t W[80];
 	uint64_t S[8];
@@ -334,7 +336,7 @@ SHA512_Final(unsigned char digest[static SHA512_DIGEST_LENGTH], SHA512_CTX *ctx)
 	explicit_bzero(ctx, sizeof (*ctx));
 }
 
-/*** SHA-512t: *********************************************************/
+/* SHA-512t: ******************************************************** */
 /*
  * the SHA512t transforms are identical to SHA512 so reuse the existing function
  */
@@ -364,7 +366,8 @@ SHA512_224_Update(SHA512_CTX * ctx, const void *in, size_t len)
 }
 
 void
-SHA512_224_Final(unsigned char digest[static SHA512_224_DIGEST_LENGTH], SHA512_CTX * ctx)
+SHA512_224_Final(unsigned char digest[static SHA512_224_DIGEST_LENGTH],
+    SHA512_CTX *ctx)
 {
 
 	/* Add padding */
@@ -403,7 +406,8 @@ SHA512_256_Update(SHA512_CTX * ctx, const void *in, size_t len)
 }
 
 void
-SHA512_256_Final(unsigned char digest[static SHA512_256_DIGEST_LENGTH], SHA512_CTX * ctx)
+SHA512_256_Final(unsigned char digest[static SHA512_256_DIGEST_LENGTH],
+    SHA512_CTX * ctx)
 {
 
 	/* Add padding */
@@ -416,7 +420,7 @@ SHA512_256_Final(unsigned char digest[static SHA512_256_DIGEST_LENGTH], SHA512_C
 	explicit_bzero(ctx, sizeof (*ctx));
 }
 
-/*** SHA-384: *********************************************************/
+/* ** SHA-384: ******************************************************** */
 /*
  * the SHA384 and SHA512 transforms are identical, so SHA384 is skipped
  */
@@ -467,9 +471,10 @@ SHA384_Final(unsigned char digest[static SHA384_DIGEST_LENGTH], SHA384_CTX *ctx)
 }
 
 #if 0
-/* When building libmd, provide weak references. Note: this is not
-   activated in the context of compiling these sources for internal
-   use in libcrypt.
+/*
+ * When building libmd, provide weak references. Note: this is not
+ * activated in the context of compiling these sources for internal
+ * use in libcrypt.
  */
 #undef SHA512_Init
 __weak_reference(_libmd_SHA512_Init, SHA512_Init);

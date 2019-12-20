@@ -70,7 +70,7 @@
 
 /* Used by fstat(1). */
 SYSCTL_INT(_debug_sizeof, OID_AUTO, znode, CTLFLAG_RD,
-    SYSCTL_NULL_INT_PTR, sizeof(znode_t), "sizeof(znode_t)");
+	SYSCTL_NULL_INT_PTR, sizeof (znode_t), "sizeof(znode_t)");
 
 /*
  * Define ZNODE_STATS to turn on statistic gathering. By default, it is only
@@ -181,7 +181,7 @@ zfs_znode_init(void)
 	znode_cache = kmem_cache_create("zfs_znode_cache",
 	    sizeof (znode_t), 0, zfs_znode_cache_constructor,
 	    zfs_znode_cache_destructor, NULL, NULL, NULL, 0);
-	//kmem_cache_set_move(znode_cache, zfs_znode_move);
+	// kmem_cache_set_move(znode_cache, zfs_znode_move);
 }
 
 void
@@ -1184,7 +1184,7 @@ zfs_znode_free(znode_t *zp)
 
 void
 zfs_tstamp_update_setup_ext(znode_t *zp, uint_t flag, uint64_t mtime[2],
-	uint64_t ctime[2], boolean_t have_tx)
+    uint64_t ctime[2], boolean_t have_tx)
 {
 	timestruc_t	now;
 
@@ -1219,7 +1219,7 @@ zfs_tstamp_update_setup_ext(znode_t *zp, uint_t flag, uint64_t mtime[2],
 
 void
 zfs_tstamp_update_setup(znode_t *zp, uint_t flag, uint64_t mtime[2],
-	uint64_t ctime[2])
+    uint64_t ctime[2])
 {
 	zfs_tstamp_update_setup_ext(zp, flag, mtime, ctime, B_TRUE);
 }
@@ -1272,7 +1272,7 @@ zfs_extend(znode_t *zp, uint64_t end)
 {
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	dmu_tx_t *tx;
-    zfs_locked_range_t *lr;
+	zfs_locked_range_t *lr;
 	uint64_t newblksz;
 	int error;
 
@@ -1703,7 +1703,7 @@ zfs_grab_sa_handle(objset_t *osp, uint64_t obj, sa_handle_t **hdlp,
 	if ((doi.doi_bonus_type != DMU_OT_SA &&
 	    doi.doi_bonus_type != DMU_OT_ZNODE) ||
 	    (doi.doi_bonus_type == DMU_OT_ZNODE &&
-		doi.doi_bonus_size < sizeof (znode_phys_t))) {
+	    doi.doi_bonus_size < sizeof (znode_phys_t))) {
 		sa_buf_rele(*db, tag);
 		return (SET_ERROR(ENOTSUP));
 	}

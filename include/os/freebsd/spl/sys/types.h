@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -49,12 +49,15 @@ typedef	int64_t		clock_t;
 typedef	struct timespec	timestruc_t;
 typedef	struct timespec	timespec_t;
 typedef struct timespec inode_timespec_t;
+/* BEGIN CSTYLED */
 typedef u_int		uint_t;
 typedef u_char		uchar_t;
 typedef u_short		ushort_t;
 typedef u_long		ulong_t;
 typedef long long	longlong_t;  
 typedef unsigned long long u_longlong_t;
+typedef	u_int		minor_t;
+/* END CSTYLED */
 #ifndef	_OFF64_T_DECLARED
 #define	_OFF64_T_DECLARED
 typedef off_t		off64_t;
@@ -66,7 +69,6 @@ typedef id_t		zoneid_t;
 typedef id_t		ctid_t;
 typedef	mode_t		o_mode_t;
 typedef	uint64_t	pgcnt_t;
-typedef	u_int		minor_t;
 
 #ifdef _KERNEL
 

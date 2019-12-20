@@ -71,12 +71,12 @@ extern void zcmn_err(zoneid_t, int, const char *, ...)
     __KPRINTFLIKE(3);
 #pragma rarely_called(zcmn_err)
 
-#ifndef __FreeBSD__	
+#ifndef __FreeBSD__
 /*PRINTFLIKE1*/
 extern void printf(const char *, ...)
     __KPRINTFLIKE(1);
 #pragma	rarely_called(printf)
-#endif	
+#endif
 
 extern void vzprintf(zoneid_t, const char *, __va_list)
     __KVPRINTFLIKE(2);
@@ -91,7 +91,7 @@ extern void zprintf(zoneid_t, const char *, ...)
 extern void vprintf(const char *, __va_list)
     __KVPRINTFLIKE(1);
 #pragma	rarely_called(vprintf)
-	
+
 /*PRINTFLIKE1*/
 extern void uprintf(const char *, ...)
     __KPRINTFLIKE(1);

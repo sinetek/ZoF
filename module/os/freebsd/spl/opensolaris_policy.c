@@ -248,13 +248,13 @@ secpolicy_vnode_setattr(cred_t *cr, vnode_t *vp, struct vattr *vap,
 			return (error);
 
 		/*
-		 * To change the owner of a file, or change the group of a file to a
-		 * group of which we are not a member, the caller must have
-		 * privilege.
+		 * To change the owner of a file, or change the group of
+		 * a file to a group of which we are not a member, the
+		 * caller must have privilege.
 		 */
 		if (((mask & AT_UID) && vap->va_uid != ovap->va_uid) ||
 		    ((mask & AT_GID) && vap->va_gid != ovap->va_gid &&
-		     !groupmember(vap->va_gid, cr))) {
+		    !groupmember(vap->va_gid, cr))) {
 			if (secpolicy_fs_owner(vp->v_mount, cr) != 0) {
 				error = spl_priv_check_cred(cr, PRIV_VFS_CHOWN);
 				if (error)
@@ -332,7 +332,7 @@ int
 secpolicy_setid_setsticky_clear(vnode_t *vp, struct vattr *vap,
     const struct vattr *ovap, cred_t *cr)
 {
-        int error;
+	int error;
 
 	if (secpolicy_fs_owner(vp->v_mount, cr) == 0)
 		return (0);

@@ -216,7 +216,7 @@ aces_from_acl(ace_t *aces, int *nentries, const struct acl *aclp)
 			break;
 		default:
 			panic("aces_from_acl: ae_entry_type is 0x%x",
-		    entry->ae_entry_type);
+			    entry->ae_entry_type);
 		}
 	}
 }

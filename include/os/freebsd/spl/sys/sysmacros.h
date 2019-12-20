@@ -68,10 +68,9 @@ extern "C" {
 #define	ARRAY_SIZE(a) (sizeof (a) / sizeof (a[0]))
 #endif
 #ifndef	DIV_ROUND_UP
-#define	DIV_ROUND_UP(n, d)      (((n) + (d) - 1) / (d))
+#define	DIV_ROUND_UP(n, d)	(((n) + (d) - 1) / (d))
 #endif
 
-	
 #ifdef _KERNEL
 #define	boot_ncpus mp_ncpus
 #define	kpreempt_disable() critical_enter()

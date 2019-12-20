@@ -24,7 +24,6 @@ zpool_LDADD = \
 	$(top_builddir)/lib/libuutil/libuutil.la \
 	$(top_builddir)/lib/libzfs/libzfs.la
 
-# XXX
 if BUILD_FREEBSD
 zpool_LDADD += -L/usr/local/lib -lintl -lgeom
 endif

@@ -81,7 +81,6 @@ update_vdev_config_dev_strs(nvlist_t *nv)
 {
 	(void) nvlist_remove_all(nv, ZPOOL_CONFIG_DEVID);
 	(void) nvlist_remove_all(nv, ZPOOL_CONFIG_PHYS_PATH);
-	return;
 }
 
 void

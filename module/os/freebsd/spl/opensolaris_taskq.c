@@ -57,10 +57,11 @@ system_taskq_init(void *arg)
 	    NULL, NULL, NULL, NULL, 0, 0);
 	system_taskq = taskq_create("system_taskq", mp_ncpus, minclsyspri,
 	    0, 0, 0);
-	system_delay_taskq = taskq_create("system_delay_taskq", mp_ncpus, minclsyspri,
-	    0, 0, 0);
+	system_delay_taskq = taskq_create("system_delay_taskq", mp_ncpus,
+	    minclsyspri, 0, 0, 0);
 }
-SYSINIT(system_taskq_init, SI_SUB_CONFIGURE, SI_ORDER_ANY, system_taskq_init, NULL);
+SYSINIT(system_taskq_init, SI_SUB_CONFIGURE, SI_ORDER_ANY, system_taskq_init,
+    NULL);
 
 static void
 system_taskq_fini(void *arg)
@@ -69,11 +70,12 @@ system_taskq_fini(void *arg)
 	taskq_destroy(system_taskq);
 	uma_zdestroy(taskq_zone);
 }
-SYSUNINIT(system_taskq_fini, SI_SUB_CONFIGURE, SI_ORDER_ANY, system_taskq_fini, NULL);
+SYSUNINIT(system_taskq_fini, SI_SUB_CONFIGURE, SI_ORDER_ANY, system_taskq_fini,
+    NULL);
 
 static taskq_t *
 taskq_create_with_init(const char *name, int nthreads, pri_t pri,
-	int minalloc __unused, int maxalloc __unused, uint_t flags)
+    int minalloc __unused, int maxalloc __unused, uint_t flags)
 {
 	taskq_t *tq;
 
@@ -81,9 +83,10 @@ taskq_create_with_init(const char *name, int nthreads, pri_t pri,
 		nthreads = MAX((mp_ncpus * nthreads) / 100, 1);
 
 	tq = kmem_alloc(sizeof (*tq), KM_SLEEP);
-	tq->tq_queue = taskqueue_create(name, M_WAITOK, taskqueue_thread_enqueue,
-	    &tq->tq_queue);
-	(void) taskqueue_start_threads(&tq->tq_queue, nthreads, pri, "%s", name);
+	tq->tq_queue = taskqueue_create(name, M_WAITOK,
+	    taskqueue_thread_enqueue, &tq->tq_queue);
+	(void) taskqueue_start_threads(&tq->tq_queue, nthreads, pri,
+	    "%s", name);
 
 	return ((taskq_t *)tq);
 }
@@ -124,14 +127,15 @@ taskq_member(taskq_t *tq, kthread_t *thread)
 int
 taskq_cancel_id(taskq_t *tq, taskqid_t id)
 {
-	u_int pend;
+	uint32_t pend;
 	int rc;
 	struct taskq_ent *ent = (void*)id;
 
 	if (ent == NULL)
 		return (0);
 	if (ent->tqent_type == TIMEOUT_TASK) {
-		rc = taskqueue_cancel_timeout(tq->tq_queue, &ent->tqent_timeout_task, &pend);
+		rc = taskqueue_cancel_timeout(tq->tq_queue,
+		    &ent->tqent_timeout_task, &pend);
 		uma_zfree(taskq_zone, ent);
 	} else
 		rc = taskqueue_cancel(tq->tq_queue, &ent->tqent_task, &pend);
@@ -160,7 +164,7 @@ taskq_dispatch_delay(taskq_t *tq, task_func_t func, void *arg,
 		mflag = M_WAITOK;
 	else
 		mflag = M_NOWAIT;
-	
+
 	task = uma_zalloc(taskq_zone, mflag);
 	if (task == NULL)
 		return (0);
@@ -168,13 +172,13 @@ taskq_dispatch_delay(taskq_t *tq, task_func_t func, void *arg,
 	task->tqent_func = func;
 	task->tqent_arg = arg;
 	task->tqent_type = TIMEOUT_TASK;
-	
+
 	TIMEOUT_TASK_INIT(tq->tq_queue, &task->tqent_timeout_task, 0,
-		taskq_run, task);
-	
+	    taskq_run, task);
+
 	taskqueue_enqueue_timeout(tq->tq_queue, &task->tqent_timeout_task,
-		expire_time);
-	return (taskqid_t)task;
+	    expire_time);
+	return ((taskqid_t)task);
 }
 
 taskqid_t
@@ -215,7 +219,7 @@ taskq_run_ent(void *arg, int pending __unused)
 }
 
 void
-taskq_dispatch_ent(taskq_t *tq, task_func_t func, void *arg, u_int flags,
+taskq_dispatch_ent(taskq_t *tq, task_func_t func, void *arg, uint32_t flags,
     taskq_ent_t *task)
 {
 	int prio;

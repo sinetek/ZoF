@@ -68,7 +68,7 @@
 #include <sys/zfs_quota.h>
 
 #include "zfs_comutil.h"
-
+/* BEGIN CSTYLED */
 struct mtx zfs_debug_mtx;
 MTX_SYSINIT(zfs_debug_mtx, &zfs_debug_mtx, "zfs_debug", MTX_DEF);
 
@@ -80,7 +80,7 @@ SYSCTL_INT(_vfs_zfs, OID_AUTO, super_owner, CTLFLAG_RW, &zfs_super_owner, 0,
 
 int zfs_debug_level;
 SYSCTL_INT(_vfs_zfs, OID_AUTO, debug, CTLFLAG_RWTUN, &zfs_debug_level, 0,
-    "Debug level");
+	"Debug level");
 
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, version, CTLFLAG_RD, 0, "ZFS versions");
 static int zfs_version_acl = ZFS_ACL_VERSION;
@@ -92,6 +92,7 @@ SYSCTL_INT(_vfs_zfs_version, OID_AUTO, spa, CTLFLAG_RD, &zfs_version_spa, 0,
 static int zfs_version_zpl = ZPL_VERSION;
 SYSCTL_INT(_vfs_zfs_version, OID_AUTO, zpl, CTLFLAG_RD, &zfs_version_zpl, 0,
     "ZPL_VERSION");
+/* END CSTYLED */
 
 static int zfs_quotactl(vfs_t *vfsp, int cmds, uid_t id, void *arg);
 static int zfs_mount(vfs_t *vfsp);
@@ -215,7 +216,7 @@ zfs_getquota(zfsvfs_t *zfsvfs, uid_t id, int isgroup, struct dqblk64 *dqp)
 	uint64_t usedobj, quotaobj;
 	uint64_t quota, used = 0;
 	timespec_t now;
-	
+
 	usedobj = isgroup ? DMU_GROUPUSED_OBJECT : DMU_USERUSED_OBJECT;
 	quotaobj = isgroup ? zfsvfs->z_groupquota_obj : zfsvfs->z_userquota_obj;
 
@@ -223,10 +224,11 @@ zfs_getquota(zfsvfs_t *zfsvfs, uid_t id, int isgroup, struct dqblk64 *dqp)
 		error = ENOENT;
 		goto done;
 	}
-	(void)sprintf(buf, "%llx", (longlong_t)id);
+	(void) sprintf(buf, "%llx", (longlong_t)id);
 	if ((error = zap_lookup(zfsvfs->z_os, quotaobj,
-				buf, sizeof (quota), 1, &quota)) != 0) {
-		dprintf("%s(%d): quotaobj lookup failed\n", __FUNCTION__, __LINE__);
+	    buf, sizeof (quota), 1, &quota)) != 0) {
+		dprintf("%s(%d): quotaobj lookup failed\n",
+		    __FUNCTION__, __LINE__);
 		goto done;
 	}
 	/*
@@ -236,7 +238,8 @@ zfs_getquota(zfsvfs_t *zfsvfs, uid_t id, int isgroup, struct dqblk64 *dqp)
 	dqp->dqb_bsoftlimit = dqp->dqb_bhardlimit = btodb(quota);
 	error = zap_lookup(zfsvfs->z_os, usedobj, buf, sizeof (used), 1, &used);
 	if (error && error != ENOENT) {
-		dprintf("%s(%d):  usedobj failed; %d\n", __FUNCTION__, __LINE__, error);
+		dprintf("%s(%d):  usedobj failed; %d\n",
+		    __FUNCTION__, __LINE__, error);
 		goto done;
 	}
 	dqp->dqb_curblocks = btodb(used);
@@ -261,7 +264,7 @@ zfs_quotactl(vfs_t *vfsp, int cmds, uid_t id, void *arg)
 	int bitsize;
 	zfs_userquota_prop_t quota_type;
 	struct dqblk64 dqblk = { 0 };
-	
+
 	td = curthread;
 	cmd = cmds >> SUBCMDSHIFT;
 	type = cmds & SUBCMDMASK;
@@ -319,11 +322,12 @@ zfs_quotactl(vfs_t *vfsp, int cmds, uid_t id, void *arg)
 	 * I think I can use just the id?
 	 *
 	 * Look at zfs_id_overquota() to look up a quota.
-	 * zap_lookup(something, quotaobj, fuidstring, sizeof (long long), 1, &quota)
+	 * zap_lookup(something, quotaobj, fuidstring,
+	 *     sizeof (long long), 1, &quota)
 	 *
 	 * See zfs_set_userquota() to set a quota.
 	 */
-	if ((u_int)type >= MAXQUOTAS) {
+	if ((uint32_t)type >= MAXQUOTAS) {
 		error = EINVAL;
 		goto done;
 	}
@@ -346,7 +350,7 @@ zfs_quotactl(vfs_t *vfsp, int cmds, uid_t id, void *arg)
 		error = copyin(&dqblk, arg, sizeof (dqblk));
 		if (error == 0)
 			error = zfs_set_userquota(zfsvfs, quota_type,
-						  "", id, dbtob(dqblk.dqb_bhardlimit));
+			    "", id, dbtob(dqblk.dqb_bhardlimit));
 		break;
 	case Q_GETQUOTA:
 		error = zfs_getquota(zfsvfs, id, type == GRPQUOTA, &dqblk);
@@ -1203,7 +1207,8 @@ zfs_domount(vfs_t *vfsp, char *osname)
 		return (error);
 	zfsvfs->z_vfs = vfsp;
 
-	if ((error = dsl_prop_get_integer(osname, "recordsize", &recordsize, NULL)))
+	if ((error = dsl_prop_get_integer(osname,
+	    "recordsize", &recordsize, NULL)))
 		goto out;
 	zfsvfs->z_vfs->vfs_bsize = SPA_MINBLOCKSIZE;
 	zfsvfs->z_vfs->mnt_stat.f_iosize = recordsize;
@@ -1260,7 +1265,8 @@ zfs_domount(vfs_t *vfsp, char *osname)
 
 		atime_changed_cb(zfsvfs, B_FALSE);
 		readonly_changed_cb(zfsvfs, B_TRUE);
-		if ((error = dsl_prop_get_integer(osname, "xattr", &pval, NULL)))
+		if ((error = dsl_prop_get_integer(osname,
+		    "xattr", &pval, NULL)))
 			goto out;
 		xattr_changed_cb(zfsvfs, pval);
 		zfsvfs->z_issnap = B_TRUE;
@@ -1774,7 +1780,8 @@ zfs_statfs(vfs_t *vfsp, struct statfs *statp)
 	/*
 	 * We're a zfs filesystem.
 	 */
-	(void) strlcpy(statp->f_fstypename, "zfs", sizeof (statp->f_fstypename));
+	strlcpy(statp->f_fstypename, "zfs",
+	    sizeof (statp->f_fstypename));
 
 	strlcpy(statp->f_mntfromname, vfsp->mnt_stat.f_mntfromname,
 	    sizeof (statp->f_mntfromname));
@@ -2139,7 +2146,7 @@ zfs_fhtovp(vfs_t *vfsp, fid_t *fidp, int flags, vnode_t **vpp)
 	 * we are in the .zfs/shares directory tree.
 	 */
 	if ((fid_gen == 0 &&
-	     (object == ZFSCTL_INO_ROOT || object == ZFSCTL_INO_SNAPDIR)) ||
+	    (object == ZFSCTL_INO_ROOT || object == ZFSCTL_INO_SNAPDIR)) ||
 	    (zfsvfs->z_shares_dir != 0 && object == zfsvfs->z_shares_dir)) {
 		ZFS_EXIT(zfsvfs);
 		VERIFY0(zfsctl_root(zfsvfs, LK_SHARED, &dvp));
@@ -2591,15 +2598,15 @@ zfsvfs_update_fromname(const char *oldname, const char *newname)
 	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		fromname = mp->mnt_stat.f_mntfromname;
 		if (strcmp(fromname, oldname) == 0) {
-			(void)strlcpy(fromname, newname,
+			(void) strlcpy(fromname, newname,
 			    sizeof (mp->mnt_stat.f_mntfromname));
 			continue;
 		}
 		if (strncmp(fromname, oldname, oldlen) == 0 &&
 		    (fromname[oldlen] == '/' || fromname[oldlen] == '@')) {
-			(void)snprintf(tmpbuf, sizeof (tmpbuf), "%s%s",
+			(void) snprintf(tmpbuf, sizeof (tmpbuf), "%s%s",
 			    newname, fromname + oldlen);
-			(void)strlcpy(fromname, tmpbuf,
+			(void) strlcpy(fromname, tmpbuf,
 			    sizeof (mp->mnt_stat.f_mntfromname));
 			continue;
 		}

@@ -15,15 +15,15 @@
 #define	kfpu_initialize(tsk)	do {} while (0)
 
 #define	kfpu_begin() {							\
-	critical_enter();							\
+	critical_enter();					\
 	fpu_kern_enter(curthread, NULL, FPU_KERN_NOCTX); \
 }
 
 #define	kfpu_end()						\
-{												   \
-	fpu_kern_leave(curthread, NULL);				   \
-	critical_exit();								   \
-}
+	{						 \
+		fpu_kern_leave(curthread, NULL); \
+		critical_exit();			     \
+	}
 #else
 #endif
 /*
@@ -81,7 +81,7 @@ static inline boolean_t
 zfs_sse_available(void)
 {
 #if defined(_KERNEL)
-	return !!(cpu_feature & CPUID_SSE);
+	return (!!(cpu_feature & CPUID_SSE));
 #elif !defined(_KERNEL)
 	return (__cpuid_has_sse());
 #endif
@@ -94,7 +94,7 @@ static inline boolean_t
 zfs_sse2_available(void)
 {
 #if defined(_KERNEL)
-	return !!(cpu_feature & CPUID_SSE2);
+	return (!!(cpu_feature & CPUID_SSE2));
 #elif !defined(_KERNEL)
 	return (__cpuid_has_sse2());
 #endif
@@ -107,7 +107,7 @@ static inline boolean_t
 zfs_sse3_available(void)
 {
 #if defined(_KERNEL)
-	return !!(cpu_feature2 & CPUID2_SSE3);
+	return (!!(cpu_feature2 & CPUID2_SSE3));
 #elif !defined(_KERNEL)
 	return (__cpuid_has_sse3());
 #endif
@@ -120,7 +120,7 @@ static inline boolean_t
 zfs_ssse3_available(void)
 {
 #if defined(_KERNEL)
-	return !!(cpu_feature2 & CPUID2_SSSE3);
+	return (!!(cpu_feature2 & CPUID2_SSSE3));
 #elif !defined(_KERNEL)
 	return (__cpuid_has_ssse3());
 #endif
@@ -177,7 +177,7 @@ zfs_avx_available(void)
 #endif
 #elif defined(__FreeBSD__)
 	has_avx = !!(cpu_feature2 & CPUID2_AVX);
-#endif		
+#endif
 #elif !defined(_KERNEL)
 	has_avx = __cpuid_has_avx();
 #endif
@@ -202,7 +202,7 @@ zfs_avx2_available(void)
 }
 
 /*
-   * AVX-512 family of instruction sets:
+ * AVX-512 family of instruction sets:
  *
  * AVX512F	Foundation
  * AVX512CD	Conflict Detection Instructions

@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -63,18 +63,6 @@ typedef	int	umode_t;
 
 #define	XU_NGROUPS	16
 
-#if 0
-/*
- * This is the external representation of struct ucred.
- */
-struct xucred {
-	u_int	cr_version;		/* structure layout version */
-	uid_t	cr_uid;			/* effective user id */
-	short	cr_ngroups;		/* number of groups */
-	gid_t	cr_groups[XU_NGROUPS];	/* groups */
-	void	*_cr_unused1;		/* compatibility with old ucred */
-};
-#endif
 /*
  * Structure defining a mount option for a filesystem.
  * option names are found in mntent.h

@@ -123,7 +123,7 @@ zfs_cmd_bsd12_to_zof(zfs_cmd_legacy_t *src, zfs_cmd_t *dst)
 	    offsetof(zfs_cmd_t, zc_sendobj) -
 	    offsetof(zfs_cmd_t, zc_begin_record));
 	memcpy(&dst->zc_sendobj, &src->zc_sendobj,
-	    sizeof(zfs_cmd_t) - 8 - offsetof(zfs_cmd_t, zc_sendobj));
+	    sizeof (zfs_cmd_t) - 8 - offsetof(zfs_cmd_t, zc_sendobj));
 	dst->zc_zoneid = src->zc_jailid;
 }
 
@@ -136,12 +136,12 @@ zfs_cmd_zof_to_bsd12(zfs_cmd_t *src, zfs_cmd_legacy_t *dst)
 	    offsetof(zfs_cmd_t, zc_sendobj) -
 	    offsetof(zfs_cmd_t, zc_begin_record));
 	memcpy(&dst->zc_sendobj, &src->zc_sendobj,
-	    sizeof(zfs_cmd_t) - 8 - offsetof(zfs_cmd_t, zc_sendobj));
+	    sizeof (zfs_cmd_t) - 8 - offsetof(zfs_cmd_t, zc_sendobj));
 	dst->zc_jailid = src->zc_zoneid;
 }
 
 static int
-zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
+zfsdev_ioctl(struct cdev *dev, ulong_t zcmd, caddr_t arg, int flag,
     struct thread *td)
 {
 	uint_t len, vecnum;
@@ -160,7 +160,7 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 
 	if (len != sizeof (zfs_iocparm_t)) {
 		printf("len %d vecnum: %d sizeof (zfs_cmd_t) %lu\n",
-			   len, vecnum, sizeof (zfs_cmd_t));
+		    len, vecnum, sizeof (zfs_cmd_t));
 		return (EINVAL);
 	}
 
@@ -175,25 +175,25 @@ zfsdev_ioctl(struct cdev *dev, u_long zcmd, caddr_t arg, int flag,
 		}
 		zcl = kmem_zalloc(sizeof (zfs_cmd_legacy_t), KM_SLEEP);
 		vecnum = zfs_ioctl_bsd12_to_zof[vecnum];
-		if (copyin(uaddr, zcl, sizeof(zfs_cmd_legacy_t))) {
+		if (copyin(uaddr, zcl, sizeof (zfs_cmd_legacy_t))) {
 			error = SET_ERROR(EFAULT);
 			goto out;
 		}
 		zfs_cmd_bsd12_to_zof(zcl, zc);
-	} else if (copyin(uaddr, zc, sizeof(zfs_cmd_t))) {
+	} else if (copyin(uaddr, zc, sizeof (zfs_cmd_t))) {
 		error = SET_ERROR(EFAULT);
 		goto out;
 	}
 	error = zfsdev_ioctl_common(vecnum, zc);
 	if (zcl) {
 		zfs_cmd_zof_to_bsd12(zc, zcl);
-		rc = copyout(zcl, uaddr, sizeof(*zcl));
+		rc = copyout(zcl, uaddr, sizeof (*zcl));
 	} else {
-		rc = copyout(zc, uaddr, sizeof(*zc));
+		rc = copyout(zc, uaddr, sizeof (*zc));
 	}
 	if (error == 0 && rc != 0)
 		error = SET_ERROR(EFAULT);
- out:
+out:
 	if (zcl)
 		kmem_free(zcl, sizeof (zfs_cmd_legacy_t));
 	kmem_free(zc, sizeof (zfs_cmd_t));
@@ -326,7 +326,8 @@ zfs__init(void)
 
 	tsd_create(&zfs_geom_probe_vdev_key, NULL);
 
-	printf("ZFS storage pool version: features support (" SPA_VERSION_STRING ")\n");
+	printf("ZFS storage pool version: features support ("
+	    SPA_VERSION_STRING ")\n");
 	root_mount_rel(zfs_root_token);
 	return (0);
 }
@@ -351,7 +352,7 @@ zfs_shutdown(void *arg __unused, int howto __unused)
 	 * ZFS fini routines can not properly work in a panic-ed system.
 	 */
 	if (panicstr == NULL)
-		(void)zfs__fini();
+		zfs__fini();
 }
 
 

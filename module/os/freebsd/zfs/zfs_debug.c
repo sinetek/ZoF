@@ -184,7 +184,8 @@ __set_error(const char *file, const char *func, int line, int err)
 
 #ifdef _KERNEL
 void
-__dprintf(boolean_t dprint, const char *file, const char *func, int line, const char *fmt, ...)
+__dprintf(boolean_t dprint, const char *file, const char *func,
+    int line, const char *fmt, ...)
 {
 	const char *newfile;
 	va_list adx;

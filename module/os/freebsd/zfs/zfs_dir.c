@@ -123,7 +123,7 @@ zfs_dirent_lookup(znode_t *dzp, const char *name, znode_t **zpp, int flag)
 	 */
 	if (name[0] == '.' &&
 	    (((name[1] == '\0') || (name[1] == '.' && name[2] == '\0')) ||
-		 (zfs_has_ctldir(dzp) && strcmp(name, ZFS_CTLDIR_NAME) == 0)))
+	    (zfs_has_ctldir(dzp) && strcmp(name, ZFS_CTLDIR_NAME) == 0)))
 		return (SET_ERROR(EEXIST));
 
 	/*
@@ -741,7 +741,8 @@ zfs_link_destroy(znode_t *dzp, const char *name, znode_t *zp, dmu_tx_t *tx,
 			    NULL, &ctime, sizeof (ctime));
 			SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_FLAGS(zfsvfs),
 			    NULL, &zp->z_pflags, sizeof (zp->z_pflags));
-			zfs_tstamp_update_setup(zp, STATE_CHANGED, mtime, ctime);
+			zfs_tstamp_update_setup(zp, STATE_CHANGED, mtime,
+			    ctime);
 		}
 		SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_LINKS(zfsvfs),
 		    NULL, &zp->z_links, sizeof (zp->z_links));

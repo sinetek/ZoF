@@ -133,18 +133,18 @@ DECLARE_GEOM_CLASS(zfs_zvol_class, zfs_zvol);
 static uint32_t zvol_minors;
 
 #ifdef ZVOL_LOCK_DEBUG
-#define ZVOL_RW_READER RW_WRITER
+#define	ZVOL_RW_READER RW_WRITER
 #else
-#define ZVOL_RW_READER RW_READER
+#define	ZVOL_RW_READER RW_READER
 #endif
 
 SYSCTL_DECL(_vfs_zfs);
 SYSCTL_NODE(_vfs_zfs, OID_AUTO, vol, CTLFLAG_RW, 0, "ZFS VOLUME");
 SYSCTL_INT(_vfs_zfs_vol, OID_AUTO, mode, CTLFLAG_RWTUN, &zvol_volmode, 0,
-    "Expose as GEOM providers (1), device files (2) or neither");
+	"Expose as GEOM providers (1), device files (2) or neither");
 static boolean_t zpool_on_zvol = B_FALSE;
 SYSCTL_INT(_vfs_zfs_vol, OID_AUTO, recursive, CTLFLAG_RWTUN, &zpool_on_zvol, 0,
-    "Allow zpools to use zvols as vdevs (DANGEROUS)");
+	"Allow zpools to use zvols as vdevs (DANGEROUS)");
 
 typedef struct zvol_extent {
 	list_node_t	ze_node;
@@ -163,8 +163,7 @@ int zvol_maxphys = DMU_MAX_ACCESS/2;
 boolean_t zvol_unmap_enabled = B_TRUE;
 
 SYSCTL_INT(_vfs_zfs_vol, OID_AUTO, unmap_enabled, CTLFLAG_RWTUN,
-    &zvol_unmap_enabled, 0,
-    "Enable UNMAP functionality");
+	&zvol_unmap_enabled, 0, "Enable UNMAP functionality");
 
 static d_open_t		zvol_d_open;
 static d_close_t	zvol_d_close;
@@ -279,10 +278,10 @@ zvol_open(struct g_provider *pp, int flag, int count)
 	if (drop_suspend)
 		rw_exit(&zv->zv_suspend_lock);
 	return (0);
- out_open_count:
+out_open_count:
 	if (zv->zv_open_count == 0)
 		zvol_last_close(zv);
- out_mutex:
+out_mutex:
 	mutex_exit(&zv->zv_state_lock);
 	if (drop_suspend)
 		rw_exit(&zv->zv_suspend_lock);
@@ -339,7 +338,6 @@ zvol_close(struct g_provider *pp, int flag, int count)
 	rw_exit(&zvol_state_lock);
 
 	ASSERT(MUTEX_HELD(&zv->zv_state_lock));
-	//ASSERT(zv->zv_open_count != 1 /* || RW_READ_HELD(&zv->zv_suspend_lock) */ );
 
 	/*
 	 * You may get multiple opens, but only one close.
@@ -493,7 +491,10 @@ zvol_read(struct cdev *dev, struct uio *uio, int ioflag)
 	zv = dev->si_drv2;
 
 	volsize = zv->zv_volsize;
-	/* uio_loffset == volsize isn't an error as its required for EOF processing. */
+	/*
+	 * uio_loffset == volsize isn't an error as
+	 * its required for EOF processing.
+	 */
 	if (uio->uio_resid > 0 &&
 	    (uio->uio_loffset < 0 || uio->uio_loffset > volsize))
 		return (SET_ERROR(EIO));
@@ -531,7 +532,7 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 	zv = dev->si_drv2;
 
 	volsize = zv->zv_volsize;
-	/* uio_loffset == volsize isn't an error as its required for EOF processing. */
+
 	if (uio->uio_resid > 0 &&
 	    (uio->uio_loffset < 0 || uio->uio_loffset > volsize))
 		return (SET_ERROR(EIO));
@@ -663,26 +664,23 @@ zvol_bio_getattr(struct bio *bp)
 		return (0);
 	if (strcmp(bp->bio_attribute, "blocksavail") == 0) {
 		dmu_objset_space(zv->zv_objset, &refd, &avail,
-						 &usedobjs, &availobjs);
-		if (g_handleattr_off_t(bp, "blocksavail",
-							   avail / DEV_BSIZE))
+		    &usedobjs, &availobjs);
+		if (g_handleattr_off_t(bp, "blocksavail", avail / DEV_BSIZE))
 			return (0);
 	} else if (strcmp(bp->bio_attribute, "blocksused") == 0) {
 		dmu_objset_space(zv->zv_objset, &refd, &avail,
-						 &usedobjs, &availobjs);
-		if (g_handleattr_off_t(bp, "blocksused",
-							   refd / DEV_BSIZE))
+		    &usedobjs, &availobjs);
+		if (g_handleattr_off_t(bp, "blocksused", refd / DEV_BSIZE))
 			return (0);
 	} else if (strcmp(bp->bio_attribute, "poolblocksavail") == 0) {
 		avail = metaslab_class_get_space(spa_normal_class(spa));
 		avail -= metaslab_class_get_alloc(spa_normal_class(spa));
 		if (g_handleattr_off_t(bp, "poolblocksavail",
-							   avail / DEV_BSIZE))
+		    avail / DEV_BSIZE))
 			return (0);
 	} else if (strcmp(bp->bio_attribute, "poolblocksused") == 0) {
 		refd = metaslab_class_get_alloc(spa_normal_class(spa));
-		if (g_handleattr_off_t(bp, "poolblocksused",
-							   refd / DEV_BSIZE))
+		if (g_handleattr_off_t(bp, "poolblocksused", refd / DEV_BSIZE))
 			return (0);
 	}
 	return (1);
@@ -787,8 +785,9 @@ zvol_geom_worker(void *arg)
 				mtx_unlock(&zv->zv_zso->zso_queue_mtx);
 				kthread_exit();
 			}
-			msleep(&zv->zv_zso->zso_queue, &zv->zv_zso->zso_queue_mtx, PRIBIO | PDROP,
-				   "zvol:io", 0);
+			msleep(&zv->zv_zso->zso_queue,
+			    &zv->zv_zso->zso_queue_mtx,
+			    PRIBIO | PDROP, "zvol:io", 0);
 			continue;
 		}
 		mtx_unlock(&zv->zv_zso->zso_queue_mtx);
@@ -876,15 +875,15 @@ zvol_d_open(struct cdev *dev, int flags, int fmt, struct thread *td)
 	mutex_exit(&zv->zv_state_lock);
 	return (0);
 
- out_opened:
+out_opened:
 	if (zv->zv_open_count == 0)
 		zvol_last_close(zv);
 
- out_locked:
+out_locked:
 	mutex_exit(&zv->zv_state_lock);
 	if (drop_suspend)
 		rw_exit(&zv->zv_suspend_lock);
-	return SET_ERROR(err);
+	return (SET_ERROR(err));
 }
 
 static int
@@ -943,7 +942,8 @@ zvol_d_close(struct cdev *dev, int flags, int fmt, struct thread *td)
 }
 
 static int
-zvol_d_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int fflag, struct thread *td)
+zvol_d_ioctl(struct cdev *dev, ulong_t cmd, caddr_t data,
+    int fflag, struct thread *td)
 {
 	zvol_state_t *zv;
 	zfs_locked_range_t *lr;
@@ -960,7 +960,7 @@ zvol_d_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int fflag, struct threa
 	i = IOCPARM_LEN(cmd);
 	switch (cmd) {
 	case DIOCGSECTORSIZE:
-		*(u_int *)data = DEV_BSIZE;
+		*(uint32_t *)data = DEV_BSIZE;
 		break;
 	case DIOCGMEDIASIZE:
 		*(off_t *)data = zv->zv_volsize;
@@ -1024,7 +1024,8 @@ zvol_d_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int fflag, struct threa
 			arg->value.off = refd / DEV_BSIZE;
 		} else if (strcmp(arg->name, "poolblocksavail") == 0) {
 			avail = metaslab_class_get_space(spa_normal_class(spa));
-			avail -= metaslab_class_get_alloc(spa_normal_class(spa));
+			avail -= metaslab_class_get_alloc(
+			    spa_normal_class(spa));
 			arg->value.off = avail / DEV_BSIZE;
 		} else if (strcmp(arg->name, "poolblocksused") == 0) {
 			refd = metaslab_class_get_alloc(spa_normal_class(spa));
@@ -1060,7 +1061,6 @@ zvol_is_zvol_impl(const char *device)
 
 
 /* PUBLIC */
-							  
 static void
 zvol_rename_minor(zvol_state_t *zv, const char *newname)
 {
@@ -1260,7 +1260,7 @@ zvol_create_minor(const char *name)
 	/* XXX do prefetch */
 
 	zv->zv_objset = NULL;
- out_dmu_objset_disown:
+out_dmu_objset_disown:
 	dmu_objset_disown(os, B_TRUE, FTAG);
 
 	if (zv->zv_zso->zso_volmode == ZFS_VOLMODE_GEOM) {
@@ -1268,7 +1268,7 @@ zvol_create_minor(const char *name)
 			zvol_geom_run(zv);
 		g_topology_unlock();
 	}
- out_doi:
+out_doi:
 	kmem_free(doi, sizeof (dmu_object_info_t));
 	if (error == 0) {
 		rw_enter(&zvol_state_lock, RW_WRITER);
@@ -1277,7 +1277,7 @@ zvol_create_minor(const char *name)
 		rw_exit(&zvol_state_lock);
 	}
 	ZFS_LOG(1, "ZVOL %s created.", name);
- out_giant:
+out_giant:
 	PICKUP_GIANT();
 	return (0);
 }
@@ -1320,7 +1320,9 @@ zvol_clear_private(zvol_state_t *zv)
 		pp->private = NULL;
 		wakeup_one(&zv->zv_zso->zso_queue);
 		while (zv->zv_zso->zso_state != 2)
-			msleep(&zv->zv_zso->zso_state, &zv->zv_zso->zso_queue_mtx, 0, "zvol:w", 0);
+			msleep(&zv->zv_zso->zso_state,
+			    &zv->zv_zso->zso_queue_mtx,
+			    0, "zvol:w", 0);
 		mtx_unlock(&zv->zv_zso->zso_queue_mtx);
 		ASSERT(!RW_LOCK_HELD(&zv->zv_suspend_lock));
 	}
@@ -1337,14 +1339,14 @@ static void
 zvol_set_disk_ro_impl(zvol_state_t *zv, int flags)
 {
 
-	//set_disk_ro(zv->zv_zso->zvo_disk, flags);
+	// set_disk_ro(zv->zv_zso->zvo_disk, flags);
 }
 
 static void
 zvol_set_capacity_impl(zvol_state_t *zv, uint64_t capacity)
 {
 
-	//set_capacity(zv->zv_zso->zvo_disk, capacity);
+	// set_capacity(zv->zv_zso->zvo_disk, capacity);
 }
 
 const static zvol_platform_ops_t zvol_freebsd_ops = {

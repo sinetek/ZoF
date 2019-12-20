@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -42,7 +42,7 @@ ksid_lookupdomain(const char *domain)
 	size_t len;
 
 	len = strlen(domain) + 1;
-	kd = kmem_alloc(sizeof(*kd), KM_SLEEP);
+	kd = kmem_alloc(sizeof (*kd), KM_SLEEP);
 	kd->kd_len = (uint_t)len;
 	kd->kd_name = kmem_alloc(len, KM_SLEEP);
 	strcpy(kd->kd_name, domain);
@@ -54,7 +54,7 @@ ksiddomain_rele(ksiddomain_t *kd)
 {
 
 	kmem_free(kd->kd_name, kd->kd_len);
-	kmem_free(kd, sizeof(*kd));
+	kmem_free(kd, sizeof (*kd));
 }
 
 static __inline uint_t

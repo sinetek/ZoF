@@ -52,14 +52,14 @@ extern "C" {
  * Each directory znode has a mutex and a list of locked names.
  */
 #ifdef _KERNEL
-#define ZNODE_OS_FIELDS                 \
-        struct zfsvfs   *z_zfsvfs;      \
-        vnode_t         *z_vnode;       \
-        uint64_t        z_uid;          \
-        uint64_t        z_gid;          \
-        uint64_t        z_gen;          \
-        uint64_t        z_atime[2];     \
-        uint64_t        z_links;
+#define	ZNODE_OS_FIELDS                 \
+	struct zfsvfs	*z_zfsvfs;      \
+	vnode_t		*z_vnode;       \
+	uint64_t		z_uid;          \
+	uint64_t		z_gid;          \
+	uint64_t		z_gen;          \
+	uint64_t		z_atime[2];     \
+	uint64_t		z_links;
 
 #define	ZFS_LINK_MAX	UINT64_MAX
 
@@ -167,15 +167,16 @@ extern minor_t zfsdev_minor_alloc(void);
 	if ((zfsvfs)->z_atime && !((zfsvfs)->z_vfs->vfs_flag & VFS_RDONLY)) \
 		zfs_tstamp_update_setup_ext(zp, ACCESSED, NULL, NULL, B_FALSE);
 
-extern void	zfs_tstamp_update_setup_ext(struct znode *, uint_t, uint64_t [2],
-    uint64_t [2], boolean_t have_tx);
+extern void	zfs_tstamp_update_setup_ext(struct znode *,
+    uint_t, uint64_t [2], uint64_t [2], boolean_t have_tx);
 extern void zfs_znode_free(struct znode *);
 
 extern zil_get_data_t zfs_get_data;
 extern zil_replay_func_t *zfs_replay_vector[TX_MAX_TYPE];
 extern int zfsfstype;
 
-extern int zfs_znode_parent_and_name(struct znode *zp, struct znode **dzpp, char *buf);
+extern int zfs_znode_parent_and_name(struct znode *zp, struct znode **dzpp,
+    char *buf);
 
 #endif /* _KERNEL */
 

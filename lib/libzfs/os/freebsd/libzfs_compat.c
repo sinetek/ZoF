@@ -108,10 +108,10 @@ execvPe(const char *name, const char *path, char * const *argv,
 		 * security issue; given a way to make the path too long
 		 * the user may execute the wrong program.
 		 */
-		if (lp + ln + 2 > sizeof(buf)) {
-			(void)write(STDERR_FILENO, "execvP: ", 8);
-			(void)write(STDERR_FILENO, p, lp);
-			(void)write(STDERR_FILENO, ": path too long\n",
+		if (lp + ln + 2 > sizeof (buf)) {
+			(void) write(STDERR_FILENO, "execvP: ", 8);
+			(void) write(STDERR_FILENO, p, lp);
+			(void) write(STDERR_FILENO, ": path too long\n",
 			    16);
 			continue;
 		}
@@ -120,7 +120,7 @@ execvPe(const char *name, const char *path, char * const *argv,
 		bcopy(name, buf + lp + 1, ln);
 		buf[lp + ln + 1] = '\0';
 
-retry:		(void)execve(bp, argv, envp);
+retry:		(void) execve(bp, argv, envp);
 		switch (errno) {
 		case E2BIG:
 			goto done;
@@ -131,16 +131,15 @@ retry:		(void)execve(bp, argv, envp);
 		case ENOEXEC:
 			for (cnt = 0; argv[cnt]; ++cnt)
 				;
-			memp = alloca((cnt + 2) * sizeof(char *));
+			memp = alloca((cnt + 2) * sizeof (char *));
 			if (memp == NULL) {
 				/* errno = ENOMEM; XXX override ENOEXEC? */
 				goto done;
 			}
 			memp[0] = "sh";
 			memp[1] = bp;
-			bcopy(argv + 1, memp + 2, cnt * sizeof(char *));
- 			(void)execve(_PATH_BSHELL,
-			    __DECONST(char **, memp), envp);
+			bcopy(argv + 1, memp + 2, cnt * sizeof (char *));
+			execve(_PATH_BSHELL, __DECONST(char **, memp), envp);
 			goto done;
 		case ENOMEM:
 			goto done;
@@ -310,4 +309,3 @@ zfs_jail(zfs_handle_t *zhp, int jailid, int attach)
 
 	return (ret);
 }
-

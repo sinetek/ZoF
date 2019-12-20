@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -59,7 +59,7 @@ typedef	struct sx	krwlock_t;
 #define	RW_WRITE_HELD(x)	(rw_write_held((x)))
 #define	RW_LOCK_HELD(x)		(rw_lock_held((x)))
 #define	RW_ISWRITER(x)		(rw_iswriter(x))
-
+/* BEGIN CSTYLED */
 #define	rw_init(lock, desc, type, arg)	do {				\
 	const char *_name;						\
 	ASSERT((type) == 0 || (type) == RW_DEFAULT);			\
@@ -80,18 +80,24 @@ typedef	struct sx	krwlock_t;
 		sx_slock(lock);						\
 	else /* if ((how) == RW_WRITER) */				\
 		sx_xlock(lock);						\
-} while (0)
-#define	rw_tryenter(lock, how)	((how) == RW_READER ? sx_try_slock(lock) : sx_try_xlock(lock))
+	} while (0)
+
+#define	rw_tryenter(lock, how)			   \
+	((how) == RW_READER ? sx_try_slock(lock) : sx_try_xlock(lock))
 #define	rw_exit(lock)		sx_unlock(lock)
 #define	rw_downgrade(lock)	sx_downgrade(lock)
 #define	rw_tryupgrade(lock)	sx_try_upgrade(lock)
-#define	rw_read_held(lock)	((lock)->sx_lock != SX_LOCK_UNLOCKED && ((lock)->sx_lock & SX_LOCK_SHARED))
+#define	rw_read_held(lock)					  \
+	((lock)->sx_lock != SX_LOCK_UNLOCKED &&	  \
+	 ((lock)->sx_lock & SX_LOCK_SHARED))
 #define	rw_write_held(lock)	sx_xlocked(lock)
 #define	rw_lock_held(lock)	(rw_read_held(lock) || rw_write_held(lock))
 #define	rw_iswriter(lock)	sx_xlocked(lock)
 /* TODO: Change to sx_xholder() once it is moved from kern_sx.c to sx.h. */
-#define	rw_owner(lock)		((lock)->sx_lock & SX_LOCK_SHARED ? NULL : (struct thread *)SX_OWNER((lock)->sx_lock))
+#define	rw_owner(lock)							\
+	((lock)->sx_lock & SX_LOCK_SHARED ? NULL : (struct thread *)SX_OWNER((lock)->sx_lock))
 
+/* END CSTYLED */
 #endif	/* defined(_KERNEL) */
 
 #endif	/* _OPENSOLARIS_SYS_RWLOCK_H_ */

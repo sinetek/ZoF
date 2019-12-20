@@ -1,4 +1,4 @@
-/*-
+/*
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
  * Copyright (c) 2000 Jake Burkholder <jake@freebsd.org>.
@@ -77,7 +77,7 @@ void	cv_broadcastpri(struct cv *cvp, int pri);
 #define	cv_timedwait_sig_sbt(cvp, lock, sbt, pr, flags)			\
 	_cv_timedwait_sig_sbt((cvp), &(lock)->lock_object, (sbt), (pr), (flags))
 
-#define cv_broadcast(cvp)	cv_broadcastpri(cvp, 0)
+#define	cv_broadcast(cvp)	cv_broadcastpri(cvp, 0)
 
 #define	cv_wmesg(cvp)		((cvp)->cv_description)
 

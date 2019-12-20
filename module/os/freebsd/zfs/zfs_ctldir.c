@@ -84,7 +84,7 @@
 #include <sys/kernel.h>
 
 /* Common access mode for all virtual directories under the ctldir */
-const u_short zfsctl_ctldir_mode = S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP |
+const uint16_t zfsctl_ctldir_mode = S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP |
     S_IROTH | S_IXOTH;
 
 /*
@@ -125,26 +125,26 @@ sfs_compare_ids(struct vnode *vp, void *arg)
 
 static int
 sfs_vnode_get(const struct mount *mp, int flags, uint64_t parent_id,
-   uint64_t id, struct vnode **vpp)
+    uint64_t id, struct vnode **vpp)
 {
 	sfs_node_t search;
 	int err;
 
 	search.sn_id = id;
 	search.sn_parent_id = parent_id;
-	err = vfs_hash_get(mp, (u_int)id, flags, curthread, vpp,
+	err = vfs_hash_get(mp, (uint32_t)id, flags, curthread, vpp,
 	    sfs_compare_ids, &search);
 	return (err);
 }
 
 static int
 sfs_vnode_insert(struct vnode *vp, int flags, uint64_t parent_id,
-   uint64_t id, struct vnode **vpp)
+    uint64_t id, struct vnode **vpp)
 {
 	int err;
 
 	KASSERT(vp->v_data != NULL, ("sfs_vnode_insert with NULL v_data"));
-	err = vfs_hash_insert(vp, (u_int)id, flags, curthread, vpp,
+	err = vfs_hash_insert(vp, (uint32_t)id, flags, curthread, vpp,
 	    sfs_compare_ids, vp->v_data);
 	return (err);
 }
@@ -404,7 +404,7 @@ zfsctl_root_vnode(struct mount *mp, void *arg __unused, int flags,
 	void *node;
 	int err;
 
-	node = ((zfsvfs_t*)mp->mnt_data)->z_ctldir;
+	node = ((zfsvfs_t *)mp->mnt_data)->z_ctldir;
 	err = sfs_vgetx(mp, flags, 0, ZFSCTL_INO_ROOT, "zfs", &zfsctl_ops_root,
 	    zfsctl_common_vnode_setup, node, vpp);
 	return (err);
@@ -417,9 +417,9 @@ zfsctl_snapdir_vnode(struct mount *mp, void *arg __unused, int flags,
 	void *node;
 	int err;
 
-	node = ((zfsvfs_t*)mp->mnt_data)->z_ctldir->snapdir;
+	node = ((zfsvfs_t *)mp->mnt_data)->z_ctldir->snapdir;
 	err = sfs_vgetx(mp, flags, ZFSCTL_INO_ROOT, ZFSCTL_INO_SNAPDIR, "zfs",
-	   &zfsctl_ops_snapdir, zfsctl_common_vnode_setup, node, vpp);
+	    &zfsctl_ops_snapdir, zfsctl_common_vnode_setup, node, vpp);
 	return (err);
 }
 
@@ -511,12 +511,15 @@ zfsctl_common_getattr(vnode_t *vp, vattr_t *vap)
 	vap->va_nlink = 2;
 }
 
+#ifndef _SYS_SYSPROTO_H_
+struct vop_fid_args {
+	struct vnode *a_vp;
+	struct fid *a_fid;
+};
+#endif
+
 static int
-zfsctl_common_fid(ap)
-	struct vop_fid_args /* {
-		struct vnode *a_vp;
-		struct fid *a_fid;
-	} */ *ap;
+zfsctl_common_fid(struct vop_fid_args *ap)
 {
 	vnode_t		*vp = ap->a_vp;
 	fid_t		*fidp = (void *)ap->a_fid;
@@ -538,12 +541,15 @@ zfsctl_common_fid(ap)
 	return (0);
 }
 
+#ifndef _SYS_SYSPROTO_H_
+struct vop_reclaim_args {
+	struct vnode *a_vp;
+	struct thread *a_td;
+};
+#endif
+
 static int
-zfsctl_common_reclaim(ap)
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-		struct thread *a_td;
-	} */ *ap;
+zfsctl_common_reclaim(struct vop_reclaim_args *ap)
 {
 	vnode_t *vp = ap->a_vp;
 
@@ -551,26 +557,32 @@ zfsctl_common_reclaim(ap)
 	return (0);
 }
 
+#ifndef _SYS_SYSPROTO_H_
+struct vop_print_args {
+	struct vnode *a_vp;
+};
+#endif
+
 static int
-zfsctl_common_print(ap)
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap;
+zfsctl_common_print(struct vop_print_args *ap)
 {
 	sfs_print_node(ap->a_vp->v_data);
 	return (0);
 }
 
+#ifndef _SYS_SYSPROTO_H_
+struct vop_getattr_args {
+	struct vnode *a_vp;
+	struct vattr *a_vap;
+	struct ucred *a_cred;
+};
+#endif
+
 /*
  * Get root directory attributes.
  */
 static int
-zfsctl_root_getattr(ap)
-	struct vop_getattr_args /* {
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-	} */ *ap;
+zfsctl_root_getattr(struct vop_getattr_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -750,7 +762,7 @@ zfsctl_common_pathconf(struct vop_pathconf_args *ap)
 	}
 }
 
-/**
+/*
  * Returns a trivial ACL
  */
 int
@@ -773,7 +785,7 @@ zfsctl_common_getacl(struct vop_getacl_args *ap)
 		entry = &(ap->a_aclp->acl_entry[i]);
 		entry->ae_perm &= ~(ACL_WRITE_ACL | ACL_WRITE_OWNER |
 		    ACL_WRITE_ATTRIBUTES | ACL_WRITE_NAMED_ATTRS |
-		    ACL_READ_NAMED_ATTRS );
+		    ACL_READ_NAMED_ATTRS);
 	}
 
 	return (0);
@@ -929,8 +941,8 @@ zfsctl_snapdir_lookup(struct vop_lookup_args *ap)
 		ssa.snap_name = name;
 		ssa.snap_id = snap_id;
 		err = sfs_vgetx(dvp->v_mount, LK_SHARED, ZFSCTL_INO_SNAPDIR,
-		   snap_id, "zfs", &zfsctl_ops_snapshot,
-		   zfsctl_snapshot_vnode_setup, &ssa, vpp);
+		    snap_id, "zfs", &zfsctl_ops_snapshot,
+		    zfsctl_snapshot_vnode_setup, &ssa, vpp);
 		if (err != 0)
 			return (err);
 
@@ -953,7 +965,8 @@ zfsctl_snapdir_lookup(struct vop_lookup_args *ap)
 		 */
 		VI_LOCK(*vpp);
 		if (((*vpp)->v_iflag & VI_MOUNT) == 0) {
-			/* Upgrade to exclusive lock in order to:
+			/*
+			 * Upgrade to exclusive lock in order to:
 			 * - avoid race conditions
 			 * - satisfy the contract of mount_snapshot()
 			 */

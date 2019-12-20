@@ -14,7 +14,7 @@ static void *
 zcalloc(void *opaque, uint_t items, uint_t size)
 {
 
-	return malloc((size_t)items*size, M_SOLARIS, M_NOWAIT);
+	return (malloc((size_t)items*size, M_SOLARIS, M_NOWAIT));
 }
 
 /*ARGSUSED*/

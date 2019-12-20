@@ -220,12 +220,12 @@ mount_snapshot(kthread_t *td, vnode_t **vpp, const char *fstype, char *fspath,
 	if (mp->mnt_opt != NULL)
 		vfs_freeopts(mp->mnt_opt);
 	mp->mnt_opt = mp->mnt_optnew;
-	(void)VFS_STATFS(mp, &mp->mnt_stat);
+	(void) VFS_STATFS(mp, &mp->mnt_stat);
 
 	/*
 	 * Prevent external consumers of mount options from reading
 	 * mnt_optnew.
-	*/
+	 */
 	mp->mnt_optnew = NULL;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

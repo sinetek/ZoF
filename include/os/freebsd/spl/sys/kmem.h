@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -96,7 +96,8 @@ void *calloc(size_t n, size_t s);
 #define	heap_arena			kernel_arena
 #define	zio_arena			NULL
 #define	kmem_alloc(size, kmflags)	zfs_kmem_alloc((size), (kmflags))
-#define	kmem_zalloc(size, kmflags)	zfs_kmem_alloc((size), (kmflags) | M_ZERO)
+#define	kmem_zalloc(size, kmflags)				\
+	zfs_kmem_alloc((size), (kmflags) | M_ZERO)
 #define	kmem_free(buf, size)		zfs_kmem_free((buf), (size))
 #define	vmem_qcache_reap(ptr)	((void)0)
 

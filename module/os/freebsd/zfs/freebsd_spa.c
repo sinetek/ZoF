@@ -115,7 +115,7 @@ spa_generate_rootconf(const char *name)
 	nvlist_lookup_uint64_array(best_cfg, ZPOOL_CONFIG_HOLE_ARRAY,
 	    &holes, &nholes);
 
-	tops = kmem_zalloc(nchildren * sizeof(void *), KM_SLEEP);
+	tops = kmem_zalloc(nchildren * sizeof (void *), KM_SLEEP);
 	for (i = 0; i < nchildren; i++) {
 		if (i >= count)
 			break;
@@ -182,10 +182,10 @@ spa_generate_rootconf(const char *name)
 
 	for (i = 0; i < count; i++)
 		nvlist_free(configs[i]);
-	kmem_free(configs, count * sizeof(void *));
+	kmem_free(configs, count * sizeof (void *));
 	for (i = 0; i < nchildren; i++)
 		nvlist_free(tops[i]);
-	kmem_free(tops, nchildren * sizeof(void *));
+	kmem_free(tops, nchildren * sizeof (void *));
 	nvlist_free(nvroot);
 	return (config);
 }

@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2008 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *

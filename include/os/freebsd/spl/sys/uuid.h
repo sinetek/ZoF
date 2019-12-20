@@ -88,7 +88,7 @@ typedef struct uuid {
 }
 
 static __inline int
-uuid_is_null(const caddr_t uuid) 
+uuid_is_null(const caddr_t uuid)
 {
 	return (0);
 }

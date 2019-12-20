@@ -20,10 +20,10 @@
 #include <sys/dmu.h>
 #include <sys/hkdf.h>
 #ifdef __FreeBSD__
-# include <sys/freebsd_crypto.h>
+#include <sys/freebsd_crypto.h>
 #else
-# include <sys/crypto/api.h>
-# include <sys/sha2.h>
+#include <sys/crypto/api.h>
+#include <sys/sha2.h>
 #endif
 #include <sys/hkdf.h>
 
@@ -44,7 +44,7 @@ hkdf_sha512_extract(uint8_t *salt, uint_t salt_len, uint8_t *key_material,
 	mech.cm_param = NULL;
 	mech.cm_param_len = 0;
 #endif
-	
+
 	/* initialize the salt as a crypto key */
 	key.ck_format = CRYPTO_KEY_RAW;
 	key.ck_length = CRYPTO_BYTES2BITS(salt_len);
@@ -125,7 +125,7 @@ hkdf_sha512_expand(uint8_t *extract_key, uint8_t *info, uint_t info_len,
 	info_cd.cd_raw.iov_base = (char *)info;
 	info_cd.cd_raw.iov_len = info_cd.cd_length;
 #endif
-	
+
 	for (i = 1; i <= N; i++) {
 		c = i;
 

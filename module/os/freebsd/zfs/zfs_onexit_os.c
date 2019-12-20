@@ -68,4 +68,3 @@ zfs_onexit_fd_rele(int fd)
 {
 	zfs_file_put(fd);
 }
-

@@ -154,9 +154,9 @@ size_t zfs_abd_chunk_size = 4096;
 SYSCTL_DECL(_vfs_zfs);
 
 SYSCTL_INT(_vfs_zfs, OID_AUTO, abd_scatter_enabled, CTLFLAG_RWTUN,
-    &zfs_abd_scatter_enabled, 0, "Enable scattered ARC data buffers");
+	&zfs_abd_scatter_enabled, 0, "Enable scattered ARC data buffers");
 SYSCTL_ULONG(_vfs_zfs, OID_AUTO, abd_chunk_size, CTLFLAG_RDTUN,
-    &zfs_abd_chunk_size, 0, "The size of the chunks ABD allocates");
+	&zfs_abd_chunk_size, 0, "The size of the chunks ABD allocates");
 #endif
 
 kmem_cache_t *abd_chunk_cache;
@@ -737,7 +737,7 @@ abd_iter_map(struct abd_iter *aiter)
 		size_t index = abd_iter_scatter_chunk_index(aiter);
 		offset = abd_iter_scatter_chunk_offset(aiter);
 		aiter->iter_mapsize = MIN(zfs_abd_chunk_size - offset,
-								   aiter->iter_abd->abd_size - aiter->iter_pos);
+		    aiter->iter_abd->abd_size - aiter->iter_pos);
 		paddr = aiter->iter_abd->abd_u.abd_scatter.abd_chunks[index];
 	}
 	aiter->iter_mapaddr = (char *)paddr + offset;

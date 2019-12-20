@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2013 EMC Corp.
  * All rights reserved.
  *

@@ -50,13 +50,14 @@ struct g_class zfs_vdev_class = {
 
 struct consumer_vdev_elem {
 	SLIST_ENTRY(consumer_vdev_elem)	elems;
-	vdev_t				*vd;
+	vdev_t	*vd;
 };
 
 SLIST_HEAD(consumer_priv_t, consumer_vdev_elem);
-_Static_assert(sizeof (((struct g_consumer*)NULL)->private)
-    == sizeof (struct consumer_priv_t*),
-    "consumer_priv_t* can't be stored in g_consumer.private");
+/* BEGIN CSTYLED */
+_Static_assert(sizeof (((struct g_consumer *)NULL)->private)
+	== sizeof (struct consumer_priv_t*),
+	"consumer_priv_t* can't be stored in g_consumer.private");
 
 DECLARE_GEOM_CLASS(zfs_vdev_class, zfs_vdev);
 
@@ -69,6 +70,7 @@ SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, bio_flush_disable, CTLFLAG_RWTUN,
 static int vdev_geom_bio_delete_disable;
 SYSCTL_INT(_vfs_zfs_vdev, OID_AUTO, bio_delete_disable, CTLFLAG_RWTUN,
     &vdev_geom_bio_delete_disable, 0, "Disable BIO_DELETE");
+/* END CSTYLED */
 
 /* Declare local functions */
 static void vdev_geom_detach(struct g_consumer *cp, boolean_t open_for_read);
@@ -82,7 +84,7 @@ uint_t zfs_geom_probe_vdev_key;
 
 static void
 vdev_geom_set_physpath(vdev_t *vd, struct g_consumer *cp,
-		       boolean_t do_null_update)
+    boolean_t do_null_update)
 {
 	boolean_t needs_update = B_FALSE;
 	char *physpath;
@@ -101,7 +103,7 @@ vdev_geom_set_physpath(vdev_t *vd, struct g_consumer *cp,
 
 		if (old_physpath != NULL) {
 			needs_update = (strcmp(old_physpath,
-						vd->vdev_physpath) != 0);
+			    vd->vdev_physpath) != 0);
 			spa_strfree(old_physpath);
 		} else
 			needs_update = do_null_update;
@@ -124,14 +126,14 @@ vdev_geom_attrchanged(struct g_consumer *cp, const char *attr)
 	struct consumer_priv_t *priv;
 	struct consumer_vdev_elem *elem;
 
-	priv = (struct consumer_priv_t*)&cp->private;
+	priv = (struct consumer_priv_t *)&cp->private;
 	if (SLIST_EMPTY(priv))
 		return;
 
 	SLIST_FOREACH(elem, priv, elems) {
 		vdev_t *vd = elem->vd;
 		if (strcmp(attr, "GEOM::physpath") == 0) {
-			vdev_geom_set_physpath(vd, cp, /*null_update*/B_TRUE);
+			vdev_geom_set_physpath(vd, cp, /* null_update */B_TRUE);
 			return;
 		}
 	}
@@ -146,7 +148,7 @@ vdev_geom_orphan(struct g_consumer *cp)
 
 	g_topology_assert();
 
-	priv = (struct consumer_priv_t*)&cp->private;
+	priv = (struct consumer_priv_t *)&cp->private;
 	if (SLIST_EMPTY(priv))
 		/* Vdev close in progress.  Ignore the event. */
 		return;
@@ -189,12 +191,12 @@ vdev_geom_attach(struct g_provider *pp, vdev_t *vd, boolean_t sanity)
 	if (sanity) {
 		if (pp->sectorsize > VDEV_PAD_SIZE || !ISP2(pp->sectorsize)) {
 			ZFS_LOG(1, "Failing attach of %s. "
-				   "Incompatible sectorsize %d\n",
+			    "Incompatible sectorsize %d\n",
 			    pp->name, pp->sectorsize);
 			return (NULL);
 		} else if (pp->mediasize < SPA_MINDEVSIZE) {
 			ZFS_LOG(1, "Failing attach of %s. "
-				   "Incompatible mediasize %ju\n",
+			    "Incompatible mediasize %ju\n",
 			    pp->name, pp->mediasize);
 			return (NULL);
 		}
@@ -223,7 +225,7 @@ vdev_geom_attach(struct g_provider *pp, vdev_t *vd, boolean_t sanity)
 		error = g_access(cp, 1, 0, 1);
 		if (error != 0) {
 			ZFS_LOG(1, "%s(%d): g_access failed: %d\n", __func__,
-			       __LINE__, error);
+			    __LINE__, error);
 			vdev_geom_detach(cp, B_FALSE);
 			return (NULL);
 		}
@@ -318,7 +320,7 @@ vdev_geom_close_locked(vdev_t *vd)
 
 	ZFS_LOG(1, "Closing access to %s.", cp->provider->name);
 	KASSERT(cp->private != NULL, ("%s: cp->private is NULL", __func__));
-	priv = (struct consumer_priv_t*)&cp->private;
+	priv = (struct consumer_priv_t *)&cp->private;
 	vd->vdev_tsd = NULL;
 	SLIST_FOREACH_SAFE(elem, priv, elems, elem_temp) {
 		if (elem->vd == vd) {
@@ -341,7 +343,7 @@ vdev_geom_io(struct g_consumer *cp, int *cmds, void **datas, off_t *offsets,
     off_t *sizes, int *errors, int ncmds)
 {
 	struct bio **bios;
-	u_char *p;
+	uint8_t *p;
 	off_t off, maxio, s, end;
 	int i, n_bios, j;
 	size_t bios_size;
@@ -354,7 +356,7 @@ vdev_geom_io(struct g_consumer *cp, int *cmds, void **datas, off_t *offsets,
 		n_bios += (sizes[i] + maxio - 1) / maxio;
 
 	/* Allocate memory for the bios */
-	bios_size = n_bios * sizeof (struct bio*);
+	bios_size = n_bios * sizeof (struct bio *);
 	bios = kmem_zalloc(bios_size, KM_SLEEP);
 
 	/* Prepare and issue all of the bios */
@@ -385,14 +387,15 @@ vdev_geom_io(struct g_consumer *cp, int *cmds, void **datas, off_t *offsets,
 		end = off + s;
 
 		for (; off < end; off += maxio, s -= maxio, j++) {
-			errors[i] = biowait(bios[j], "vdev_geom_io") || errors[i];
+			errors[i] = biowait(bios[j], "vdev_geom_io") ||
+			    errors[i];
 			g_destroy_bio(bios[j]);
 		}
 	}
 	kmem_free(bios, bios_size);
 }
 
-/* 
+/*
  * Read the vdev config from a device.  Return the number of valid labels that
  * were found.  The vdev config will be returned in config if and only if at
  * least one valid label was found.
@@ -497,7 +500,7 @@ resize_configs(nvlist_t ***configs, uint64_t *count, uint64_t id)
 
 static void
 process_vdev_config(nvlist_t ***configs, uint64_t *count, nvlist_t *cfg,
-    const char *name, uint64_t* known_pool_guid)
+    const char *name, uint64_t *known_pool_guid)
 {
 	nvlist_t *vdev_tree;
 	uint64_t pool_guid;
@@ -597,7 +600,7 @@ vdev_geom_read_pool_label(const char *name,
 
 enum match {
 	NO_MATCH = 0,		/* No matching labels found */
-	TOPGUID_MATCH = 1,	/* Labels match top guid, not vdev guid*/
+	TOPGUID_MATCH = 1,	/* Labels match top guid, not vdev guid */
 	ZERO_MATCH = 1,		/* Should never be returned */
 	ONE_MATCH = 2,		/* 1 label matching the vdev_guid */
 	TWO_MATCH = 3,		/* 2 label matching the vdev_guid */
@@ -717,7 +720,7 @@ vdev_geom_open_by_guids(vdev_t *vd)
 	g_topology_assert();
 
 	ZFS_LOG(1, "Searching by guids [%ju:%ju].",
-		(uintmax_t)spa_guid(vd->vdev_spa), (uintmax_t)vd->vdev_guid);
+	    (uintmax_t)spa_guid(vd->vdev_spa), (uintmax_t)vd->vdev_guid);
 	cp = vdev_geom_attach_by_guids(vd);
 	if (cp != NULL) {
 		len = strlen(cp->provider->name) + strlen("/dev/") + 1;
@@ -766,7 +769,10 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	struct g_consumer *cp;
 	int error, has_trim, rate;
 
-	/* Set the TLS to indicate downstack that we should not access zvols*/
+	/*
+	 * Set the TLS to indicate downstack that we
+	 * should not access zvols
+	 */
 	VERIFY(tsd_set(zfs_geom_probe_vdev_key, vd) == 0);
 
 	/*
@@ -791,8 +797,8 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	error = 0;
 
 	if (((vd->vdev_prevstate == VDEV_STATE_UNKNOWN &&
-		 (vd->vdev_spa->spa_load_state == SPA_LOAD_NONE ||
-		 vd->vdev_spa->spa_load_state == SPA_LOAD_CREATE)))) {
+	    (vd->vdev_spa->spa_load_state == SPA_LOAD_NONE ||
+	    vd->vdev_spa->spa_load_state == SPA_LOAD_CREATE)))) {
 		/*
 		 * We are dealing with a vdev that hasn't been previously
 		 * opened (since boot), and we are not loading an
@@ -836,7 +842,7 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 		struct consumer_vdev_elem *elem;
 		int spamode;
 
-		priv = (struct consumer_priv_t*)&cp->private;
+		priv = (struct consumer_priv_t *)&cp->private;
 		if (cp->private == NULL)
 			SLIST_INIT(priv);
 		elem = g_malloc(sizeof (*elem), M_WAITOK|M_ZERO);
@@ -864,7 +870,8 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 				g_topology_lock();
 			}
 			if (error != 0) {
-				printf("ZFS WARNING: Unable to open %s for writing (error=%d).\n",
+				printf("ZFS WARNING: Unable to open %s for "
+				    "writing (error=%d).\n",
 				    cp->provider->name, error);
 				vdev_geom_close_locked(vd);
 				cp = NULL;
@@ -875,9 +882,9 @@ vdev_geom_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	/* Fetch initial physical path information for this device. */
 	if (cp != NULL) {
 		vdev_geom_attrchanged(cp, "GEOM::physpath");
-	
+
 		/* Set other GEOM characteristics */
-		vdev_geom_set_physpath(vd, cp, /*do_null_update*/B_FALSE);
+		vdev_geom_set_physpath(vd, cp, /* do_null_update */B_FALSE);
 	}
 
 	g_topology_unlock();
@@ -957,7 +964,7 @@ vdev_geom_io_intr(struct bio *bp)
 	if (zio->io_error == 0 && bp->bio_resid != 0)
 		zio->io_error = SET_ERROR(EIO);
 
-	switch(zio->io_error) {
+	switch (zio->io_error) {
 	case ENOTSUP:
 		/*
 		 * If we get ENOTSUP for BIO_FLUSH or BIO_DELETE we know
@@ -965,7 +972,7 @@ vdev_geom_io_intr(struct bio *bp)
 		 * we set a persistent flag so that we don't bother with
 		 * requests in the future.
 		 */
-		switch(bp->bio_cmd) {
+		switch (bp->bio_cmd) {
 		case BIO_FLUSH:
 			vd->vdev_nowritecache = B_TRUE;
 			break;
@@ -1021,7 +1028,8 @@ vdev_geom_io_start(zio_t *zio)
 		} else {
 			switch (zio->io_cmd) {
 			case DKIOCFLUSHWRITECACHE:
-				if (zfs_nocacheflush || vdev_geom_bio_flush_disable)
+				if (zfs_nocacheflush ||
+				    vdev_geom_bio_flush_disable)
 					break;
 				if (vd->vdev_nowritecache) {
 					zio->io_error = SET_ERROR(ENOTSUP);

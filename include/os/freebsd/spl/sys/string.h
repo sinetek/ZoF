@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
  *
@@ -36,5 +36,4 @@ void	 strident_canon(char *, size_t);
 void	 kmem_strfree(char *);
 char	*kmem_strdup(const char *s);
 
-	
 #endif	/* _OPENSOLARIS_SYS_STRING_H_ */

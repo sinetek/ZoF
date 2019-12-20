@@ -60,7 +60,7 @@ typedef struct ucred cred_t;
 #define	crgetgroups(cred)	((cred)->cr_groups)
 #define	crgetngroups(cred)	((cred)->cr_ngroups)
 #define	crgetsid(cred, i)	(NULL)
-	
+
 struct proc;				/* cred.h is included in proc.h */
 struct prcred;
 struct ksid;

@@ -181,60 +181,60 @@ log_sysevent(sysevent_t *evp, int flag, sysevent_id_t *eid)
 	while ((elem = nvlist_next_nvpair(ev->se_nvl, elem)) != NULL) {
 		switch (nvpair_type(elem)) {
 		case DATA_TYPE_BOOLEAN:
-		    {
+		{
 			boolean_t value;
 
 			(void) nvpair_value_boolean_value(elem, &value);
 			sbuf_printf(sb, " %s=%s", nvpair_name(elem),
 			    value ? "true" : "false");
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT8:
-		    {
+		{
 			uint8_t value;
 
 			(void) nvpair_value_uint8(elem, &value);
 			sbuf_printf(sb, " %s=%hhu", nvpair_name(elem), value);
 			break;
-		    }
+		}
 		case DATA_TYPE_INT32:
-		    {
+		{
 			int32_t value;
 
 			(void) nvpair_value_int32(elem, &value);
 			sbuf_printf(sb, " %s=%jd", nvpair_name(elem),
 			    (intmax_t)value);
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT32:
-		    {
+		{
 			uint32_t value;
 
 			(void) nvpair_value_uint32(elem, &value);
 			sbuf_printf(sb, " %s=%ju", nvpair_name(elem),
 			    (uintmax_t)value);
 			break;
-		    }
+		}
 		case DATA_TYPE_INT64:
-		    {
+		{
 			int64_t value;
 
 			(void) nvpair_value_int64(elem, &value);
 			sbuf_printf(sb, " %s=%jd", nvpair_name(elem),
 			    (intmax_t)value);
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT64:
-		    {
+		{
 			uint64_t value;
 
 			(void) nvpair_value_uint64(elem, &value);
 			sbuf_printf(sb, " %s=%ju", nvpair_name(elem),
 			    (uintmax_t)value);
 			break;
-		    }
+		}
 		case DATA_TYPE_STRING:
-		    {
+		{
 			char *value;
 
 			(void) nvpair_value_string(elem, &value);
@@ -242,10 +242,10 @@ log_sysevent(sysevent_t *evp, int flag, sysevent_id_t *eid)
 			if (strcmp(FM_CLASS, nvpair_name(elem)) == 0)
 				type = value;
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT8_ARRAY:
-		    {
-		    	uint8_t *value;
+		{
+			uint8_t *value;
 			uint_t ii, nelem;
 
 			(void) nvpair_value_uint8_array(elem, &value, &nelem);
@@ -253,10 +253,10 @@ log_sysevent(sysevent_t *evp, int flag, sysevent_id_t *eid)
 			for (ii = 0; ii < nelem; ii++)
 				sbuf_printf(sb, "%02hhx", value[ii]);
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT16_ARRAY:
-		    {
-		    	uint16_t *value;
+		{
+			uint16_t *value;
 			uint_t ii, nelem;
 
 			(void) nvpair_value_uint16_array(elem, &value, &nelem);
@@ -264,10 +264,10 @@ log_sysevent(sysevent_t *evp, int flag, sysevent_id_t *eid)
 			for (ii = 0; ii < nelem; ii++)
 				sbuf_printf(sb, "%04hx", value[ii]);
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT32_ARRAY:
-		    {
-		    	uint32_t *value;
+		{
+			uint32_t *value;
 			uint_t ii, nelem;
 
 			(void) nvpair_value_uint32_array(elem, &value, &nelem);
@@ -275,10 +275,10 @@ log_sysevent(sysevent_t *evp, int flag, sysevent_id_t *eid)
 			for (ii = 0; ii < nelem; ii++)
 				sbuf_printf(sb, "%08jx", (uintmax_t)value[ii]);
 			break;
-		    }
+		}
 		case DATA_TYPE_UINT64_ARRAY:
-		    {
-		    	uint64_t *value;
+		{
+			uint64_t *value;
 			uint_t ii, nelem;
 
 			(void) nvpair_value_uint64_array(elem, &value, &nelem);
@@ -286,7 +286,7 @@ log_sysevent(sysevent_t *evp, int flag, sysevent_id_t *eid)
 			for (ii = 0; ii < nelem; ii++)
 				sbuf_printf(sb, "%016jx", (uintmax_t)value[ii]);
 			break;
-		    }
+		}
 		default:
 #if 0
 			printf("%s: type %d is not implemented\n", __func__,
@@ -329,8 +329,8 @@ _ddi_log_sysevent(char *vendor, char *class, char *subclass,
 
 	ev = sysevent_alloc(class, subclass, vendor, SE_SLEEP);
 	ASSERT(ev != NULL);
-	(void)sysevent_attach_attributes(ev, attr_list);
-        ret = log_sysevent(ev, SE_SLEEP, eidp);
+	(void) sysevent_attach_attributes(ev, attr_list);
+	ret = log_sysevent(ev, SE_SLEEP, eidp);
 	sysevent_detach_attributes(ev);
 	sysevent_free(ev);
 

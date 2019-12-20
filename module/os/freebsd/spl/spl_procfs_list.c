@@ -49,4 +49,3 @@ procfs_list_add(procfs_list_t *procfs_list, void *p)
 	NODE_ID(procfs_list, p) = procfs_list->pl_next_id++;
 	list_insert_tail(&procfs_list->pl_list, p);
 }
-

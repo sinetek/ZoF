@@ -69,7 +69,7 @@ zone_dataset_attach(struct ucred *cred, const char *dataset, int jailid)
 		return (error);
 
 	/* Allocate memory before we grab prison's mutex. */
-	zd = malloc(sizeof(*zd) + strlen(dataset) + 1, M_ZONES, M_WAITOK);
+	zd = malloc(sizeof (*zd) + strlen(dataset) + 1, M_ZONES, M_WAITOK);
 
 	sx_slock(&allprison_lock);
 	pr = prison_find(jailid);	/* Locks &pr->pr_mtx. */
@@ -93,11 +93,12 @@ zone_dataset_attach(struct ucred *cred, const char *dataset, int jailid)
 		dofree = 1;
 		prison_hold_locked(pr);
 		mtx_unlock(&pr->pr_mtx);
-		head = malloc(sizeof(*head), M_ZONES, M_WAITOK);
+		head = malloc(sizeof (*head), M_ZONES, M_WAITOK);
 		LIST_INIT(head);
 		mtx_lock(&pr->pr_mtx);
 		error = osd_jail_set(pr, zone_slot, head);
-		KASSERT(error == 0, ("osd_jail_set() failed (error=%d)", error));
+		KASSERT(error == 0, ("osd_jail_set() failed (error=%d)",
+		    error));
 	}
 	strcpy(zd->zd_dataset, dataset);
 	LIST_INSERT_HEAD(head, zd, zd_next);
@@ -224,11 +225,11 @@ zone_destroy(void *arg)
 	zone_dataset_t *zd;
 
 	head = arg;
-        while ((zd = LIST_FIRST(head)) != NULL) {
-                LIST_REMOVE(zd, zd_next);
-                free(zd, M_ZONES);
-        }
-        free(head, M_ZONES);
+	while ((zd = LIST_FIRST(head)) != NULL) {
+		LIST_REMOVE(zd, zd_next);
+		free(zd, M_ZONES);
+	}
+	free(head, M_ZONES);
 }
 
 uint32_t

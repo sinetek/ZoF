@@ -78,6 +78,7 @@
 #include <sys/dsl_deleg.h>
 #include <sys/mount.h>
 #include <sys/zap.h>
+#include <sys/sysproto.h>
 
 #include "zfs_namecheck.h"
 
@@ -511,7 +512,7 @@ zfsctl_common_getattr(vnode_t *vp, vattr_t *vap)
 	vap->va_nlink = 2;
 }
 
-#ifndef _SYS_SYSPROTO_H_
+#ifndef _OPENSOLARIS_SYS_VNODE_H_
 struct vop_fid_args {
 	struct vnode *a_vp;
 	struct fid *a_fid;

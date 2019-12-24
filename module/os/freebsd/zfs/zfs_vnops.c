@@ -48,6 +48,7 @@
 #include <sys/namei.h>
 #include <sys/mman.h>
 #include <sys/cmn_err.h>
+#include <sys/sysproto.h>
 #include <sys/errno.h>
 #include <sys/unistd.h>
 #include <sys/zfs_dir.h>
@@ -2532,8 +2533,8 @@ zfs_readdir(vnode_t *vp, uio_t *uio, cred_t *cr, int *eofp,
 			    zap.za_num_integers != 1) {
 				cmn_err(CE_WARN, "zap_readdir: bad directory "
 				    "entry, obj = %lld, offset = %lld\n",
-				    (ulong_tlong_t)zp->z_id,
-				    (ulong_tlong_t)offset);
+				    (u_longlong_t)zp->z_id,
+				    (u_longlong_t)offset);
 				error = SET_ERROR(ENXIO);
 				goto update;
 			}
@@ -2724,7 +2725,7 @@ zfs_getattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr)
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	int	error = 0;
 	uint32_t blksize;
-	ulong_tlong_t nblocks;
+	u_longlong_t nblocks;
 	uint64_t mtime[2], ctime[2], crtime[2], rdev;
 	xvattr_t *xvap = (xvattr_t *)vap;	/* vap may be an xvattr_t * */
 	xoptattr_t *xoap = NULL;
@@ -6500,11 +6501,11 @@ struct vop_vector zfs_vnodeops = {
 	.vop_access =		zfs_freebsd_access,
 	.vop_allocate =		VOP_EINVAL,
 	.vop_lookup =		zfs_cache_lookup,
-	.vop_cachedlookup =	zfs_freebsd_lookup,
+	.vop_cachedlookup =	(vop_cachedlookup_t *)zfs_freebsd_lookup,
 	.vop_getattr =		zfs_freebsd_getattr,
 	.vop_setattr =		zfs_freebsd_setattr,
 	.vop_create =		zfs_freebsd_create,
-	.vop_mknod =		zfs_freebsd_create,
+	.vop_mknod =		(vop_mknod_t *)zfs_freebsd_create,
 	.vop_mkdir =		zfs_freebsd_mkdir,
 	.vop_readdir =		zfs_freebsd_readdir,
 	.vop_fsync =		zfs_freebsd_fsync,

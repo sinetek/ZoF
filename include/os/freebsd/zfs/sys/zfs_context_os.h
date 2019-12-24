@@ -66,7 +66,6 @@ typedef int fstrans_cookie_t;
 #define	signal_pending(x) SIGPENDING(x)
 #define	current curthread
 #define	thread_join(x)
-#define	sys_shutdown rebooting
 #define	cv_wait_io(cv, mp)			cv_wait(cv, mp)
 typedef struct opensolaris_utsname	utsname_t;
 extern utsname_t *utsname(void);

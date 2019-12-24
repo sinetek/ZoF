@@ -411,7 +411,7 @@ zfs_sync(vfs_t *vfsp, int waitfor)
 		 * If the system is shutting down, then skip any
 		 * filesystems which may exist on a suspended pool.
 		 */
-		if (sys_shutdown && spa_suspended(dp->dp_spa)) {
+		if (rebooting && spa_suspended(dp->dp_spa)) {
 			ZFS_EXIT(zfsvfs);
 			return (0);
 		}

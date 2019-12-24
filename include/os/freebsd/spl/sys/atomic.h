@@ -33,8 +33,7 @@
 #include <machine/atomic.h>
 
 #define	casptr(_a, _b, _c)	\
-	atomic_cmpset_ptr((volatile uintptr_t *)(_a), (uintptr_t)(_b),
-	    (uintptr_t)(_c))
+	atomic_cmpset_ptr((volatile uintptr_t *)(_a), (uintptr_t)(_b), (uintptr_t)(_c))
 #define	cas32	atomic_cmpset_32
 #define	atomic_sub_64 atomic_subtract_64
 

@@ -35,6 +35,7 @@
 #include <sys/fs/zfs.h>
 #include <sys/zio.h>
 #include <geom/geom.h>
+#include <geom/geom_disk.h>
 #include <geom/geom_int.h>
 
 /*
@@ -922,7 +923,7 @@ skip_open:
 
 	/* Inform the ZIO pipeline that we are non-rotational */
         error = g_getattr("GEOM::rotation_rate", cp, &rate);
-        if (error == 0 && rate == 1)
+        if (error == 0 && rate == DISK_RR_NON_ROTATING)
                 vd->vdev_nonrot = B_TRUE;
         else
                 vd->vdev_nonrot = B_FALSE;

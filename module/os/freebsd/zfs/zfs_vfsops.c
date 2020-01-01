@@ -2110,7 +2110,7 @@ zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp)
 
 	rm_rlock(&zfsvfs->z_rootvnodelock, &tracker);
 	*vpp = zfsvfs->z_rootvnode;
-	if (*vpp != NULL && (((*vpp)->v_iflag & VI_DOOMED) == 0)) {
+	if (*vpp != NULL && !VN_IS_DOOMED(*vpp)) {
 		vrefact(*vpp);
 		rm_runlock(&zfsvfs->z_rootvnodelock, &tracker);
 		goto lock;

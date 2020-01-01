@@ -276,10 +276,13 @@ zthr_t *
 zthr_create_timer(zthr_checkfunc_t *checkfunc, zthr_func_t *func,
     void *arg, hrtime_t max_sleep)
 {
+	return 0;
+#if 0
 	zthr_t *t = kmem_zalloc(sizeof (*t), KM_SLEEP);
 	mutex_init(&t->zthr_state_lock, NULL, MUTEX_DEFAULT, NULL);
 	mutex_init(&t->zthr_request_lock, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&t->zthr_cv, NULL, CV_DEFAULT, NULL);
+
 
 	mutex_enter(&t->zthr_state_lock);
 	t->zthr_checkfunc = checkfunc;
@@ -292,6 +295,7 @@ zthr_create_timer(zthr_checkfunc_t *checkfunc, zthr_func_t *func,
 	mutex_exit(&t->zthr_state_lock);
 
 	return (t);
+#endif
 }
 
 void

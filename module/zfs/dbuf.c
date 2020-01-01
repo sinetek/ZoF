@@ -896,11 +896,16 @@ retry:
 		zfs_refcount_create(&dbuf_caches[dcs].size);
 	}
 
+	printf("Lol\n");
 	dbuf_evict_thread_exit = B_FALSE;
+	printf("Lol 2\n");
 	mutex_init(&dbuf_evict_lock, NULL, MUTEX_DEFAULT, NULL);
+	printf("Lol 3\n");
 	cv_init(&dbuf_evict_cv, NULL, CV_DEFAULT, NULL);
+	printf("Lol 4\n");
 	dbuf_cache_evict_thread = thread_create(NULL, 0, dbuf_evict_thread,
 	    NULL, 0, &p0, TS_RUN, minclsyspri);
+	printf("Lol 5\n");
 
 	dbuf_ksp = kstat_create("zfs", 0, "dbufstats", "misc",
 	    KSTAT_TYPE_NAMED, sizeof (dbuf_stats) / sizeof (kstat_named_t),
